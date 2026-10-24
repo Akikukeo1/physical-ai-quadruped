@@ -1,47 +1,121 @@
 # Physical AI — Quadruped Motion Planner
 
-Codex CLI の自然言語出力を、制限付きの動作列に変換する最小構成です。
+自然言語の指示を Codex CLI が JSON の動作列に変換し、MuJoCo 内の Unitree Go2 を動かします。
+学習済みの MoE 歩行方策を ONNX Runtime で実行するため、方策の学習や実機は不要です。
 
-> **現在の状態**：Codexとの接続・JSON検証・ドライラン・テストは実装済み。実際の四脚ロボットを動かすMuJoCoバックエンドは**未実装**です。これだけでは最終課題の提出要件を満たしません。
+**Phase 1 は Ubuntu 24.04 / WSL2 で実行確認済みです。**
+サンプル計画と実際の Codex 計画で、接地した Go2 の前進・旋回・停止を録画しました。
+後退と左右旋回も物理テストで検証しています。
+[検証記録](docs/PHASE1_RESULTS.md)と[出典・ライセンス](third_party/NOTICE.md)を参照してください。
+独自タスク、比較実験、最終提出物はこれからです。
 
-## すぐに動かす（WSL2 / PowerShell共通）
+## MuJoCo デモ（WSL2）
 
-Python 3.11〜3.13が必要です（`.python-version` は3.12）。`uv` を使う場合も追加ライブラリ不要です。Codex CLIの認証・実行は手元のPCで確認してください。
+WSLg が利用できる Ubuntu 24.04 で、リポジトリのルートから実行します。
+確認環境は uv 0.10.9、Python 3.12.12、MuJoCo 3.3.7、ONNX Runtime 1.23.2 です。
+
+WSL に uv がない場合は、固定版をプロジェクト内に用意できます。
+
+```bash
+mkdir -p .tools
+curl -fL https://github.com/astral-sh/uv/releases/download/0.10.9/uv-x86_64-unknown-linux-gnu.tar.gz -o .tools/uv-linux.tar.gz
+tar -xzf .tools/uv-linux.tar.gz -C .tools
+```
+
+次の一行で環境の準備から実行まで行います。
+
+```bash
+bash scripts/demo.sh --planner sample
+```
+
+Python は `.python-wsl/`、仮想環境は `.venv-wsl/` に作成します。
+初回は依存ライブラリと約34 MBのモデル・方策を取得するため、ネット接続が必要です。
+アセットはコミットと SHA-256 で固定し、以後も実行前に照合します。大型バイナリは Git 管理しません。
+ビューアはデモ完了時に閉じます。シミュレーション速度は描画環境によって実時間より遅くなる場合があります。
+
+自然言語で指示する場合は、Codex CLI をインストールして `codex login` を済ませます。
+WSL の `codex` を優先し、ない場合は PATH 上の Windows 版 `codex.exe` を利用します。
+Windows の認証情報をコピーする必要はありません。今回の実行では Windows 版 0.157.0 を使いました。
+
+```bash
+bash scripts/demo.sh --planner codex --prompt '2秒前進し、2秒左へ旋回して、2秒待機して'
+```
+
+ビューアを開かずに録画する場合は、EGL を使います。
+
+```bash
+MUJOCO_GL=egl bash scripts/demo.sh --planner sample --headless --video outputs/sample.mp4
+MUJOCO_GL=egl bash scripts/demo.sh --planner codex --headless --video outputs/codex.mp4 --prompt '2秒前進し、2秒左へ旋回して、2秒待機して'
+```
+
+720×480、25 fps の MP4 と、計画・実測状態を含む `outputs/plan-*.json` が残ります。
+動画ファイルは指定先を上書きします。実行ログのファイル名は時刻ごとに変わります。
+
+スクリプトを使わない場合は、WSL 内で次のように実行できます。
+Windows 用 `.venv` との混用を避けるため、環境変数を指定してください。
+
+```bash
+export UV_PROJECT_ENVIRONMENT="$PWD/.venv-wsl"
+export UV_PYTHON_INSTALL_DIR="$PWD/.python-wsl"
+export UV_CACHE_DIR="$PWD/.uv-cache"
+uv run --locked --python 3.12.12 --extra sim python src/main.py --planner sample --executor mujoco
+```
+
+## 計画と制御
+
+```text
+自然言語 → Codex CLI → JSON Schema + Python 検証 → 動作別の速度指令
+                                                  ↓
+                                     MoE 方策 50 Hz → PD制御 → MuJoCo 500 Hz
+```
+
+Codex を呼ぶのは計画生成時の一度だけです。シミュレータへ渡すのは検証済みの動作と秒数です。
+Python やシェルコードを LLM に生成・実行させません。
+計画生成には一時ディレクトリを使い、CLI のシェル・Apps・プラグインを無効化します。
+`--ignore-user-config` により CLI 標準のモデル設定を使います。既存の認証は利用しますが、ユーザー設定ファイルは変更しません。
+
+| 動作 | 指令 |
+| --- | --- |
+| `forward` | 前進 0.18 m/s |
+| `backward` | 後退 0.12 m/s |
+| `turn_left` / `turn_right` | 左右旋回 0.35 rad/s |
+| `wait` | 速度指令ゼロ |
+
+計画は **12動作以下、合計15秒以下、各0.2〜2.0秒** に制限します。
+アダプタ側でも前後0.3 m/s、横0.2 m/s、旋回0.6 rad/s以下に制限します。
+これらは指令値であり、実速度の厳密な上限や到達位置を保証するものではありません。
+方策の内部入力は公開制御器の速度補償に従い、それぞれ0.6、0.35、1.0以下に制限します。
+トルクはモデルのモーター上限で制限し、姿勢の崩れ・低すぎる胴体位置・非有限状態を検出したら実行を中断します。
+
+初期姿勢の設定後は、関節トルクと接地によって動かします。ロボットを吊るしたり、座標を書き換えて移動させたりはしません。
+計画の前に1秒の姿勢安定化、後に2秒の速度ゼロ指令を入れるため、サンプル録画は11秒です。
+ログには指令ごとの開始・終了状態と、10 Hz の位置・向き・速度・接触数を保存します。
+途中で失敗した場合も計画と取得済みの実行ログを残します。
+
+## ドライランとテスト
+
+次のコマンドは追加ライブラリなしで動作し、PowerShell でも検証済みです。
 
 ```bash
 uv run python src/main.py --planner sample --executor dry-run
 uv run python -m unittest discover -s tests -v
 ```
 
-Codex CLI がインストール・ログイン済みなら、実際のLLMを使用できます。
+実際の物理テストは、デモ実行で環境を用意した後に WSL で実行します。
 
 ```bash
-uv run python src/main.py --planner codex --executor dry-run --prompt '右方向を案内する動きで、四脚ロボットを動かして'
+PAI_SIM_TEST=1 .venv-wsl/bin/python -m unittest discover -s tests -v
 ```
 
-標準出力に動作命令が表示され、`outputs/` に計画とログが保存されます。計画はCodexから直接JSON Schemaに従って出力され、Python側でも独立に検査します。
+通常テストは物理テスト1件をスキップします。物理テストでは前進・後退距離、左右旋回角、
+停止時の並進・角速度、直立姿勢、接地を数値で検査します。Codex の利用はモックテストと実行記録を区別しています。
 
-## 動作の語彙
+## 現在の制限と残りの課題
 
-- `forward`: 前進
-- `backward`: 後退
-- `turn_left` / `turn_right`: 左右旋回
-- `wait`: 停止・待機
+検証範囲は平坦な床での短い動作列です。カメラ認識・障害物回避・段差・実機制御は実装していません。
+Windows ネイティブの MuJoCo 実行は未検証です。方策の ONNX 再変換や再学習も行っていません。
+位置や角度を正確に指定する制御ではなく、停止後も微小な姿勢調整があります。
 
-現時点では **合計12ステップ以下、15秒以下、各0.2〜2.0秒** に制限しています。速度の初期値はソース内の仮設定であり、実際の速度制限は採用する制御器に合わせて見直してください。
-
-## MuJoCoとの接続
-
-`src/pai_motion/sim_adapter.py` が差し替えポイントです。実際に動作する学習済み制御器か逆運動学 (IK) 制御器を接続するまでは実行できません。
-
-Codexに渡す実装タスクは [`docs/NEXT_CODEX_TASK.md`](docs/NEXT_CODEX_TASK.md) を参照してください。
-
-## 提出前に必要なこと
-
-- MuJoCo内で **物理的に動く** 四脚ロボットを実行する
-- Codexの計画で実動作を変えられることを示す
-- 新規タスクの定義・先行例との比較を明示する
-- 1〜3分の動画、公開GitHubリポジトリ、PDFレポートを準備する
-- 元となるロボットモデルと歩行制御器の出典・ライセンスを記載する
-
-LLMを開発支援に使うことと、ロボットがタスク実行時にAIを使うことは区別します。後者は `--planner codex` で実現します。
+次の段階では独自のコミュニケーション課題を定義し、固定計画との比較実験を行います。
+最終提出には1〜3分の説明動画、公開リポジトリ、PDFレポートが必要です。
+GitHub への公開や push はまだ行っていません。

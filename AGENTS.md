@@ -4,7 +4,7 @@ Project: Physical AI final assignment, quadruped natural-language motion plannin
 
 ## Current milestone
 - Phase 1a (included): validated motion protocol, Codex CLI planner, dry-run executor, tests.
-- Phase 1b (not yet implemented): **real MuJoCo Go2 locomotion backend** with a proven velocity-command controller; verify in the target WSL2 environment before claiming it works.
+- Phase 1b: MuJoCo Go2 locomotion with a pinned MoE ONNX policy. Sample and real Codex plans verified on Ubuntu 24.04 / WSL2; see README and docs/PHASE1_RESULTS.md for evidence and limits.
 - Phase 2: task-specific motion vocabulary and constraint adaptation.
 - Phase 3: comparative experiments and a 1–3 minute video.
 

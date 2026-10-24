@@ -1,19 +1,20 @@
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import unittest
 
 from pai_motion.executor import DryRunSink, execute_plan
-from pai_motion.motion import InvalidPlan, validate_plan
+from pai_motion.motion import Action, InvalidPlan, MotionPlan, validate_plan
 from pai_motion.planner import sample_plan
 
 
 class TestPlans(unittest.TestCase):
     def test_sample_plan(self) -> None:
         plan = sample_plan()
-        self.assertEqual(len(plan.actions), 3)
-        self.assertEqual(plan.actions[0].type, "turn_right")
+        self.assertEqual(len(plan.actions), 4)
+        self.assertEqual(plan.actions[1].type, "turn_right")
 
     def test_invalid_action(self) -> None:
         with self.assertRaises(InvalidPlan):
@@ -53,8 +54,14 @@ class TestPlans(unittest.TestCase):
     def test_dry_run(self) -> None:
         sink = DryRunSink()
         execute_plan(sample_plan(), sink)
-        self.assertEqual(len(sink.events), 3)
-        self.assertLess(sink.events[0]["yaw"], 0)
+        self.assertEqual(len(sink.events), 4)
+        self.assertLess(sink.events[1]["yaw"], 0)
+
+    def test_executor_revalidates_constructed_plans_before_motion(self) -> None:
+        sink = DryRunSink()
+        with self.assertRaises(InvalidPlan):
+            execute_plan(MotionPlan("invalid", (Action("forward", 100),)), sink)
+        self.assertEqual(sink.events, [])
 
 
 if __name__ == "__main__":

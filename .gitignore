@@ -7,3 +7,8 @@ outputs/
 *.mp4
 *.log
 .env
+.venv-wsl/
+.tools/
+.uv-cache/
+.python-wsl/
+.assets/

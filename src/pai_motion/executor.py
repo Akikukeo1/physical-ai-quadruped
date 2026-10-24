@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Protocol
 
-from pai_motion.motion import MotionPlan
+from pai_motion.motion import MotionPlan, validate_plan
 
 
 @dataclass(frozen=True)
@@ -15,7 +15,7 @@ class Velocity:
     yaw: float
 
 
-# Conservative *illustrative* defaults; adjust against the selected controller.
+# Low-speed commands verified with the pinned MoE Go2 controller on flat ground.
 COMMAND_VELOCITIES = {
     "forward": Velocity(0.18, 0.0, 0.0),
     "backward": Velocity(-0.12, 0.0, 0.0),
@@ -47,6 +47,9 @@ class DryRunSink:
 
 def execute_plan(plan: MotionPlan, sink: VelocitySink) -> None:
     """Run validated commands and always request a stop."""
+    plan = validate_plan(
+        {"intent": plan.intent, "actions": [{"type": a.type, "duration": a.duration} for a in plan.actions]}
+    )
     try:
         for action in plan.actions:
             sink.run_velocity(COMMAND_VELOCITIES[action.type], action.duration)

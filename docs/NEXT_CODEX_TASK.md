@@ -1,5 +1,7 @@
 # Codexに次に実装させるタスク — Phase 1b
 
+> 2026-10-24: このタスクの実装結果と検証記録は [PHASE1_RESULTS.md](PHASE1_RESULTS.md) を参照してください。以下は実装時の要件です。
+
 You are implementing the next milestone of this repository on the user's Windows 11 / WSL2 Ubuntu 24.04 machine. Read AGENTS.md, README.md, and tests first.
 
 **Goal:** Replace the intentionally missing MuJoCoGo2Sink backend so that `--planner sample --executor mujoco` makes the Unitree Go2 model physically walk/turn/stop with a reproducible demonstration video. Then confirm that `--planner codex --executor mujoco` uses the exact same motion interface. Keep dry-run intact.
