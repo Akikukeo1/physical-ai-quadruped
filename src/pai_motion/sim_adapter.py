@@ -18,7 +18,7 @@ from pai_motion.executor import Velocity
 class MuJoCoGo2Sink:
     """Own physics and joint control; accept only bounded velocity segments."""
 
-    def __init__(self, *, headless: bool = False, video: Path | None = None) -> None:
+    def __init__(self, *, headless: bool = False, video: Path | None = None, navigation: bool = False) -> None:
         try:
             import mujoco
             import numpy as np
@@ -31,6 +31,7 @@ class MuJoCoGo2Sink:
         self.viewer = self.renderer = self.writer = None
         self.ticks = 0
         self.stopped = False
+        self.navigation = navigation
         assets = ensure_assets()
         scene = ET.parse(assets / "go2.xml").getroot()
         scene.find("compiler").set("meshdir", (assets / "assets").as_posix())
@@ -46,6 +47,32 @@ class MuJoCoGo2Sink:
         scene.append(additions.find("visual"))
         scene.find("asset").extend(additions.find("asset"))
         scene.find("worldbody").extend(additions.find("worldbody"))
+        if navigation:
+            from pai_motion.navigation import OBSTACLE, WAYPOINTS
+
+            x, y, hx, hy = OBSTACLE
+            ET.SubElement(
+                scene.find("worldbody"),
+                "geom",
+                name="task_obstacle",
+                type="box",
+                pos=f"{x} {y} 0.3",
+                size=f"{hx} {hy} 0.3",
+                rgba="0.85 0.1 0.1 1",
+            )
+            for name, color in (("blue", "0.1 0.35 1 1"), ("green", "0.1 0.85 0.3 1"), ("home", "1 .8 .1 1")):
+                x, y = WAYPOINTS[name]
+                ET.SubElement(
+                    scene.find("worldbody"),
+                    "geom",
+                    name=f"marker_{name}",
+                    type="cylinder",
+                    pos=f"{x} {y} .006",
+                    size=".18 .005",
+                    rgba=color,
+                    contype="0",
+                    conaffinity="0",
+                )
         self.model = mujoco.MjModel.from_xml_string(ET.tostring(scene, encoding="unicode"))
         self.data = mujoco.MjData(self.model)
         names = [f"{leg}_{joint}" for leg in ("FL", "FR", "RL", "RR") for joint in ("hip", "thigh", "calf")]
@@ -63,6 +90,7 @@ class MuJoCoGo2Sink:
         ):
             raise ValueError("Go2 model does not match the released policy joint/torque contract")
         self.base = self.model.body("base_link").id
+        self.obstacle_id = self.model.geom("task_obstacle").id if navigation else None
         self.home = np.array([0.1, 0.8, -1.5, -0.1, 0.8, -1.5, 0.1, 1.0, -1.5, -0.1, 1.0, -1.5], dtype=np.float32)
         self.action = np.zeros(12, dtype=np.float32)
         self.history = np.zeros((5, 45), dtype=np.float32)
@@ -98,12 +126,18 @@ class MuJoCoGo2Sink:
                 self.camera = mujoco.MjvCamera()
                 self.camera.lookat[:] = [0.25, 0, 0.2]
                 self.camera.distance, self.camera.azimuth, self.camera.elevation = 2.7, 135, -25
+                if navigation:
+                    self.camera.lookat[:] = [0.9, 0, 0.2]
+                    self.camera.distance, self.camera.azimuth, self.camera.elevation = 4.5, 110, -55
             if not headless:
                 import mujoco.viewer
 
                 self.viewer = mujoco.viewer.launch_passive(self.model, self.data)
                 self.viewer.cam.distance = 2.7
                 self.viewer.cam.elevation = -25
+                if navigation:
+                    self.viewer.cam.lookat[:] = [0.9, 0, 0.2]
+                    self.viewer.cam.distance, self.viewer.cam.elevation = 4.5, -55
             self._advance(np.zeros(3), 1.0)
         except BaseException:
             self.close()
@@ -112,7 +146,7 @@ class MuJoCoGo2Sink:
     def _state(self) -> dict:
         np = self.np
         rotation = self.data.xmat[self.base].reshape(3, 3)
-        return {
+        state = {
             "time": float(self.data.time),
             "position": self.data.qpos[:3].tolist(),
             "yaw": math.atan2(rotation[1, 0], rotation[0, 0]),
@@ -122,6 +156,20 @@ class MuJoCoGo2Sink:
             "contacts": int(self.data.ncon),
             "finite": bool(np.isfinite(self.data.qpos).all() and np.isfinite(self.data.qvel).all()),
         }
+        if self.navigation:
+            from pai_motion.navigation import OBSTACLE, ROBOT_RADIUS
+
+            x, y, hx, hy = OBSTACLE
+            state["obstacle_clearance"] = (
+                math.hypot(max(abs(state["position"][0] - x) - hx, 0), max(abs(state["position"][1] - y) - hy, 0))
+                - ROBOT_RADIUS
+            )
+            state["obstacle_contact"] = any(self.obstacle_id in contact.geom for contact in self.data.contact)
+        return state
+
+    def observe(self) -> dict:
+        """Expose simulator ground truth for the known-map task; no visual perception."""
+        return self._state()
 
     def _advance(self, command, seconds: float) -> None:
         np, mj = self.np, self.mj
@@ -171,6 +219,9 @@ class MuJoCoGo2Sink:
             if not state["finite"] or state["upright"] < 0.65 or state["position"][2] < 0.17:
                 self.data.ctrl[:] = 0
                 raise RuntimeError(f"Go2 fell or state became invalid at t={self.data.time:.3f}s")
+            if state.get("obstacle_contact") or state.get("obstacle_clearance", 1.0) < 0.05:
+                self.data.ctrl[:] = 0
+                raise RuntimeError(f"Go2 obstacle safety stop at t={self.data.time:.3f}s")
             if self.ticks % 50 == 0:
                 self.trace.append(state)
             if self.writer is not None and self.ticks % 20 == 0:
@@ -204,7 +255,13 @@ class MuJoCoGo2Sink:
             return
         self.stopped = True
         state = self._state()
-        if not state["finite"] or state["upright"] < 0.65 or state["position"][2] < 0.17:
+        if (
+            not state["finite"]
+            or state["upright"] < 0.65
+            or state["position"][2] < 0.17
+            or state.get("obstacle_contact")
+            or state.get("obstacle_clearance", 1.0) < 0.05
+        ):
             self.data.ctrl[:] = 0
             return
         event = {"vx": 0.0, "vy": 0.0, "yaw": 0.0, "duration": 2.0, "phase": "stop", "start": state}

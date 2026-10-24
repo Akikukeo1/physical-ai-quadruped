@@ -1,0 +1,121 @@
+{
+  "date": "2026-10-24",
+  "checkpoint": "0f73528",
+  "state_source": "simulator ground truth",
+  "runs": [
+    {
+      "source_log": "outputs/plan-20261024T100011208214Z.json",
+      "prompt": "赤い障害物の北側を回って青い地点へ行き、その後で緑の地点へ移動して",
+      "status": "completed",
+      "route": [
+        "north_gate",
+        "blue",
+        "green"
+      ],
+      "reached": [
+        {
+          "waypoint": "north_gate",
+          "distance_m": 0.07128480555259294,
+          "time_s": 7.799999999999363
+        },
+        {
+          "waypoint": "blue",
+          "distance_m": 0.06869146426028232,
+          "time_s": 18.60000000000057
+        },
+        {
+          "waypoint": "green",
+          "distance_m": 0.07527231076333492,
+          "time_s": 29.799999999994363
+        }
+      ],
+      "elapsed_seconds": 30.799999999993254,
+      "final_goal_error_m": 0.08899252173870727,
+      "final_speed_m_s": 0.0032695365836218505,
+      "trace_samples": 318,
+      "minimum_sampled_clearance_m": 0.21075874907097397,
+      "minimum_sampled_upright": 0.9984684538100107,
+      "obstacle_contact_samples": 0,
+      "video": "outputs/navigation-codex.mp4"
+    },
+    {
+      "source_log": "outputs/plan-20261024T100240221976Z.json",
+      "prompt": "赤い障害物の南側を回って緑の地点へ行き、次に青の地点を訪れ、最後に黄色の出発地点へ戻って",
+      "status": "completed",
+      "route": [
+        "south_gate",
+        "green",
+        "blue",
+        "north_gate",
+        "home"
+      ],
+      "reached": [
+        {
+          "waypoint": "south_gate",
+          "distance_m": 0.0743032340076831,
+          "time_s": 7.999999999999341
+        },
+        {
+          "waypoint": "green",
+          "distance_m": 0.07466749448187975,
+          "time_s": 18.20000000000079
+        },
+        {
+          "waypoint": "blue",
+          "distance_m": 0.07369915395210788,
+          "time_s": 29.599999999994473
+        },
+        {
+          "waypoint": "north_gate",
+          "distance_m": 0.0790281063132824,
+          "time_s": 39.800000000002676
+        },
+        {
+          "waypoint": "home",
+          "distance_m": 0.07189380006759387,
+          "time_s": 46.600000000010986
+        }
+      ],
+      "elapsed_seconds": 47.60000000001343,
+      "final_goal_error_m": 0.06848797541132234,
+      "final_speed_m_s": 0.0011190554318240324,
+      "trace_samples": 486,
+      "minimum_sampled_clearance_m": 0.1913035829525111,
+      "minimum_sampled_upright": 0.9959645440020337,
+      "obstacle_contact_samples": 0,
+      "video": null
+    }
+  ],
+  "world": {
+    "state_source": "simulator ground truth",
+    "waypoints": {
+      "home": [
+        0.0,
+        0.0
+      ],
+      "north_gate": [
+        0.0,
+        1.05
+      ],
+      "south_gate": [
+        0.0,
+        -1.05
+      ],
+      "blue": [
+        1.85,
+        1.05
+      ],
+      "green": [
+        1.85,
+        -1.05
+      ]
+    },
+    "obstacle": [
+      0.9,
+      0.0,
+      0.18,
+      0.28
+    ],
+    "max_task_seconds": 90.0
+  }
+}
