@@ -9,9 +9,12 @@ from dataclasses import asdict, dataclass
 from pai_motion.executor import Velocity
 from pai_motion.motion import InvalidPlan
 
-RESOLUTION = 0.2
+RESOLUTION = 0.1
 SENSOR_RANGE = 1.8
 HOME_TOLERANCE = 0.15
+FOOTPRINT = [(dx, dy) for dx in range(-5, 6) for dy in range(-5, 6) if math.hypot(dx, dy) * RESOLUTION <= 0.45]
+# .45 m body + .05 m reserve + .071 m worst-case cell quantization.
+INFLATION = [(dx, dy) for dx in range(-6, 7) for dy in range(-6, 7) if math.hypot(dx, dy) * RESOLUTION <= 0.58]
 
 
 @dataclass(frozen=True)
@@ -69,28 +72,25 @@ class ObservedMap:
         # shortcut: static 2-D world and exact odometry; upgrade for noise, slopes or moving objects.
         blocked = set()
         for x, y in self.occupied:
-            for dx in range(-4, 5):
-                for dy in range(-4, 5):
-                    if math.hypot(dx, dy) * RESOLUTION <= 0.7:
-                        blocked.add((x + dx, y + dy))
+            blocked.update((x + dx, y + dy) for dx, dy in INFLATION)
         safe = self.free - blocked
         # Unknown space also blocks the footprint, so exploration never plans through unseen areas.
-        return {
-            c
-            for c in safe
-            if all(
-                (c[0] + dx, c[1] + dy) in self.free
-                for dx in range(-2, 3)
-                for dy in range(-2, 3)
-                if math.hypot(dx, dy) <= 2.5
-            )
-        }
+        return {c for c in safe if all((c[0] + dx, c[1] + dy) in self.free for dx, dy in FOOTPRINT)}
 
     def routes(self, position):
         safe = self.traversable()
         start = self.cell(position)
         if start not in safe:
-            raise RuntimeError("Robot has no observed safe footprint")
+            # Tracking drift can round a safe measured pose into an inflated cell.
+            if (
+                not safe
+                or any((start[0] + dx, start[1] + dy) not in self.free for dx, dy in FOOTPRINT)
+                or any(math.dist(position, self.point(c)) < 0.52 for c in self.occupied)
+            ):
+                raise RuntimeError("Robot has no observed safe footprint")
+            start = min(safe, key=lambda c: math.dist(position, self.point(c)))
+            if math.dist(position, self.point(start)) > 0.15:
+                raise RuntimeError("No adjacent observed safe cell for tracking recovery")
         costs, previous = {start: 0.0}, {start: None}
         queue = [(0.0, start)]
         while queue:
@@ -116,13 +116,19 @@ class ObservedMap:
             if any(math.dist(cell, old) * RESOLUTION < 0.6 for old in visited):
                 continue
             # Score new sensing area; coordinates carry no target-specific or route-side preference.
-            gain = sum(
-                (cell[0] + dx, cell[1] + dy) not in observed
-                for dx in range(-7, 8, 2)
-                for dy in range(-7, 8, 2)
-                if math.hypot(dx, dy) <= 7
-            )
-            if gain >= 3:
+            gain = 0
+            for dx in range(-16, 17, 4):
+                for dy in range(-16, 17, 4):
+                    if math.hypot(dx, dy) > 16 or (cell[0] + dx, cell[1] + dy) in observed:
+                        continue
+                    steps = max(abs(dx), abs(dy))
+                    # A known wall hides the unknown cells behind it; those are not information gain.
+                    if not any(
+                        (cell[0] + round(dx * i / steps), cell[1] + round(dy * i / steps)) in self.occupied
+                        for i in range(1, steps + 1)
+                    ):
+                        gain += 1
+            if gain >= 1:
                 candidates.append((gain / (distance + 1.0), cell))
         return max(candidates)[1] if candidates else None
 
@@ -206,7 +212,8 @@ def execute_search(plan: SearchPlan, sink, *, observations: list, decisions: lis
             target = home if outcome and math.dist(position, home) < 0.35 else grid.lookahead(position, goal, previous)
             heading = math.atan2(target[1] - position[1], target[0] - position[0])
             error = math.atan2(math.sin(heading - state["yaw"]), math.cos(heading - state["yaw"]))
-            speed = min(0.25, 0.8 * math.dist(position, target)) if abs(error) < 0.45 else 0.0
+            limit = 0.15 if any(math.dist(position, grid.point(c)) < 0.8 for c in grid.occupied) else 0.25
+            speed = min(limit, 0.8 * math.dist(position, target)) if abs(error) < 0.3 else 0.0
             sink.run_velocity(Velocity(speed, 0.0, max(-0.6, min(0.6, 1.8 * error))), 0.2)
     finally:
         sink.stop()

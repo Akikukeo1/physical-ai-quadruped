@@ -1,8 +1,8 @@
 {
-  "protocol": "unknown-search-v1",
-  "development_seeds": [0, 1, 2],
-  "held_out_seeds": [101, 102, 103, 104, 105, 106],
-  "missing_blue_seeds": [201, 202],
+  "protocol": "unknown-search-v2",
+  "development_seeds": [0, 1, 2, 101, 102, 103, 104, 105, 106, 201, 202],
+  "held_out_seeds": [301, 302, 303, 304, 305, 306],
+  "missing_blue_seeds": [401, 402],
   "targets_on_each_held_out_seed": ["blue", "green"],
   "success": "requested target observed with at least two first-hit color rays, then home error <= 0.15 m; no fall, contact or safety stop; within the validated time budget",
   "missing_blue_success": "not_found with no claimed detection, then safe return within the validated time budget",

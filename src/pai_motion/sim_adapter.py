@@ -115,6 +115,16 @@ class MuJoCoGo2Sink:
                     size=f"{hx} {hy} .3",
                     rgba=" ".join(map(str, item["rgba"])),
                 )
+            ET.SubElement(
+                scene.find("worldbody"),
+                "geom",
+                type="cylinder",
+                pos="0 0 .006",
+                size=".18 .005",
+                rgba="1 .8 .1 1",
+                contype="0",
+                conaffinity="0",
+            )
         self.model = mujoco.MjModel.from_xml_string(ET.tostring(scene, encoding="unicode"))
         self.data = mujoco.MjData(self.model)
         names = [f"{leg}_{joint}" for leg in ("FL", "FR", "RL", "RR") for joint in ("hip", "thigh", "calf")]

@@ -45,15 +45,15 @@ class TestSearch(unittest.TestCase):
     def test_ray_map_does_not_clear_behind_first_hit_and_blocks_unknown_footprint(self):
         grid = ObservedMap()
         grid.update({"position": [0.0, 0.0], "yaw": 0.0, "scan": [[0.0, 1.0, True, None]]})
-        self.assertIn((5, 0), grid.occupied)
-        self.assertNotIn((6, 0), grid.free)
+        self.assertIn(grid.cell((1.0, 0.0)), grid.occupied)
+        self.assertNotIn(grid.cell((1.2, 0.0)), grid.free)
         with self.assertRaisesRegex(RuntimeError, "footprint"):
             grid.routes((0, 0))
         grid = ObservedMap()
         grid.update({"position": [0.0, 0.0], "yaw": 0.0, "scan": empty_scan()})
         costs, _ = grid.routes((0, 0))
         self.assertIn((0, 0), costs)
-        self.assertNotIn((9, 0), costs)
+        self.assertNotIn(grid.cell((1.8, 0.0)), costs)
         self.assertIsNotNone(grid.frontier(costs))
 
     def test_scene_is_repeatable_and_missing_blue_keeps_green(self):
@@ -62,6 +62,28 @@ class TestSearch(unittest.TestCase):
         scene = search_scene(0, True)
         self.assertFalse(any(item["rgba"][2] == 1 for item in scene))
         self.assertTrue(any(item["rgba"][1] == 1 for item in scene))
+
+    def test_passable_corridor_and_safe_pose_at_quantized_cell_boundary(self):
+        grid = ObservedMap()
+        grid.free = {(x, y) for x in range(-10, 41) for y in range(-5, 6)}
+        grid.occupied = {(x, y) for x in range(-10, 41) for y in (-6, 6)}
+        costs, _ = grid.routes((0.0, 0.0))
+        self.assertIn(grid.cell((2.0, 0.0)), costs)
+        grid.free = {(x, y) for x in range(20, 46) for y in range(0, 31)}
+        grid.occupied = {grid.cell((3.6, 1.3))}
+        grid.free -= grid.occupied
+        costs, previous = grid.routes((3.156, 1.730))
+        self.assertTrue(costs)
+        self.assertNotIn(grid.cell((3.156, 1.730)), previous)
+        with self.assertRaisesRegex(RuntimeError, "footprint"):
+            grid.routes((3.4, 1.4))
+
+    def test_known_walls_hide_unknown_cells_from_frontier_gain(self):
+        grid = ObservedMap()
+        grid.free = {(x, y) for x in range(-10, 11) for y in range(-10, 11)}
+        grid.occupied = {(x, y) for x in range(-11, 12) for y in (-11, 11)}
+        grid.occupied |= {(x, y) for x in (-11, 11) for y in range(-11, 12)}
+        self.assertIsNone(grid.frontier({(0, 0): 0.0, (4, 0): 0.7}))
 
     def test_budget_returns_not_found_without_hallucinating_target(self):
         class StalledSensorSink:
