@@ -1,0 +1,16 @@
+[project]
+name = "pai-quadruped-motion"
+version = "0.1.0"
+description = "Codex-guided, bounded motion sequences for a quadruped robot"
+requires-python = ">=3.11,<3.14"
+dependencies = []
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
