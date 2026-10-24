@@ -40,6 +40,8 @@ class MuJoCoGo2Sink:
         self.events: list[dict] = []
         self.trace: list[dict] = []
         self.viewer = self.renderer = self.writer = None
+        self.visual_options = mujoco.MjvOption()
+        self.visual_options.geomgroup[5] = 1
         self.ticks = 0
         self.stopped = False
         self.navigation = navigation
@@ -192,6 +194,8 @@ class MuJoCoGo2Sink:
                 import mujoco.viewer
 
                 self.viewer = mujoco.viewer.launch_passive(self.model, self.data)
+                with self.viewer.lock():
+                    self.viewer.opt.geomgroup[5] = 1
                 self.viewer.cam.distance = 2.7
                 self.viewer.cam.elevation = -25
                 if navigation:
@@ -332,7 +336,7 @@ class MuJoCoGo2Sink:
             if self.ticks % 50 == 0:
                 self.trace.append(state)
             if self.writer is not None and self.ticks % 20 == 0:
-                self.renderer.update_scene(self.data, camera=self.camera)
+                self.renderer.update_scene(self.data, camera=self.camera, scene_option=self.visual_options)
                 self.writer.append_data(self.renderer.render())
             if self.viewer is not None:
                 if not self.viewer.is_running():

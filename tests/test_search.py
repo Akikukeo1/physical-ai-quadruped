@@ -126,6 +126,7 @@ class TestSearchPhysics(unittest.TestCase):
             sink = MuJoCoGo2Sink(headless=True, search_seed=0)
         try:
             observation = sink.sense()
+            self.assertEqual(sink.visual_options.geomgroup[5], 1)
             self.assertEqual(set(observation), {"time", "position", "yaw", "body_velocity", "yaw_rate", "scan"})
             self.assertLess(observation["scan"][0][1], 1.0)
             self.assertTrue(any(ray[3] == "green" for ray in observation["scan"]))
