@@ -1,0 +1,393 @@
+{
+  "protocol": {
+    "protocol": "unknown-search-v3",
+    "development_seeds": [
+      0,
+      1,
+      2,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      201,
+      202,
+      301,
+      302,
+      303,
+      304,
+      305,
+      306,
+      401,
+      402
+    ],
+    "held_out_seeds": [
+      501,
+      502,
+      503,
+      504,
+      505,
+      506
+    ],
+    "missing_blue_seeds": [
+      601,
+      602
+    ],
+    "targets_on_each_held_out_seed": [
+      "blue",
+      "green"
+    ],
+    "success": "requested target observed with at least two first-hit color rays, then home error <= 0.15 m; no fall, contact or safety stop; within the validated time budget",
+    "missing_blue_success": "not_found with no claimed detection, then safe return within the validated time budget",
+    "freeze_rule": "Freeze code and task plans before first held-out run. If changed after inspecting held-out results, disclose those seeds as development and select new held-out seeds.",
+    "known_limits": [
+      "same procedural scene family",
+      "flat floor",
+      "static geometry",
+      "oracle odometry",
+      "ideal 360 degree 1.8 m range and first-hit surface color sensor",
+      "not_found does not prove absence"
+    ]
+  },
+  "planner": "codex",
+  "source_sha256": {
+    "assets/go2-assets.json": "514b9c396fe9be115ba39bf7bc726599a08b24c1cdc575db28b54c68cd486a33",
+    "schema/motion-plan.schema.json": "d4c34f7ac5fa1d3b73b8b5f83edd2424868f03e63a3248410b5c1a76416b3047",
+    "schema/navigation-plan.schema.json": "de40a70f9db7a55146c4a187cce16af4992e86ff76d34538a78a126d7d8f3ede",
+    "schema/search-plan.schema.json": "0e6fb7944f7eed123a01bc33498f90c9dc0140d1d89b8dc4a9815c2b447272e8",
+    "src/main.py": "21356a419572587cecef63ce7f0107b8bd8622496ab16ca13d89a1220f2ead1a",
+    "src/pai_motion/__init__.py": "1e734be59743ab4b4788e8c224b97546a33c0dfa051b74015242a5a8e0d8e931",
+    "src/pai_motion/assets.py": "d37498a34e1c7555efb1aaf7679ca94f94e13a04fac16f5272ac5ad7bfd254ee",
+    "src/pai_motion/executor.py": "e26b8ba8a2c14f0f0b2afca81c676f7be9521678c54f1ac0a943217eb2fe7d17",
+    "src/pai_motion/motion.py": "a9a07958fb9694c7fc68cc06848f3570d47df278151e5da2a87de465ff9d6ba9",
+    "src/pai_motion/navigation.py": "4d8ae17d3b9b3e5ad8923de615fad091f078d8633ce072f7db27c64a86543425",
+    "src/pai_motion/planner.py": "a649248587ce674e59acdaea9ba62cb89a8534d76b674c4635fb430359e9a036",
+    "src/pai_motion/search.py": "9ef194e4348981bdf75fe77d2a66bb41a5338ecc524ca1dd4b50e8c64b2672ba",
+    "src/pai_motion/search_world.py": "efef1446aa809a8251aaaa259b8a22b5b75002f9dc064cf0134d98f05767ff30",
+    "src/pai_motion/sim_adapter.py": "c4f46fb1a3c5f35b2d962fbcc6c5001ce227593671e89b209e93d7809cefaef6"
+  },
+  "versions": {
+    "mujoco": "3.3.7",
+    "numpy": "2.2.6",
+    "onnxruntime": "1.23.2"
+  },
+  "plans": {
+    "blue": {
+      "prompt": "青い対象を探して、発見したら出発地点へ戻って。制限は180秒",
+      "plan": {
+        "intent": "未知の環境を距離・色の観測で探索し、自ら地図を作成して青い対象を探す。発見して観測したら出発地点へ戻る。探索終了または制限時間に達した場合はnot_foundを報告して戻る。",
+        "target": "blue",
+        "seconds": 180,
+        "on_found": "return_home"
+      },
+      "planning_wall_seconds": 7.370908315002453
+    },
+    "green": {
+      "prompt": "青ではなく緑を探してください。見つけたらスタート地点へ帰還。全体で180秒以内",
+      "plan": {
+        "intent": "未知の環境を距離・色の観測で探索しながら地図を作成し、緑を探す。発見・観測後はスタート地点へ帰還する。探索または制限時間が尽きた場合はnot_foundを報告して帰還する。",
+        "target": "green",
+        "seconds": 180,
+        "on_found": "return_home"
+      },
+      "planning_wall_seconds": 7.30669205400045
+    }
+  },
+  "results": [
+    {
+      "seed": 501,
+      "target": "blue",
+      "missing_blue": false,
+      "success": true,
+      "outcome": "found",
+      "error": null,
+      "elapsed": 29.79999999999381,
+      "home_error": 0.11325698923206819,
+      "distance": 4.3250162596900745,
+      "found": {
+        "time": 12.000000000000677,
+        "position": [
+          1.6548292748790476,
+          1.2524521347608604
+        ],
+        "range": 1.7100824511957928
+      },
+      "contact": false,
+      "min_clearance": 0.10616447207134744,
+      "log": "seed-501-blue-present.json"
+    },
+    {
+      "seed": 501,
+      "target": "green",
+      "missing_blue": false,
+      "success": true,
+      "outcome": "found",
+      "error": null,
+      "elapsed": 77.99999999999729,
+      "home_error": 0.10145812652696398,
+      "distance": 13.30659567038892,
+      "found": {
+        "time": 62.00000000002981,
+        "position": [
+          1.740037224396645,
+          -1.4850438988830492
+        ],
+        "range": 1.7776038939543986
+      },
+      "contact": false,
+      "min_clearance": 0.15817506756467853,
+      "log": "seed-501-green-present.json"
+    },
+    {
+      "seed": 502,
+      "target": "blue",
+      "missing_blue": false,
+      "success": true,
+      "outcome": "found",
+      "error": null,
+      "elapsed": 47.0000000000127,
+      "home_error": 0.099340886182339,
+      "distance": 5.43850839676267,
+      "found": {
+        "time": 19.000000000000348,
+        "position": [
+          1.865659182610868,
+          1.066709556977907
+        ],
+        "range": 1.692394621838955
+      },
+      "contact": false,
+      "min_clearance": 0.056238734367343446,
+      "log": "seed-502-blue-present.json"
+    },
+    {
+      "seed": 502,
+      "target": "green",
+      "missing_blue": false,
+      "success": true,
+      "outcome": "found",
+      "error": null,
+      "elapsed": 53.40000000002052,
+      "home_error": 0.10000626339573877,
+      "distance": 7.773086984204666,
+      "found": {
+        "time": 24.999999999997023,
+        "position": [
+          2.910756799152593,
+          0.33756975870527534
+        ],
+        "range": 1.7427937658864816
+      },
+      "contact": false,
+      "min_clearance": 0.09221451183636947,
+      "log": "seed-502-green-present.json"
+    },
+    {
+      "seed": 503,
+      "target": "blue",
+      "missing_blue": false,
+      "success": true,
+      "outcome": "found",
+      "error": null,
+      "elapsed": 37.60000000000121,
+      "home_error": 0.10181396868755536,
+      "distance": 5.825544240718088,
+      "found": {
+        "time": 17.000000000001457,
+        "position": [
+          1.9902027764225967,
+          1.81684762467589
+        ],
+        "range": 1.7697972496371563
+      },
+      "contact": false,
+      "min_clearance": 0.09905554777690045,
+      "log": "seed-503-blue-present.json"
+    },
+    {
+      "seed": 503,
+      "target": "green",
+      "missing_blue": false,
+      "success": true,
+      "outcome": "found",
+      "error": null,
+      "elapsed": 106.3999999999311,
+      "home_error": 0.12427858406310334,
+      "distance": 15.683533009039529,
+      "found": {
+        "time": 81.9999999999903,
+        "position": [
+          2.1629088116454103,
+          -1.9817566735598666
+        ],
+        "range": 1.5745613088536303
+      },
+      "contact": false,
+      "min_clearance": 0.0832313306543428,
+      "log": "seed-503-green-present.json"
+    },
+    {
+      "seed": 504,
+      "target": "blue",
+      "missing_blue": false,
+      "success": true,
+      "outcome": "found",
+      "error": null,
+      "elapsed": 29.59999999999392,
+      "home_error": 0.08025770482139008,
+      "distance": 5.443121872180322,
+      "found": {
+        "time": 15.000000000001679,
+        "position": [
+          1.9535519030412984,
+          -1.505387691512581
+        ],
+        "range": 1.566740309331119
+      },
+      "contact": false,
+      "min_clearance": 0.37409106411984544,
+      "log": "seed-504-blue-present.json"
+    },
+    {
+      "seed": 504,
+      "target": "green",
+      "missing_blue": false,
+      "success": true,
+      "outcome": "found",
+      "error": null,
+      "elapsed": 42.20000000000683,
+      "home_error": 0.12160769104592145,
+      "distance": 6.962639441808398,
+      "found": {
+        "time": 19.999999999999794,
+        "position": [
+          2.6457920333049847,
+          -0.7715758313889081
+        ],
+        "range": 1.7136698889561508
+      },
+      "contact": false,
+      "min_clearance": 0.10438620838733964,
+      "log": "seed-504-green-present.json"
+    },
+    {
+      "seed": 505,
+      "target": "blue",
+      "missing_blue": false,
+      "success": true,
+      "outcome": "found",
+      "error": null,
+      "elapsed": 31.199999999993388,
+      "home_error": 0.10454924619293254,
+      "distance": 5.066072541272912,
+      "found": {
+        "time": 13.00000000000101,
+        "position": [
+          2.2372802695155682,
+          -0.43894227923622037
+        ],
+        "range": 1.7033786342198696
+      },
+      "contact": false,
+      "min_clearance": 0.3113085975844923,
+      "log": "seed-505-blue-present.json"
+    },
+    {
+      "seed": 505,
+      "target": "green",
+      "missing_blue": false,
+      "success": true,
+      "outcome": "found",
+      "error": null,
+      "elapsed": 43.60000000000854,
+      "home_error": 0.07812857900485093,
+      "distance": 6.852337478201742,
+      "found": {
+        "time": 18.000000000000902,
+        "position": [
+          3.1377166546409043,
+          -0.27937969058415457
+        ],
+        "range": 1.7018152873011871
+      },
+      "contact": false,
+      "min_clearance": 0.21474258235421012,
+      "log": "seed-505-green-present.json"
+    },
+    {
+      "seed": 506,
+      "target": "blue",
+      "missing_blue": false,
+      "success": true,
+      "outcome": "found",
+      "error": null,
+      "elapsed": 110.19999999992224,
+      "home_error": 0.12048265565573406,
+      "distance": 16.232455697415205,
+      "found": {
+        "time": 83.99999999998563,
+        "position": [
+          2.0179770489524023,
+          1.906012676792806
+        ],
+        "range": 1.67940177271995
+      },
+      "contact": false,
+      "min_clearance": 0.07588711743095283,
+      "log": "seed-506-blue-present.json"
+    },
+    {
+      "seed": 506,
+      "target": "green",
+      "missing_blue": false,
+      "success": true,
+      "outcome": "found",
+      "error": null,
+      "elapsed": 46.20000000001172,
+      "home_error": 0.11933210939600761,
+      "distance": 6.243198833362009,
+      "found": {
+        "time": 20.99999999999924,
+        "position": [
+          1.7201484060209444,
+          -1.7041837849022758
+        ],
+        "range": 1.707098602354368
+      },
+      "contact": false,
+      "min_clearance": 0.16613877839421826,
+      "log": "seed-506-green-present.json"
+    },
+    {
+      "seed": 601,
+      "target": "blue",
+      "missing_blue": true,
+      "success": true,
+      "outcome": "not_found",
+      "error": null,
+      "elapsed": 152.40000000000435,
+      "home_error": 0.10744006487369628,
+      "distance": 27.288120980189426,
+      "found": null,
+      "contact": false,
+      "min_clearance": 0.12584527519797511,
+      "log": "seed-601-blue-missing.json"
+    },
+    {
+      "seed": 602,
+      "target": "blue",
+      "missing_blue": true,
+      "success": true,
+      "outcome": "not_found",
+      "error": null,
+      "elapsed": 148.99999999998812,
+      "home_error": 0.09009135189638258,
+      "distance": 23.65292151640503,
+      "found": null,
+      "contact": false,
+      "min_clearance": 0.10703064242174715,
+      "log": "seed-602-blue-missing.json"
+    }
+  ]
+}
