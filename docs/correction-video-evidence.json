@@ -1,0 +1,26 @@
+{
+  "logs": [
+    "outputs/correction-comparison/baseline/plan-20261024T160414339978Z.json",
+    "outputs/correction-comparison/corrected/plan-20261024T160650008894Z.json"
+  ],
+  "same_physics_before_correction": true,
+  "received": 70.00000000001826,
+  "applied": 73.2000000000108,
+  "green_first_seen": 21.999999999998685,
+  "green_visible_during_correction": false,
+  "old_goal_vs_home_cosine": -0.9855477404294074,
+  "return_started": {
+    "baseline": 79.99999999999496,
+    "corrected": 73.2000000000108
+  },
+  "home_error": {
+    "baseline": 0.10564146161454367,
+    "corrected": 0.09932118172338153
+  },
+  "video": {
+    "source_start": 63.0,
+    "source_end": 84.0,
+    "rate": 1.5,
+    "duration": 14.0
+  }
+}

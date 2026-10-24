@@ -47,6 +47,7 @@ mv outputs/correction.new outputs/correction.txt
 訂正文は最大500文字、ファイルは4096バイト以下です。2回目以降の入力は扱いません。
 `sample` は初期の青探索と固定の緑への訂正を使う輸送確認用で、自然言語を解釈しません。
 [MVPの試行結果・再現手順](docs/CORRECTION_MVP.md)に、開発用の実Codex試行と制限を記録しています。
+[判断変更を見せる比較プレビュー](docs/CORRECTION_VIDEO.md)では、同じ探索の訂正なし／ありを並べます。
 
 ## 未知配置の対象探索と帰還
 
