@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import heapq
 import math
-from dataclasses import asdict, dataclass
+import time
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import asdict, dataclass, replace
 
+from pai_motion.correction import validate_correction
 from pai_motion.executor import Velocity
 from pai_motion.motion import InvalidPlan
 
@@ -153,8 +156,20 @@ class ObservedMap:
         return target
 
 
-def execute_search(plan: SearchPlan, sink, *, observations: list, decisions: list) -> dict:
+def execute_search(
+    plan: SearchPlan,
+    sink,
+    *,
+    observations: list,
+    decisions: list,
+    get_correction=None,
+    correction_planner=None,
+    corrections: list | None = None,
+) -> dict:
     plan = validate_search(asdict(plan))
+    if (get_correction is None) != (correction_planner is None):
+        raise ValueError("Correction source and planner must be provided together")
+    corrections = [] if corrections is None else corrections
     grid = ObservedMap()
     initial = sink.observe()
     home = tuple(initial["position"][:2])
@@ -167,6 +182,9 @@ def execute_search(plan: SearchPlan, sink, *, observations: list, decisions: lis
     distance_travelled = 0.0
     last = home
     visited = []
+    detections = {}
+    worker = pending = revision = None
+    correction_received = False
     try:
         while True:
             state = sink.observe()
@@ -176,7 +194,8 @@ def execute_search(plan: SearchPlan, sink, *, observations: list, decisions: lis
             elapsed = state["time"] - started
             if elapsed >= plan.seconds - 2.0:
                 raise RuntimeError("Search total time budget exhausted before returning home")
-            if state["time"] >= next_scan - 1e-9:
+            scanned = state["time"] >= next_scan - 1e-9
+            if scanned:
                 observation = sink.sense()
                 observations.append(observation)
                 grid.update(observation)
@@ -184,13 +203,87 @@ def execute_search(plan: SearchPlan, sink, *, observations: list, decisions: lis
                 home_cell = grid.cell(home)
                 if home_cell not in costs:
                     raise RuntimeError("No observed safe route home")
-                hits = [ray for ray in observation["scan"] if ray[3] == plan.target]
-                if found is None and len(hits) >= 2:
-                    found = {"time": state["time"], "position": list(position), "range": min(ray[1] for ray in hits)}
-                    outcome = "found"
-                    goal = home_cell
-                    decisions.append({"phase": "return", "reason": "target observed", **found})
-                    print(f"FOUND: {plan.target} at t={state['time']:.1f}s; returning home")
+                for color in ("blue", "green"):
+                    hits = [ray for ray in observation["scan"] if ray[3] == color]
+                    if color not in detections and len(hits) >= 2:
+                        detections[color] = {
+                            "time": state["time"],
+                            "position": list(position),
+                            "range": min(ray[1] for ray in hits),
+                        }
+                next_scan = state["time"] + 1.0
+            if get_correction and not correction_received and outcome is None:
+                message = get_correction(state)
+                if message is not None:
+                    if not isinstance(message, str) or not 1 <= len(message.strip()) <= 500:
+                        raise ValueError("Correction must contain 1–500 characters")
+                    correction_received = True
+                    revision = {
+                        "message": message,
+                        "status": "planning",
+                        "received": state,
+                        "original_plan": asdict(plan),
+                        "home": list(home),
+                        "deadline": started + plan.seconds,
+                        "observations_before": len(observations),
+                        "known_colors_before": sorted(detections),
+                        "wall_started": time.monotonic(),
+                        "old_goal": grid.point(goal) if goal is not None else None,
+                    }
+                    corrections.append(revision)
+                    worker = ThreadPoolExecutor(max_workers=1)
+                    pending = worker.submit(correction_planner, message, plan)
+                    print(f"CORRECTION: {message}; holding position", flush=True)
+            if pending is not None:
+                tick = time.monotonic()
+                revision.setdefault("first_zero_command_time", state["time"])
+                sink.run_velocity(Velocity(0.0, 0.0, 0.0), 0.2)
+                stopped = sink.observe()
+                if "settled" not in revision:
+                    if math.hypot(*stopped["body_velocity"][:2]) < 0.03 and abs(stopped["yaw_rate"]) < 0.05:
+                        revision["settled"] = stopped
+                    elif stopped["time"] - revision["received"]["time"] > 3.0:
+                        raise RuntimeError("Robot did not settle during correction")
+                if pending.done() and "settled" in revision:
+                    correction = validate_correction(asdict(pending.result()))
+                    plan = replace(plan, target=correction.target, intent=correction.intent)
+                    revision.update(
+                        status="accepted",
+                        correction=asdict(correction),
+                        updated_plan=asdict(plan),
+                        applied_time=stopped["time"],
+                        observations_after=len(observations),
+                        known_colors_after=sorted(detections),
+                        planning_wall_seconds=time.monotonic() - revision["wall_started"],
+                        planning_sim_seconds=stopped["time"] - revision["received"]["time"],
+                    )
+                    pending = None
+                    goal = None
+                    next_scan = stopped["time"]
+                    print(f"UPDATED: target={plan.target}; return_home and deadline retained", flush=True)
+                else:
+                    # Keep physics running while the model thinks, including in fast headless runs.
+                    time.sleep(max(0.0, 0.2 - (time.monotonic() - tick)))
+                continue
+            if scanned:
+                if found is None and plan.target in detections:
+                    found = detections[plan.target]
+                    outcome, goal = "found", home_cell
+                    reason = (
+                        "target observed"
+                        if abs(found["time"] - state["time"]) < 1e-6
+                        else "target in observation history"
+                    )
+                    decisions.append(
+                        {
+                            "phase": "return",
+                            "reason": reason,
+                            "target": plan.target,
+                            "time": state["time"],
+                            "evidence": found,
+                        }
+                    )
+                    print(f"FOUND: {plan.target}; evidence t={found['time']:.1f}s; returning home ({reason})")
                 reserve = costs[home_cell] / 0.12 + 25.0
                 if outcome is None and elapsed + reserve >= plan.seconds:
                     outcome, goal = "not_found", home_cell
@@ -204,7 +297,6 @@ def execute_search(plan: SearchPlan, sink, *, observations: list, decisions: lis
                     decisions.append(
                         {"phase": "return" if outcome else "explore", "goal": grid.point(goal), "time": state["time"]}
                     )
-                next_scan = state["time"] + 1.0
             if outcome and math.dist(position, home) < 0.10:
                 break
             if goal not in previous:
@@ -215,8 +307,16 @@ def execute_search(plan: SearchPlan, sink, *, observations: list, decisions: lis
             limit = 0.15 if any(math.dist(position, grid.point(c)) < 0.8 for c in grid.occupied) else 0.25
             speed = min(limit, 0.8 * math.dist(position, target)) if abs(error) < 0.3 else 0.0
             sink.run_velocity(Velocity(speed, 0.0, max(-0.6, min(0.6, 1.8 * error))), 0.2)
+    except Exception as exc:
+        if revision is not None and revision["status"] == "planning":
+            revision.update(status="failed", error=str(exc))
+        raise
     finally:
-        sink.stop()
+        try:
+            sink.stop()
+        finally:
+            if worker is not None:
+                worker.shutdown(wait=True, cancel_futures=True)
     final = sink.observe()
     error = math.dist(home, final["position"][:2])
     if error > HOME_TOLERANCE:
@@ -228,5 +328,8 @@ def execute_search(plan: SearchPlan, sink, *, observations: list, decisions: lis
         "home_error": error,
         "distance": distance_travelled,
         "final": final,
+        "plan": asdict(plan),
+        "detections": detections,
+        "corrections": corrections,
         "map": {"resolution": RESOLUTION, "free": sorted(grid.free), "occupied": sorted(grid.occupied)},
     }

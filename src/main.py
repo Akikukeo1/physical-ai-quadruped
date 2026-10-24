@@ -2,11 +2,13 @@
 
 import argparse
 import json
+import math
 import sys
 from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
 
+from pai_motion.correction import sample_correction
 from pai_motion.executor import DryRunSink, execute_plan
 from pai_motion.navigation import (
     MAX_TASK_SECONDS,
@@ -16,7 +18,7 @@ from pai_motion.navigation import (
     rules_navigation,
     sample_navigation,
 )
-from pai_motion.planner import codex_navigation, codex_plan, codex_search, sample_plan
+from pai_motion.planner import codex_correction, codex_navigation, codex_plan, codex_search, sample_plan
 from pai_motion.search import execute_search, sample_search
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -29,6 +31,14 @@ def main() -> int:
     parser.add_argument("--task", choices=["motion", "navigation", "replanning", "search"], default="motion")
     parser.add_argument("--seed", type=int, default=0, help="Simulator-only search layout seed; never sent to planner")
     parser.add_argument("--missing-target", action="store_true", help="Search scene with no blue target")
+    correction_input = parser.add_mutually_exclusive_group()
+    correction_input.add_argument(
+        "--correction-file", type=Path, help="Read one natural-language correction from this UTF-8 file during search"
+    )
+    correction_input.add_argument(
+        "--correction", help="Inject one natural-language correction at --correct-at for replay"
+    )
+    parser.add_argument("--correct-at", type=float, help="Seconds after search start to inject --correction")
     parser.add_argument(
         "--replanner",
         choices=["stop", "rules", "codex"],
@@ -58,6 +68,14 @@ def main() -> int:
         parser.error("navigation/search requires --executor mujoco; it uses measured physics state")
     if args.missing_target and not search:
         parser.error("--missing-target requires --task search")
+    if (args.correction_file or args.correction is not None or args.correct_at is not None) and not search:
+        parser.error("correction input requires --task search")
+    if (args.correction is None) != (args.correct_at is None):
+        parser.error("--correction and --correct-at must be used together")
+    if args.correction is not None and not 1 <= len(args.correction.strip()) <= 500:
+        parser.error("--correction must contain 1–500 characters")
+    if args.correct_at is not None and (not math.isfinite(args.correct_at) or not 0 <= args.correct_at < 238):
+        parser.error("--correct-at must be finite and in 0–238 seconds")
     if args.executor != "mujoco" and (args.headless or args.video):
         parser.error("--headless and --video require --executor mujoco")
     args.out_dir.mkdir(parents=True, exist_ok=True)
@@ -76,13 +94,21 @@ def main() -> int:
         "events": [],
         "observations": [],
         "decisions": [],
+        "corrections": [],
         "disclaimer": "dry-run only, not a physical simulation" if args.executor == "dry-run" else None,
     }
     try:
         if search:
             plan = codex_search(args.prompt) if args.planner == "codex" else sample_search()
+            if args.correct_at is not None and args.correct_at >= plan.seconds - 2:
+                raise ValueError("--correct-at must precede the original task deadline")
             data["search_plan"] = asdict(plan)
             data["scene"] = {"seed": args.seed, "missing_blue": args.missing_target}
+            data["correction_input"] = {
+                "file": str(args.correction_file) if args.correction_file else None,
+                "message": args.correction,
+                "at": args.correct_at,
+            }
         elif navigation:
             plan = codex_navigation(args.prompt) if args.planner == "codex" else sample_navigation()
             data.update(intent=plan.intent, waypoints=list(plan.waypoints))
@@ -114,7 +140,34 @@ def main() -> int:
         else:
             sink = DryRunSink()
         if search:
-            data["result"] = execute_search(plan, sink, observations=data["observations"], decisions=data["decisions"])
+            search_started = sink.observe()["time"]
+
+            def get_correction(state):
+                if args.correction_file and args.correction_file.exists():
+                    if args.correction_file.stat().st_size > 4096:
+                        raise ValueError("Correction file exceeds 4096 bytes")
+                    message = args.correction_file.read_text(encoding="utf-8").strip()
+                    return message or None
+                if args.correction is not None and state["time"] - search_started >= args.correct_at - 1e-9:
+                    return args.correction
+                return None
+
+            correction_enabled = args.correction_file is not None or args.correction is not None
+            if args.correction_file:
+                print(
+                    f"CORRECTION INPUT: {args.correction_file}; write one UTF-8 instruction during search", flush=True
+                )
+            data["result"] = execute_search(
+                plan,
+                sink,
+                observations=data["observations"],
+                decisions=data["decisions"],
+                get_correction=get_correction if correction_enabled else None,
+                correction_planner=(codex_correction if args.planner == "codex" else sample_correction)
+                if correction_enabled
+                else None,
+                corrections=data["corrections"],
+            )
         elif navigation:
 
             def replan(state, remaining):

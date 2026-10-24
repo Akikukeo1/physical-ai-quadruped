@@ -94,6 +94,27 @@ def codex_search(prompt: str, timeout: int = 120):
     return validate_search(_codex_json(instructions, ROOT / "schema/search-plan.schema.json", timeout))
 
 
+def codex_correction(prompt: str, plan, timeout: int = 30):
+    from dataclasses import asdict
+
+    from pai_motion.correction import validate_correction
+
+    if not isinstance(prompt, str) or not 1 <= len(prompt.strip()) <= 500:
+        raise ValueError("Correction must contain 1–500 characters")
+    instructions = (
+        "Interpret ONE in-flight correction to a robot's search task. Output schema-compliant JSON; no tools/code. "
+        f"Current task: {json.dumps(asdict(plan), ensure_ascii=False)}. "
+        "Only changing the search target between blue and green is supported. "
+        "The original return_home obligation, original overall deadline and all observation history are retained "
+        "by the controller, and cannot be changed. Do not reset the time budget. "
+        "If the user clearly requests a target color replacement only, status=accept and target=the NEW color. "
+        "For ambiguity, other actions, changes to time/return constraints or unsupported colors, status=reject "
+        "and target=the current color. Do not guess. Explain briefly in intent (1–120 characters). "
+        f"Correction: {prompt!r}"
+    )
+    return validate_correction(_codex_json(instructions, ROOT / "schema/search-correction.schema.json", timeout))
+
+
 def _codex_json(instructions: str, schema: Path, timeout: int) -> object:
     codex = shutil.which("codex") or (shutil.which("codex.exe") if sys.platform == "linux" else None)
     if not codex:
