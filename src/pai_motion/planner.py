@@ -77,6 +77,23 @@ def codex_navigation(
     )
 
 
+def codex_search(prompt: str, timeout: int = 120):
+    from pai_motion.search import validate_search
+
+    if not prompt.strip():
+        raise ValueError("prompt is required")
+    instructions = (
+        "Translate the user's search-and-return task to schema-compliant JSON. No tools or code. "
+        "The robot explores an UNKNOWN layout with range/color observations and builds its own map. "
+        "No map, scene seed, obstacle positions, target positions or predefined detours are available to you. "
+        "Targets are blue or green. Set target to the REQUESTED color, seconds to a total task budget "
+        "in 60–240 seconds (default 180), and on_found to return_home. "
+        "Return home after observation, or report not_found and return if exploration or time runs out. "
+        f"User request: {prompt!r}"
+    )
+    return validate_search(_codex_json(instructions, ROOT / "schema/search-plan.schema.json", timeout))
+
+
 def _codex_json(instructions: str, schema: Path, timeout: int) -> object:
     codex = shutil.which("codex") or (shutil.which("codex.exe") if sys.platform == "linux" else None)
     if not codex:

@@ -3,6 +3,7 @@
 import argparse
 import json
 import sys
+from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -15,7 +16,8 @@ from pai_motion.navigation import (
     rules_navigation,
     sample_navigation,
 )
-from pai_motion.planner import codex_navigation, codex_plan, sample_plan
+from pai_motion.planner import codex_navigation, codex_plan, codex_search, sample_plan
+from pai_motion.search import execute_search, sample_search
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -24,7 +26,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Quadruped natural-language motion planner")
     parser.add_argument("--planner", choices=["sample", "codex"], default="sample")
     parser.add_argument("--executor", choices=["dry-run", "mujoco"], default="dry-run")
-    parser.add_argument("--task", choices=["motion", "navigation", "replanning"], default="motion")
+    parser.add_argument("--task", choices=["motion", "navigation", "replanning", "search"], default="motion")
+    parser.add_argument("--seed", type=int, default=0, help="Simulator-only search layout seed; never sent to planner")
+    parser.add_argument("--missing-target", action="store_true", help="Search scene with no blue target")
     parser.add_argument(
         "--replanner",
         choices=["stop", "rules", "codex"],
@@ -35,20 +39,25 @@ def main() -> int:
     parser.add_argument("--headless", action="store_true", help="Run MuJoCo without the interactive viewer")
     parser.add_argument("--video", type=Path, help="Save a 25 fps MuJoCo recording (.mp4)")
     args = parser.parse_args()
-    navigation = args.task != "motion"
+    search = args.task == "search"
+    navigation = args.task in ("navigation", "replanning")
     dynamic = args.task == "replanning"
     if args.replanner and not dynamic:
         parser.error("--replanner requires --task replanning")
     args.replanner = args.replanner or ("codex" if dynamic else "stop")
     args.prompt = args.prompt or (
-        "青い地点へ行ってから緑へ。最初は北側を使い、塞がったら安全な別経路へ切り替えて"
+        "青い対象を探して、見つけたら出発地点へ戻って。180秒以内で、見つからなくても戻って"
+        if search
+        else "青い地点へ行ってから緑へ。最初は北側を使い、塞がったら安全な別経路へ切り替えて"
         if dynamic
         else "障害物を避けて青い地点へ行き、その後で緑の地点へ移動して"
         if navigation
         else "右の方向を動作で案内して"
     )
-    if navigation and args.executor != "mujoco":
-        parser.error("navigation requires --executor mujoco; it uses measured physics state")
+    if (navigation or search) and args.executor != "mujoco":
+        parser.error("navigation/search requires --executor mujoco; it uses measured physics state")
+    if args.missing_target and not search:
+        parser.error("--missing-target requires --task search")
     if args.executor != "mujoco" and (args.headless or args.video):
         parser.error("--headless and --video require --executor mujoco")
     args.out_dir.mkdir(parents=True, exist_ok=True)
@@ -65,10 +74,16 @@ def main() -> int:
         "prompt": args.prompt,
         "status": "failed",
         "events": [],
+        "observations": [],
+        "decisions": [],
         "disclaimer": "dry-run only, not a physical simulation" if args.executor == "dry-run" else None,
     }
     try:
-        if navigation:
+        if search:
+            plan = codex_search(args.prompt) if args.planner == "codex" else sample_search()
+            data["search_plan"] = asdict(plan)
+            data["scene"] = {"seed": args.seed, "missing_blue": args.missing_target}
+        elif navigation:
             plan = codex_navigation(args.prompt) if args.planner == "codex" else sample_navigation()
             data.update(intent=plan.intent, waypoints=list(plan.waypoints))
             data["world"] = {
@@ -85,7 +100,12 @@ def main() -> int:
             from pai_motion.sim_adapter import MuJoCoGo2Sink
 
             sink = MuJoCoGo2Sink(
-                headless=args.headless, video=args.video, navigation=navigation, dynamic_obstacle=dynamic
+                headless=args.headless,
+                video=args.video,
+                navigation=navigation,
+                dynamic_obstacle=dynamic,
+                search_seed=args.seed if search else None,
+                missing_target=args.missing_target,
             )
             from pai_motion.assets import MANIFEST
 
@@ -93,7 +113,9 @@ def main() -> int:
             data["video"] = str(args.video) if args.video else None
         else:
             sink = DryRunSink()
-        if navigation:
+        if search:
+            data["result"] = execute_search(plan, sink, observations=data["observations"], decisions=data["decisions"])
+        elif navigation:
 
             def replan(state, remaining):
                 return codex_navigation(

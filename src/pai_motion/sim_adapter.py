@@ -25,6 +25,8 @@ class MuJoCoGo2Sink:
         video: Path | None = None,
         navigation: bool = False,
         dynamic_obstacle: bool = False,
+        search_seed: int | None = None,
+        missing_target: bool = False,
     ) -> None:
         if dynamic_obstacle and not navigation:
             raise ValueError("dynamic_obstacle requires navigation")
@@ -42,6 +44,9 @@ class MuJoCoGo2Sink:
         self.stopped = False
         self.navigation = navigation
         self.dynamic_obstacle = dynamic_obstacle
+        self.search = search_seed is not None
+        if self.search and navigation:
+            raise ValueError("Search and known-map navigation are separate scenes")
         self.world_events: list[dict] = []
         assets = ensure_assets()
         scene = ET.parse(assets / "go2.xml").getroot()
@@ -92,6 +97,24 @@ class MuJoCoGo2Sink:
                     contype="0",
                     conaffinity="0",
                 )
+        search_names = []
+        if self.search:
+            from pai_motion.search_world import search_scene
+
+            for index, item in enumerate(search_scene(search_seed, missing_target)):
+                x, y, hx, hy = item["box"]
+                name = f"search_object_{index}"
+                search_names.append(name)
+                ET.SubElement(
+                    scene.find("worldbody"),
+                    "geom",
+                    name=name,
+                    type="box",
+                    group="5",
+                    pos=f"{x} {y} .3",
+                    size=f"{hx} {hy} .3",
+                    rgba=" ".join(map(str, item["rgba"])),
+                )
         self.model = mujoco.MjModel.from_xml_string(ET.tostring(scene, encoding="unicode"))
         self.data = mujoco.MjData(self.model)
         names = [f"{leg}_{joint}" for leg in ("FL", "FR", "RL", "RR") for joint in ("hip", "thigh", "calf")]
@@ -110,6 +133,7 @@ class MuJoCoGo2Sink:
             raise ValueError("Go2 model does not match the released policy joint/torque contract")
         self.base = self.model.body("base_link").id
         self.obstacle_ids = [self.model.geom("task_obstacle").id] if navigation else []
+        self.obstacle_ids.extend(self.model.geom(name).id for name in search_names)
         if dynamic_obstacle:
             self.obstacle_ids.append(self.model.geom("task_blocker").id)
             self.blocker_mocap = self.model.body_mocapid[self.model.body("moving_blocker").id]
@@ -151,6 +175,9 @@ class MuJoCoGo2Sink:
                 if navigation:
                     self.camera.lookat[:] = [0.9, 0, 0.2]
                     self.camera.distance, self.camera.azimuth, self.camera.elevation = 4.5, 110, -55
+                if self.search:
+                    self.camera.lookat[:] = [1.7, 0, 0]
+                    self.camera.distance, self.camera.azimuth, self.camera.elevation = 8.0, 90, -75
             if not headless:
                 import mujoco.viewer
 
@@ -160,6 +187,9 @@ class MuJoCoGo2Sink:
                 if navigation:
                     self.viewer.cam.lookat[:] = [0.9, 0, 0.2]
                     self.viewer.cam.distance, self.viewer.cam.elevation = 4.5, -55
+                if self.search:
+                    self.viewer.cam.lookat[:] = [1.7, 0, 0]
+                    self.viewer.cam.distance, self.viewer.cam.elevation = 8.0, -75
             self._advance(np.zeros(3), 1.0)
         except BaseException:
             self.close()
@@ -178,7 +208,7 @@ class MuJoCoGo2Sink:
             "contacts": int(self.data.ncon),
             "finite": bool(np.isfinite(self.data.qpos).all() and np.isfinite(self.data.qvel).all()),
         }
-        if self.navigation:
+        if self.navigation or self.search:
             from pai_motion.navigation import ROBOT_RADIUS
 
             state["obstacles"] = [
@@ -196,8 +226,37 @@ class MuJoCoGo2Sink:
         return state
 
     def observe(self) -> dict:
-        """Expose simulator ground truth for the known-map task; no visual perception."""
-        return self._state()
+        """Search exposes oracle odometry, but never hidden geometry or target coordinates."""
+        state = self._state()
+        if self.search:
+            return {name: state[name] for name in ("time", "position", "yaw", "body_velocity", "yaw_rate")}
+        return state
+
+    def sense(self) -> dict:
+        """Ideal horizontal range scanner with surface color at the FIRST visible ray hit."""
+        if not self.search:
+            raise RuntimeError("Range/color sensing requires a search scene")
+        from pai_motion.search import SENSOR_RANGE
+
+        state = self.observe()
+        origin = self.np.array([*state["position"][:2], 0.3])
+        group = self.np.array([0, 0, 0, 0, 0, 1], dtype=self.np.uint8)
+        geom = self.np.zeros(1, dtype=self.np.int32)
+        scan = []
+        for index in range(180):
+            angle = index * math.tau / 180
+            heading = state["yaw"] + angle
+            direction = self.np.array([math.cos(heading), math.sin(heading), 0.0])
+            distance = self.mj.mj_ray(self.model, self.data, origin, direction, group, 1, -1, geom)
+            hit = 0 <= distance <= SENSOR_RANGE
+            color = None
+            if hit:
+                r, g, b = self.model.geom_rgba[geom[0], :3]
+                color = (
+                    "blue" if b > 0.8 and r < 0.2 and g < 0.4 else "green" if g > 0.8 and r < 0.2 and b < 0.4 else None
+                )
+            scan.append([angle, float(distance) if hit else SENSOR_RANGE, hit, color])
+        return {**state, "scan": scan}
 
     def _advance(self, command, seconds: float) -> None:
         np, mj = self.np, self.mj
