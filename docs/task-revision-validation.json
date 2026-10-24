@@ -1,0 +1,200 @@
+{
+  "date": "2026-10-25",
+  "environment": "Ubuntu 24.04 / WSL2",
+  "checkpoint": "1def0a6",
+  "scope": "Development cases, not a held-out benchmark. Real Codex CLI and real MuJoCo for all four cases.",
+  "source_sha256": {
+    "src/pai_motion/correction.py": "b04c8e34751b78b271fdc094abc6d906f70c2e7d3dd619adaa836a92e5df0eab",
+    "src/pai_motion/planner.py": "b2e219e095382230ece122a2d4c55cae9506dc220a7ac8d0397eed26b8df385b",
+    "src/pai_motion/search.py": "44f0c30f22d844a24084cb5d517cafd799d8a23650878b792179e52587ba56ba",
+    "schema/search-correction.schema.json": "0a8f8635c0aed33019ce64a9343fe130620bd8cdfafd97c9ad729ea7566539a7"
+  },
+  "tests": {
+    "wsl_total": 53,
+    "wsl_skipped": 0,
+    "physics_test_methods": 9,
+    "windows_total": 53,
+    "windows_skipped_physics": 9,
+    "physics_log": "outputs/task-revision-physics-final.log"
+  },
+  "cases": [
+    {
+      "case": "reobserve",
+      "log": "outputs/task-revision-dev/reobserve/plan-20261024T201811354659Z.json",
+      "seed": 305,
+      "instruction": "青の探索は続けて。ただし、さっき見た緑をもう一度確認してからにして。最後は戻ってきて",
+      "outcome": "found",
+      "received_at": 56.000000000022474,
+      "applied_at": 62.400000000030296,
+      "deadline": 181.0,
+      "elapsed": 137.39999999993273,
+      "home_error": 0.11891784148622984,
+      "distance": 19.218713007580327,
+      "completed": [
+        {
+          "id": "reobserve-green-1",
+          "action": "reobserve",
+          "target": "green",
+          "completed_at": 74.400000000008,
+          "evidence_time": 74.400000000008
+        },
+        {
+          "id": "search-1",
+          "action": "search",
+          "target": "blue",
+          "completed_at": 117.39999999990779,
+          "evidence_time": 117.39999999990779
+        },
+        {
+          "id": "home",
+          "action": "return_home",
+          "target": null,
+          "completed_at": 136.39999999992318,
+          "evidence_time": null
+        }
+      ],
+      "cancelled": [],
+      "selected_observation": {
+        "id": "obs-47-green",
+        "color": "green",
+        "time": 47.000000000011475,
+        "position": [
+          2.2691727856458033,
+          -2.0846918138324573
+        ],
+        "range": 1.4918153037567805
+      },
+      "planning_wall_seconds": 6.27568386902567,
+      "planning_sim_seconds": 6.400000000007822,
+      "zero_velocity_commands_during_planning": 32,
+      "no_obstacle_contacts": true
+    },
+    {
+      "case": "return",
+      "log": "outputs/task-revision-dev/return/plan-20261024T201843764610Z.json",
+      "seed": 0,
+      "instruction": "青の探索は中止して、今すぐ出発地点へ戻って",
+      "outcome": "returned",
+      "received_at": 8.999999999999675,
+      "applied_at": 14.400000000001478,
+      "deadline": 181.0,
+      "elapsed": 27.599999999995028,
+      "home_error": 0.12020033708172341,
+      "distance": 3.5283501332048988,
+      "completed": [
+        {
+          "id": "home",
+          "action": "return_home",
+          "target": null,
+          "completed_at": 26.599999999996136,
+          "evidence_time": null
+        }
+      ],
+      "cancelled": [
+        {
+          "step": {
+            "id": "search-1",
+            "action": "search",
+            "target": "blue",
+            "observation_id": null
+          },
+          "time": 14.400000000001478,
+          "instruction": "青の探索は中止して、今すぐ出発地点へ戻って"
+        }
+      ],
+      "selected_observation": null,
+      "planning_wall_seconds": 5.270375698979478,
+      "planning_sim_seconds": 5.400000000001803,
+      "zero_velocity_commands_during_planning": 27,
+      "no_obstacle_contacts": true
+    },
+    {
+      "case": "insert",
+      "log": "outputs/task-revision-dev/insert/plan-20261024T201901276897Z.json",
+      "seed": 0,
+      "instruction": "緑も先に探して、それから元の青の探索を続けて。最後は出発地点へ戻って",
+      "outcome": "found",
+      "received_at": 8.999999999999675,
+      "applied_at": 14.400000000001478,
+      "deadline": 181.0,
+      "elapsed": 87.19999999997584,
+      "home_error": 0.1229772020137533,
+      "distance": 15.143290091896777,
+      "completed": [
+        {
+          "id": "search-green-1",
+          "action": "search",
+          "target": "green",
+          "completed_at": 68.40000000002199,
+          "evidence_time": 68.40000000002199
+        },
+        {
+          "id": "search-1",
+          "action": "search",
+          "target": "blue",
+          "completed_at": 69.40000000001966,
+          "evidence_time": 15.400000000001812
+        },
+        {
+          "id": "home",
+          "action": "return_home",
+          "target": null,
+          "completed_at": 86.1999999999805,
+          "evidence_time": null
+        }
+      ],
+      "cancelled": [],
+      "selected_observation": null,
+      "planning_wall_seconds": 5.268796227988787,
+      "planning_sim_seconds": 5.400000000001803,
+      "zero_velocity_commands_during_planning": 27,
+      "no_obstacle_contacts": true
+    },
+    {
+      "case": "replace",
+      "log": "outputs/task-revision-dev/replace/plan-20261024T202119924861Z.json",
+      "seed": 305,
+      "instruction": "青ではなく緑に変更して",
+      "outcome": "found",
+      "received_at": 56.000000000022474,
+      "applied_at": 63.00000000003103,
+      "deadline": 181.0,
+      "elapsed": 74.00000000000661,
+      "home_error": 0.09850709342683191,
+      "distance": 9.743836432846619,
+      "completed": [
+        {
+          "id": "search-2",
+          "action": "search",
+          "target": "green",
+          "completed_at": 63.00000000003103,
+          "evidence_time": 21.999999999998685
+        },
+        {
+          "id": "home",
+          "action": "return_home",
+          "target": null,
+          "completed_at": 73.00000000001127,
+          "evidence_time": null
+        }
+      ],
+      "cancelled": [
+        {
+          "step": {
+            "id": "search-1",
+            "action": "search",
+            "target": "blue",
+            "observation_id": null
+          },
+          "time": 63.00000000003103,
+          "instruction": "青ではなく緑に変更して"
+        }
+      ],
+      "selected_observation": null,
+      "planning_wall_seconds": 6.887807090010028,
+      "planning_sim_seconds": 7.000000000008555,
+      "zero_velocity_commands_during_planning": 35,
+      "no_obstacle_contacts": true
+    }
+  ]
+}

@@ -6,9 +6,10 @@ import heapq
 import math
 import time
 from concurrent.futures import ThreadPoolExecutor
+from copy import deepcopy
 from dataclasses import asdict, dataclass, replace
 
-from pai_motion.correction import validate_correction
+from pai_motion.correction import initial_tasks, validate_correction
 from pai_motion.executor import Velocity
 from pai_motion.motion import InvalidPlan
 
@@ -183,6 +184,10 @@ def execute_search(
     last = home
     visited = []
     detections = {}
+    evidence_records = {}
+    first_seen, last_seen = {}, {}
+    tasks, completed, cancelled = initial_tasks(plan.target), [], []
+    active_id, active_since = None, started
     worker = pending = revision = None
     correction_received = False
     try:
@@ -205,12 +210,17 @@ def execute_search(
                     raise RuntimeError("No observed safe route home")
                 for color in ("blue", "green"):
                     hits = [ray for ray in observation["scan"] if ray[3] == color]
-                    if color not in detections and len(hits) >= 2:
-                        detections[color] = {
+                    if len(hits) >= 2:
+                        detection = {
                             "time": state["time"],
                             "position": list(position),
                             "range": min(ray[1] for ray in hits),
                         }
+                        detections.setdefault(color, detection)
+                        record = {"id": f"obs-{len(observations)}-{color}", "color": color, **detection}
+                        evidence_records[record["id"]] = record
+                        first_seen.setdefault(color, record)
+                        last_seen[color] = record
                 next_scan = state["time"] + 1.0
             if get_correction and not correction_received and outcome is None:
                 message = get_correction(state)
@@ -218,6 +228,39 @@ def execute_search(
                     if not isinstance(message, str) or not 1 <= len(message.strip()) <= 500:
                         raise ValueError("Correction must contain 1–500 characters")
                     correction_received = True
+                    # A detached snapshot avoids sharing mutable task/history state with the planner thread.
+                    context = deepcopy(
+                        {
+                            "time": state["time"],
+                            "position": list(position),
+                            "yaw": state["yaw"],
+                            "home": list(home),
+                            "deadline": started + plan.seconds,
+                            "remaining_seconds": plan.seconds - elapsed,
+                            "latest_scan": {
+                                "time": observations[-1]["time"],
+                                "visible_colors": [
+                                    color
+                                    for color in ("blue", "green")
+                                    if sum(ray[3] == color for ray in observations[-1]["scan"]) >= 2
+                                ],
+                                "range_limit": SENSOR_RANGE,
+                            },
+                            "pending": tasks,
+                            "completed": completed,
+                            "observations": list(
+                                {
+                                    record["id"]: record for record in [*first_seen.values(), *last_seen.values()]
+                                }.values()
+                            ),
+                            "map_summary": {
+                                "resolution": RESOLUTION,
+                                "free_cells": len(grid.free),
+                                "occupied_cells": len(grid.occupied),
+                                "visited_frontiers": [grid.point(cell) for cell in visited],
+                            },
+                        }
+                    )
                     revision = {
                         "message": message,
                         "status": "planning",
@@ -229,10 +272,11 @@ def execute_search(
                         "known_colors_before": sorted(detections),
                         "wall_started": time.monotonic(),
                         "old_goal": grid.point(goal) if goal is not None else None,
+                        "context": context,
                     }
                     corrections.append(revision)
                     worker = ThreadPoolExecutor(max_workers=1)
-                    pending = worker.submit(correction_planner, message, plan)
+                    pending = worker.submit(correction_planner, message, plan, deepcopy(context))
                     print(f"CORRECTION: {message}; holding position", flush=True)
             if pending is not None:
                 tick = time.monotonic()
@@ -245,8 +289,20 @@ def execute_search(
                     elif stopped["time"] - revision["received"]["time"] > 3.0:
                         raise RuntimeError("Robot did not settle during correction")
                 if pending.done() and "settled" in revision:
-                    correction = validate_correction(asdict(pending.result()))
-                    plan = replace(plan, target=correction.target, intent=correction.intent)
+                    correction = validate_correction(
+                        asdict(pending.result()), context=revision["context"], prompt=revision["message"]
+                    )
+                    removed = {entry["id"]: entry for entry in correction.cancelled}
+                    cancelled.extend(
+                        {"step": step, "time": stopped["time"], "instruction": removed[step["id"]]["instruction"]}
+                        for step in tasks
+                        if step["id"] in removed
+                    )
+                    tasks = deepcopy(correction.steps)
+                    searches = [step for step in tasks if step["action"] == "search"]
+                    plan = replace(
+                        plan, target=searches[-1]["target"] if searches else plan.target, intent=correction.intent
+                    )
                     revision.update(
                         status="accepted",
                         correction=asdict(correction),
@@ -259,36 +315,70 @@ def execute_search(
                     )
                     pending = None
                     goal = None
+                    active_id = None
                     next_scan = stopped["time"]
-                    print(f"UPDATED: target={plan.target}; return_home and deadline retained", flush=True)
+                    print(
+                        f"UPDATED: tasks={[step['action'] + ':' + str(step['target']) for step in tasks]}", flush=True
+                    )
                 else:
                     # Keep physics running while the model thinks, including in fast headless runs.
                     time.sleep(max(0.0, 0.2 - (time.monotonic() - tick)))
                 continue
             if scanned:
-                if found is None and plan.target in detections:
-                    found = detections[plan.target]
-                    outcome, goal = "found", home_cell
-                    reason = (
-                        "target observed"
-                        if abs(found["time"] - state["time"]) < 1e-6
-                        else "target in observation history"
-                    )
-                    decisions.append(
-                        {
-                            "phase": "return",
-                            "reason": reason,
-                            "target": plan.target,
-                            "time": state["time"],
-                            "evidence": found,
-                        }
-                    )
-                    print(f"FOUND: {plan.target}; evidence t={found['time']:.1f}s; returning home ({reason})")
+                step = tasks[0]
+                if active_id != step["id"]:
+                    active_id, active_since, goal = step["id"], state["time"], home_cell if outcome else None
+                    decisions.append({"phase": "task_started", "step": deepcopy(step), "time": active_since})
+                if outcome is None and step["action"] != "return_home":
+                    color = step["target"]
+                    fresh = last_seen.get(color)
+                    evidence = detections.get(color) if step["action"] == "search" else None
+                    if step["action"] == "reobserve" and fresh and fresh["time"] > active_since + 1e-9:
+                        evidence = fresh
+                    if evidence is not None:
+                        if step["action"] == "search":
+                            found = evidence
+                        completed.append({"step": tasks.pop(0), "time": state["time"], "evidence": deepcopy(evidence)})
+                        reason = (
+                            "fresh target observation"
+                            if step["action"] == "reobserve"
+                            else "target observed"
+                            if abs(evidence["time"] - state["time"]) < 1e-6
+                            else "target in observation history"
+                        )
+                        decisions.append(
+                            {
+                                "phase": "return" if tasks[0]["action"] == "return_home" else "task_completed",
+                                "reason": reason,
+                                "step": deepcopy(step),
+                                "target": color,
+                                "time": state["time"],
+                                "evidence": deepcopy(evidence),
+                            }
+                        )
+                        print(f"TASK DONE: {step['id']}; {reason}; evidence t={evidence['time']:.1f}s", flush=True)
+                        active_id, goal = None, None
+                        step = tasks[0]
+                        if step["action"] != "return_home":
+                            # A later task cannot reuse this scan as a new observation after its activation.
+                            active_id, active_since = step["id"], state["time"]
+                            decisions.append({"phase": "task_started", "step": deepcopy(step), "time": active_since})
+                if outcome is None and step["action"] == "return_home":
+                    outcome, goal = "found" if found is not None else "returned", home_cell
+                    if not decisions or decisions[-1]["phase"] != "return":
+                        decisions.append({"phase": "return", "reason": "remaining task is home", "time": state["time"]})
                 reserve = costs[home_cell] / 0.12 + 25.0
                 if outcome is None and elapsed + reserve >= plan.seconds:
                     outcome, goal = "not_found", home_cell
                     decisions.append({"phase": "return", "reason": "return reserve", "time": state["time"]})
-                if outcome is None and (goal not in costs or math.dist(position, grid.point(goal)) < 0.25):
+                if outcome is None and step["action"] == "reobserve":
+                    reference = evidence_records[step["observation_id"]]
+                    goal = grid.cell(reference["position"])
+                    if goal not in costs:
+                        raise RuntimeError("Remembered sensing position is not reachable on the observed safe map")
+                    if math.dist(position, reference["position"]) < 0.15 and state["time"] > active_since + 1e-9:
+                        raise RuntimeError("Target could not be reobserved from its remembered sensing position")
+                elif outcome is None and (goal not in costs or math.dist(position, grid.point(goal)) < 0.25):
                     if goal is not None:
                         visited.append(goal)
                     goal = grid.frontier(costs, visited)
@@ -298,6 +388,8 @@ def execute_search(
                         {"phase": "return" if outcome else "explore", "goal": grid.point(goal), "time": state["time"]}
                     )
             if outcome and math.dist(position, home) < 0.10:
+                completed.append({"step": tasks[-1], "time": state["time"], "evidence": None})
+                tasks = tasks[:-1]
                 break
             if goal not in previous:
                 raise RuntimeError("Exploration goal left the observed safe map")
@@ -331,5 +423,6 @@ def execute_search(
         "plan": asdict(plan),
         "detections": detections,
         "corrections": corrections,
+        "tasks": {"pending": tasks, "completed": completed, "cancelled": cancelled},
         "map": {"resolution": RESOLUTION, "free": sorted(grid.free), "occupied": sorted(grid.occupied)},
     }

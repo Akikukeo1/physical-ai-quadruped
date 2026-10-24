@@ -94,25 +94,43 @@ def codex_search(prompt: str, timeout: int = 120):
     return validate_search(_codex_json(instructions, ROOT / "schema/search-plan.schema.json", timeout))
 
 
-def codex_correction(prompt: str, plan, timeout: int = 30):
+def codex_correction(prompt: str, plan, context=None, timeout: int = 30):
     from dataclasses import asdict
 
-    from pai_motion.correction import validate_correction
+    from pai_motion.correction import initial_tasks, validate_correction
 
     if not isinstance(prompt, str) or not 1 <= len(prompt.strip()) <= 500:
         raise ValueError("Correction must contain 1–500 characters")
+    context = context or {"pending": initial_tasks(plan.target), "completed": [], "observations": []}
     instructions = (
         "Interpret ONE in-flight correction to a robot's search task. Output schema-compliant JSON; no tools/code. "
         f"Current task: {json.dumps(asdict(plan), ensure_ascii=False)}. "
-        "Only changing the search target between blue and green is supported. "
-        "The original return_home obligation, original overall deadline and all observation history are retained "
-        "by the controller, and cannot be changed. Do not reset the time budget. "
-        "If the user clearly requests a target color replacement only, status=accept and target=the NEW color. "
-        "For ambiguity, other actions, changes to time/return constraints or unsupported colors, status=reject "
-        "and target=the current color. Do not guess. Explain briefly in intent (1–120 characters). "
+        f"Observed execution context (no hidden scene information): {json.dumps(context, ensure_ascii=False)}. "
+        "Output the complete ORDERED remaining steps, at most 8. Capabilities: "
+        "search(target) explores until that color is observed; past detection history may satisfy it. "
+        "reobserve(target, observation_id) requires a NEW observation after that step starts; it can navigate "
+        "to the robot's remembered sensing position in the referenced observation, NOT a hidden object position. "
+        "Use reobserve for 'again', 'recheck' or 'さっき見た対象をもう一度確認'. "
+        "return_home ends at the original home. Preserve the supplied home step exactly, last. "
+        "You may insert searches/reobservations and reorder pending tasks. Retain unchanged task IDs and fields. "
+        "Never silently drop pending tasks. Cancel a task ONLY if the instruction explicitly cancels/replaces it "
+        "or requests immediate return: list its ID in cancelled with an exact quote from the user's instruction. "
+        "A color replacement cancels the old search and adds a new search with a new ID. "
+        "For 'green before blue', INSERT green before the retained blue task; do NOT cancel blue. "
+        "New task IDs must be unique and must not reuse completed IDs. Reobserve must reference an ID supplied "
+        "in context.observations with the matching color. "
+        "These records are prior observations, not current visibility. "
+        "The original deadline, home obligation, physical limits and factual observation history cannot be edited. "
+        "No coordinates, executable code, arbitrary conditions or unsupported colors/actions. "
+        "For ambiguity or an unsupported request, status=reject and retain the existing pending steps. "
+        "Explain the revision briefly in intent (1–120 characters). "
         f"Correction: {prompt!r}"
     )
-    return validate_correction(_codex_json(instructions, ROOT / "schema/search-correction.schema.json", timeout))
+    return validate_correction(
+        _codex_json(instructions, ROOT / "schema/search-correction.schema.json", timeout),
+        context=context,
+        prompt=prompt,
+    )
 
 
 def _codex_json(instructions: str, schema: Path, timeout: int) -> object:

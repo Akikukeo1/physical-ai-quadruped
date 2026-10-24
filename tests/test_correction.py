@@ -61,7 +61,7 @@ def after(seconds):
 
 class TestCorrection(unittest.TestCase):
     def test_boundary_rejects_other_fields_and_unsupported_responses(self):
-        valid = asdict(sample_correction("", sample_search()))
+        valid = asdict(sample_correction("青じゃなくて緑に変更して", sample_search()))
         for change in (
             {"seconds": 240},
             {"on_found": "continue"},
@@ -75,7 +75,7 @@ class TestCorrection(unittest.TestCase):
         plan = sample_search()
         with patch("pai_motion.planner._codex_json", return_value=valid) as model:
             result = codex_correction("青じゃなくて緑に変更して", plan)
-        self.assertEqual(result.target, "green")
+        self.assertEqual(result.steps[0]["target"], "green")
         self.assertEqual(model.call_args.args[1].name, "search-correction.schema.json")
         self.assertIn('"on_found": "return_home"', model.call_args.args[0])
         self.assertEqual(plan.target, "blue")
@@ -108,10 +108,10 @@ class TestCorrection(unittest.TestCase):
     def test_unseen_target_keeps_exploring_and_physics_advances_while_waiting(self):
         sink = SensorFixture()
 
-        def delayed(prompt, plan):
+        def delayed(prompt, plan, context):
             if not sink.release.wait(2.0):
                 raise RuntimeError("Physics did not advance while planner waited")
-            return sample_correction(prompt, plan)
+            return sample_correction(prompt, plan, context)
 
         revisions = []
         result = execute_search(
@@ -143,10 +143,10 @@ class TestCorrection(unittest.TestCase):
         )
 
     def test_failed_or_invalid_correction_never_resumes_old_task(self):
-        def unavailable(prompt, plan):
+        def unavailable(prompt, plan, context):
             raise RuntimeError("model unavailable")
 
-        for planner in (unavailable, lambda prompt, plan: SearchCorrection("wrong", "red", "accept")):
+        for planner in (unavailable, lambda prompt, plan, context: SearchCorrection("wrong", "accept", [], [])):
             with self.subTest(planner=planner):
                 sink, revisions = SensorFixture(remembered=True), []
                 with self.assertRaises((RuntimeError, InvalidPlan)):
