@@ -1,0 +1,716 @@
+{
+  "date": "2026-10-25",
+  "scope": "MVP development trials; not a held-out benchmark or evidence of research novelty",
+  "cases": [
+    {
+      "case": "unseen-codex",
+      "log": "outputs/correction-dev/unseen-codex/plan-20261024T153210616626Z.json",
+      "status": "completed",
+      "input": {
+        "file": null,
+        "message": "青はやめて、やっぱり緑を探して",
+        "at": 8.0
+      },
+      "initial_plan": {
+        "intent": "未知の環境を距離・色の観測で探索し、自分で地図を作りながら青い対象を探す。発見して観測したら出発地点へ戻る。探索を尽くすか帰還時間を含む180秒の予算に達する前に、未発見ならnot_foundを報告して戻る。",
+        "target": "blue",
+        "seconds": 180,
+        "on_found": "return_home"
+      },
+      "correction": {
+        "message": "青はやめて、やっぱり緑を探して",
+        "status": "accepted",
+        "received": {
+          "time": 8.999999999999675,
+          "position": [
+            1.3291713539736096,
+            1.08195952188226,
+            0.3585759348893626
+          ],
+          "yaw": 0.6155938927250354,
+          "body_velocity": [
+            0.2835045744515861,
+            -0.01100515423821517,
+            0.0067673889285982764
+          ],
+          "yaw_rate": 0.09081944863652375
+        },
+        "original_plan": {
+          "intent": "未知の環境を距離・色の観測で探索し、自分で地図を作りながら青い対象を探す。発見して観測したら出発地点へ戻る。探索を尽くすか帰還時間を含む180秒の予算に達する前に、未発見ならnot_foundを報告して戻る。",
+          "target": "blue",
+          "seconds": 180,
+          "on_found": "return_home"
+        },
+        "home": [
+          -7.953999876922021e-05,
+          -0.00011282629718181661
+        ],
+        "deadline": 181.0,
+        "observations_before": 9,
+        "known_colors_before": [],
+        "old_goal": [
+          2.0,
+          1.6
+        ],
+        "first_zero_command_time": 8.999999999999675,
+        "settled": {
+          "time": 9.199999999999742,
+          "position": [
+            1.3417116077221594,
+            1.0884794340351995,
+            0.36256322903387944
+          ],
+          "yaw": 0.6191561826796422,
+          "body_velocity": [
+            0.008168299154283954,
+            -0.004933162843039285,
+            -0.01463344909568796
+          ],
+          "yaw_rate": 0.0015336018324354549
+        },
+        "correction": {
+          "intent": "探索対象を青から緑に変更する。帰還条件・全体の期限・観測履歴は維持する。",
+          "target": "green",
+          "status": "accept"
+        },
+        "updated_plan": {
+          "intent": "探索対象を青から緑に変更する。帰還条件・全体の期限・観測履歴は維持する。",
+          "target": "green",
+          "seconds": 180,
+          "on_found": "return_home"
+        },
+        "applied_time": 15.800000000001946,
+        "observations_after": 15,
+        "known_colors_after": [],
+        "planning_wall_seconds": 6.677603602991439,
+        "planning_sim_seconds": 6.800000000002271
+      },
+      "result": {
+        "outcome": "found",
+        "found": {
+          "time": 68.80000000002106,
+          "position": [
+            1.7931110061994906,
+            -1.8204326633619219
+          ],
+          "range": 1.6778412331264556
+        },
+        "elapsed": 84.5999999999819,
+        "home_error": 0.09703174511895374,
+        "distance": 14.52820247599672,
+        "final": {
+          "time": 85.5999999999819,
+          "position": [
+            0.061714122278789335,
+            -0.07492394086685414,
+            0.3632260850280944
+          ],
+          "yaw": 2.274823364257391,
+          "body_velocity": [
+            -0.0021439827574627336,
+            -0.0010171900646580754,
+            0.0002391090975198276
+          ],
+          "yaw_rate": 8.786457197024317e-05
+        },
+        "plan": {
+          "intent": "探索対象を青から緑に変更する。帰還条件・全体の期限・観測履歴は維持する。",
+          "target": "green",
+          "seconds": 180,
+          "on_found": "return_home"
+        },
+        "detections": {
+          "blue": {
+            "time": 16.800000000001567,
+            "position": [
+              1.575461324530904,
+              1.215599890739048
+            ],
+            "range": 1.7668547118310758
+          },
+          "green": {
+            "time": 68.80000000002106,
+            "position": [
+              1.7931110061994906,
+              -1.8204326633619219
+            ],
+            "range": 1.6778412331264556
+          }
+        }
+      },
+      "green_rays_during_wait": 0,
+      "max_hold_displacement": 0.01851871850765267,
+      "min_clearance": 0.09945042279532418,
+      "contact": false
+    },
+    {
+      "case": "remembered-codex",
+      "log": "outputs/correction-dev/remembered-codex/plan-20261024T153238793547Z.json",
+      "status": "completed",
+      "input": {
+        "file": null,
+        "message": "やっぱり青ではなく緑に変更して",
+        "at": 45.0
+      },
+      "initial_plan": {
+        "intent": "未知の環境を距離・色の観測から探索して地図を作り、青い対象を探す。対象を観測したら出発地点へ戻る。探索終了または制限時間までに見つからなければnot_foundを報告して戻る。帰還を含め180秒以内に完了する。",
+        "target": "blue",
+        "seconds": 180,
+        "on_found": "return_home"
+      },
+      "correction": {
+        "message": "やっぱり青ではなく緑に変更して",
+        "status": "accepted",
+        "received": {
+          "time": 46.00000000001025,
+          "position": [
+            2.45261653036118,
+            -2.0911994368730054,
+            0.3525190529882753
+          ],
+          "yaw": -3.1269289708116297,
+          "body_velocity": [
+            0.16541346330738274,
+            0.053265596154149907,
+            -0.15152903221613032
+          ],
+          "yaw_rate": -0.022890513019827283
+        },
+        "original_plan": {
+          "intent": "未知の環境を距離・色の観測から探索して地図を作り、青い対象を探す。対象を観測したら出発地点へ戻る。探索終了または制限時間までに見つからなければnot_foundを報告して戻る。帰還を含め180秒以内に完了する。",
+          "target": "blue",
+          "seconds": 180,
+          "on_found": "return_home"
+        },
+        "home": [
+          -7.953999876922021e-05,
+          -0.00011282629718181661
+        ],
+        "deadline": 181.0,
+        "observations_before": 46,
+        "known_colors_before": [
+          "green"
+        ],
+        "old_goal": [
+          0.8,
+          1.1
+        ],
+        "first_zero_command_time": 46.00000000001025,
+        "settled": {
+          "time": 46.40000000001074,
+          "position": [
+            2.4503723322207054,
+            -2.088334139240245,
+            0.35800704501691594
+          ],
+          "yaw": -3.1278851563422125,
+          "body_velocity": [
+            -0.023087035907524263,
+            -0.008265640634984148,
+            0.03884192352585075
+          ],
+          "yaw_rate": 0.0047033010242644386
+        },
+        "correction": {
+          "intent": "探索対象を青から緑に変更する。",
+          "target": "green",
+          "status": "accept"
+        },
+        "updated_plan": {
+          "intent": "探索対象を青から緑に変更する。",
+          "target": "green",
+          "seconds": 180,
+          "on_found": "return_home"
+        },
+        "applied_time": 50.600000000015875,
+        "observations_after": 50,
+        "known_colors_after": [
+          "green"
+        ],
+        "planning_wall_seconds": 4.461695026984671,
+        "planning_sim_seconds": 4.600000000005622
+      },
+      "result": {
+        "outcome": "found",
+        "found": {
+          "time": 21.999999999998685,
+          "position": [
+            2.355157376217962,
+            -2.090133571793647
+          ],
+          "range": 1.389082633046279
+        },
+        "elapsed": 70.400000000015,
+        "home_error": 0.10795417051042905,
+        "distance": 9.742312389637364,
+        "final": {
+          "time": 71.400000000015,
+          "position": [
+            0.08460925732052842,
+            -0.06705989896810384,
+            0.3628832261438184
+          ],
+          "yaw": 2.3772285117953937,
+          "body_velocity": [
+            -0.0025853378521884956,
+            -0.0011938752601814118,
+            0.000317306856855437
+          ],
+          "yaw_rate": 0.0004547814738438226
+        },
+        "plan": {
+          "intent": "探索対象を青から緑に変更する。",
+          "target": "green",
+          "seconds": 180,
+          "on_found": "return_home"
+        },
+        "detections": {
+          "green": {
+            "time": 21.999999999998685,
+            "position": [
+              2.355157376217962,
+              -2.090133571793647
+            ],
+            "range": 1.389082633046279
+          }
+        }
+      },
+      "green_rays_during_wait": 30,
+      "max_hold_displacement": 0.01446272924428103,
+      "min_clearance": 0.12840759323289147,
+      "contact": false
+    },
+    {
+      "case": "remembered-out-of-view",
+      "log": "outputs/correction-dev/remembered-out-of-view/plan-20261024T153523053934Z.json",
+      "status": "completed",
+      "input": {
+        "file": null,
+        "message": "やっぱり青ではなく緑に変更して",
+        "at": 55.0
+      },
+      "initial_plan": {
+        "intent": "未知の環境を距離・色の観測で探索し、自ら地図を作成して青い対象を探す。対象を観測したら出発地点へ戻る。探索を終えても見つからない場合や帰還を含む180秒の制限に達する前に探索を打ち切る場合は、not_foundを報告して出発地点へ戻る。",
+        "target": "blue",
+        "seconds": 180,
+        "on_found": "return_home"
+      },
+      "correction": {
+        "message": "やっぱり青ではなく緑に変更して",
+        "status": "accepted",
+        "received": {
+          "time": 56.000000000022474,
+          "position": [
+            1.2907165320180827,
+            -1.3176044051560716,
+            0.35806888821080324
+          ],
+          "yaw": 2.313526386203978,
+          "body_velocity": [
+            0.20770584855129542,
+            -0.03528570621847016,
+            -0.01548671301361073
+          ],
+          "yaw_rate": -0.011138176666481045
+        },
+        "original_plan": {
+          "intent": "未知の環境を距離・色の観測で探索し、自ら地図を作成して青い対象を探す。対象を観測したら出発地点へ戻る。探索を終えても見つからない場合や帰還を含む180秒の制限に達する前に探索を打ち切る場合は、not_foundを報告して出発地点へ戻る。",
+          "target": "blue",
+          "seconds": 180,
+          "on_found": "return_home"
+        },
+        "home": [
+          -7.953999876922021e-05,
+          -0.00011282629718181661
+        ],
+        "deadline": 181.0,
+        "observations_before": 56,
+        "known_colors_before": [
+          "green"
+        ],
+        "old_goal": [
+          0.8,
+          1.1
+        ],
+        "first_zero_command_time": 56.000000000022474,
+        "settled": {
+          "time": 56.20000000002272,
+          "position": [
+            1.2852912976000244,
+            -1.309947787327585,
+            0.3639653673748161
+          ],
+          "yaw": 2.3125557924370113,
+          "body_velocity": [
+            -0.009502218540163658,
+            0.0006874295881593748,
+            0.0021299814623452163
+          ],
+          "yaw_rate": 0.0006915693325851575
+        },
+        "correction": {
+          "intent": "探索対象を青から緑に変更する。",
+          "target": "green",
+          "status": "accept"
+        },
+        "updated_plan": {
+          "intent": "探索対象を青から緑に変更する。",
+          "target": "green",
+          "seconds": 180,
+          "on_found": "return_home"
+        },
+        "applied_time": 60.80000000002834,
+        "observations_after": 60,
+        "known_colors_after": [
+          "green"
+        ],
+        "planning_wall_seconds": 4.664971520978725,
+        "planning_sim_seconds": 4.800000000005866
+      },
+      "result": {
+        "outcome": "found",
+        "found": {
+          "time": 21.999999999998685,
+          "position": [
+            2.355157376217962,
+            -2.090133571793647
+          ],
+          "range": 1.389082633046279
+        },
+        "elapsed": 71.80000000001174,
+        "home_error": 0.10996132765526183,
+        "distance": 9.73596286563147,
+        "final": {
+          "time": 72.80000000001174,
+          "position": [
+            0.08148263224986911,
+            -0.07386311875620398,
+            0.36108651175940387
+          ],
+          "yaw": 2.392300825943389,
+          "body_velocity": [
+            -0.0025539906880729687,
+            -0.0006046875161273906,
+            6.546046390618281e-05
+          ],
+          "yaw_rate": 0.00037036016953869956
+        },
+        "plan": {
+          "intent": "探索対象を青から緑に変更する。",
+          "target": "green",
+          "seconds": 180,
+          "on_found": "return_home"
+        },
+        "detections": {
+          "green": {
+            "time": 21.999999999998685,
+            "position": [
+              2.355157376217962,
+              -2.090133571793647
+            ],
+            "range": 1.389082633046279
+          }
+        }
+      },
+      "green_rays_during_wait": 0,
+      "max_hold_displacement": 0.009894388493128395,
+      "min_clearance": 0.12840759323289147,
+      "contact": false
+    },
+    {
+      "case": "video-memory",
+      "log": "outputs/correction-dev/video-memory/plan-20261024T153914445085Z.json",
+      "status": "completed",
+      "input": {
+        "file": null,
+        "message": "やっぱり青ではなく緑に変更して",
+        "at": 55.0
+      },
+      "initial_plan": {
+        "intent": "未知の環境を距離・色の観測で探索し、自ら地図を作って青い対象を探す。対象を観測したら出発地点へ戻る。探索を終えても見つからない場合、または帰還時間を含む180秒の制限に達する前に、not_foundを報告して戻る。",
+        "target": "blue",
+        "seconds": 180,
+        "on_found": "return_home"
+      },
+      "correction": {
+        "message": "やっぱり青ではなく緑に変更して",
+        "status": "accepted",
+        "received": {
+          "time": 56.000000000022474,
+          "position": [
+            1.2907165320180827,
+            -1.3176044051560716,
+            0.35806888821080324
+          ],
+          "yaw": 2.313526386203978,
+          "body_velocity": [
+            0.20770584855129542,
+            -0.03528570621847016,
+            -0.01548671301361073
+          ],
+          "yaw_rate": -0.011138176666481045
+        },
+        "original_plan": {
+          "intent": "未知の環境を距離・色の観測で探索し、自ら地図を作って青い対象を探す。対象を観測したら出発地点へ戻る。探索を終えても見つからない場合、または帰還時間を含む180秒の制限に達する前に、not_foundを報告して戻る。",
+          "target": "blue",
+          "seconds": 180,
+          "on_found": "return_home"
+        },
+        "home": [
+          -7.953999876922021e-05,
+          -0.00011282629718181661
+        ],
+        "deadline": 181.0,
+        "observations_before": 56,
+        "known_colors_before": [
+          "green"
+        ],
+        "old_goal": [
+          0.8,
+          1.1
+        ],
+        "first_zero_command_time": 56.000000000022474,
+        "settled": {
+          "time": 56.20000000002272,
+          "position": [
+            1.2852912976000244,
+            -1.309947787327585,
+            0.3639653673748161
+          ],
+          "yaw": 2.3125557924370113,
+          "body_velocity": [
+            -0.009502218540163658,
+            0.0006874295881593748,
+            0.0021299814623452163
+          ],
+          "yaw_rate": 0.0006915693325851575
+        },
+        "correction": {
+          "intent": "探索対象を青から緑に変更する。",
+          "target": "green",
+          "status": "accept"
+        },
+        "updated_plan": {
+          "intent": "探索対象を青から緑に変更する。",
+          "target": "green",
+          "seconds": 180,
+          "on_found": "return_home"
+        },
+        "applied_time": 60.20000000002761,
+        "observations_after": 60,
+        "known_colors_after": [
+          "green"
+        ],
+        "planning_wall_seconds": 4.951498387003085,
+        "planning_sim_seconds": 4.200000000005133
+      },
+      "result": {
+        "outcome": "found",
+        "found": {
+          "time": 21.999999999998685,
+          "position": [
+            2.355157376217962,
+            -2.090133571793647
+          ],
+          "range": 1.389082633046279
+        },
+        "elapsed": 71.0000000000136,
+        "home_error": 0.0842763476533845,
+        "distance": 9.747522577054948,
+        "final": {
+          "time": 72.0000000000136,
+          "position": [
+            0.06544094839440408,
+            -0.05311818804968918,
+            0.3648225884668003
+          ],
+          "yaw": 2.4327994594549627,
+          "body_velocity": [
+            -0.0010084469975254627,
+            -0.0008527681033618796,
+            -8.827883276862855e-05
+          ],
+          "yaw_rate": 0.0001972195900624816
+        },
+        "plan": {
+          "intent": "探索対象を青から緑に変更する。",
+          "target": "green",
+          "seconds": 180,
+          "on_found": "return_home"
+        },
+        "detections": {
+          "green": {
+            "time": 21.999999999998685,
+            "position": [
+              2.355157376217962,
+              -2.090133571793647
+            ],
+            "range": 1.389082633046279
+          }
+        }
+      },
+      "green_rays_during_wait": 0,
+      "max_hold_displacement": 0.009894388493128395,
+      "min_clearance": 0.12840759323289147,
+      "contact": false
+    },
+    {
+      "case": "live-file-1f89a3d8",
+      "log": "outputs/correction-dev/live-file-1f89a3d8/plan-20261024T153756025329Z.json",
+      "status": "completed",
+      "input": {
+        "file": "outputs/correction-dev/live-file-1f89a3d8/request.txt",
+        "message": null,
+        "at": null
+      },
+      "initial_plan": {
+        "intent": "未知の環境を距離・色の観測で探索して地図を作り、青い対象を探す。対象を観測したら出発地点へ戻る。探索を終えても見つからない場合、または帰還時間を含む180秒の制限に達する前に、not_foundを報告して出発地点へ戻る。",
+        "target": "blue",
+        "seconds": 180,
+        "on_found": "return_home"
+      },
+      "correction": {
+        "message": "やっぱり緑を探して。最後に戻る条件はそのままで",
+        "status": "accepted",
+        "received": {
+          "time": 2.999999999999891,
+          "position": [
+            0.299824223926702,
+            0.19903958689219625,
+            0.3573562965357585
+          ],
+          "yaw": 0.7297301549026719,
+          "body_velocity": [
+            0.1914103183309697,
+            -0.028380694241219726,
+            -0.03556276610485063
+          ],
+          "yaw_rate": 0.06403584766567953
+        },
+        "original_plan": {
+          "intent": "未知の環境を距離・色の観測で探索して地図を作り、青い対象を探す。対象を観測したら出発地点へ戻る。探索を終えても見つからない場合、または帰還時間を含む180秒の制限に達する前に、not_foundを報告して出発地点へ戻る。",
+          "target": "blue",
+          "seconds": 180,
+          "on_found": "return_home"
+        },
+        "home": [
+          -7.953999876922021e-05,
+          -0.00011282629718181661
+        ],
+        "deadline": 181.0,
+        "observations_before": 3,
+        "known_colors_before": [],
+        "old_goal": [
+          1.0,
+          0.9
+        ],
+        "first_zero_command_time": 2.999999999999891,
+        "settled": {
+          "time": 3.199999999999869,
+          "position": [
+            0.30512328757724827,
+            0.2008833136584737,
+            0.36173274237179265
+          ],
+          "yaw": 0.7314823089893209,
+          "body_velocity": [
+            -0.013553063618806465,
+            -0.0027757484136334536,
+            0.00665433335413007
+          ],
+          "yaw_rate": 0.00024679409303718293
+        },
+        "correction": {
+          "intent": "探索対象を緑に変更し、帰還条件・全体の制限時間・観測履歴はそのまま維持する。",
+          "target": "green",
+          "status": "accept"
+        },
+        "updated_plan": {
+          "intent": "探索対象を緑に変更し、帰還条件・全体の制限時間・観測履歴はそのまま維持する。",
+          "target": "green",
+          "seconds": 180,
+          "on_found": "return_home"
+        },
+        "applied_time": 7.999999999999341,
+        "observations_after": 7,
+        "known_colors_after": [],
+        "planning_wall_seconds": 4.868640037981095,
+        "planning_sim_seconds": 4.999999999999449
+      },
+      "result": {
+        "outcome": "found",
+        "found": {
+          "time": 52.000000000017586,
+          "position": [
+            1.7379209161756712,
+            -1.0412742107099815
+          ],
+          "range": 1.7293643972947375
+        },
+        "elapsed": 65.60000000002618,
+        "home_error": 0.11352043135630101,
+        "distance": 10.032619034941623,
+        "final": {
+          "time": 66.60000000002618,
+          "position": [
+            0.08655501858307829,
+            -0.07347045435758927,
+            0.35940298062656
+          ],
+          "yaw": 2.410679140974747,
+          "body_velocity": [
+            -0.003829018889945264,
+            -0.0024381258595050663,
+            0.0007240620516420765
+          ],
+          "yaw_rate": 0.0005850516240145805
+        },
+        "plan": {
+          "intent": "探索対象を緑に変更し、帰還条件・全体の制限時間・観測履歴はそのまま維持する。",
+          "target": "green",
+          "seconds": 180,
+          "on_found": "return_home"
+        },
+        "detections": {
+          "blue": {
+            "time": 15.000000000001679,
+            "position": [
+              1.5552109914531547,
+              1.3170888146220867
+            ],
+            "range": 1.790390837242675
+          },
+          "green": {
+            "time": 52.000000000017586,
+            "position": [
+              1.7379209161756712,
+              -1.0412742107099815
+            ],
+            "range": 1.7293643972947375
+          }
+        }
+      },
+      "green_rays_during_wait": 0,
+      "max_hold_displacement": 0.00709411280668136,
+      "min_clearance": 0.10184540441840234,
+      "contact": false
+    }
+  ],
+  "parser_rejections": [
+    {
+      "prompt": "やっぱり赤を探して",
+      "rejected": true,
+      "error": "Correction must clearly specify a supported blue/green target change"
+    },
+    {
+      "prompt": "緑に変更して。帰らなくていい",
+      "rejected": true,
+      "error": "Correction must clearly specify a supported blue/green target change"
+    },
+    {
+      "prompt": "そっちじゃなくてあっちを探して",
+      "rejected": true,
+      "error": "Correction must clearly specify a supported blue/green target change"
+    }
+  ]
+}
