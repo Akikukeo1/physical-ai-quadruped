@@ -5,7 +5,7 @@ Project: Physical AI final assignment, quadruped natural-language motion plannin
 ## Current milestone
 - Phase 1a (included): validated motion protocol, Codex CLI planner, dry-run executor, tests.
 - Phase 1b: MuJoCo Go2 locomotion with a pinned MoE ONNX policy. Sample and real Codex plans verified on Ubuntu 24.04 / WSL2; see README and docs/PHASE1_RESULTS.md for evidence and limits.
-- Phase 2 (initial): known-map waypoint navigation, obstacle route validation and measured-position feedback are implemented. Two real Codex routes were verified on WSL2; see docs/NAVIGATION_RESULTS.md. Camera perception and dynamic replanning are not implemented.
+- Phase 2: known-map waypoint navigation and event-driven replanning after a scripted moving blocker are implemented and verified on WSL2. See docs/NAVIGATION_RESULTS.md and docs/REPLANNING_RESULTS.md. Camera perception and real-time continuously changing environments are not implemented.
 - Phase 3: comparative experiments and a 1–3 minute video.
 
 ## Development rules

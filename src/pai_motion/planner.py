@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 
 from pai_motion.motion import MotionPlan, validate_plan
-from pai_motion.navigation import OBSTACLE, WAYPOINTS, NavigationPlan, validate_navigation
+from pai_motion.navigation import OBSTACLE, ROBOT_RADIUS, ROUTE_MARGIN, WAYPOINTS, NavigationPlan, validate_navigation
 
 ROOT = Path(__file__).resolve().parents[2]
 SCHEMA = ROOT / "schema" / "motion-plan.schema.json"
@@ -47,21 +47,34 @@ def codex_plan(prompt: str, timeout: int = 120) -> MotionPlan:
     return validate_plan(_codex_json(instructions, SCHEMA, timeout))
 
 
-def codex_navigation(prompt: str, timeout: int = 120) -> NavigationPlan:
+def codex_navigation(
+    prompt: str, timeout: int = 120, *, start=(0.0, 0.0), obstacles=(OBSTACLE,), required=None
+) -> NavigationPlan:
     if not prompt.strip():
         raise ValueError("prompt is required")
     instructions = (
         "Plan a waypoint route for a simulated Go2 using ONLY schema-compliant JSON. No tools or executable code. "
-        "The map and current start position (0,0) are simulator ground truth, not camera observations. "
-        f"Named points (x,y metres): {WAYPOINTS!r}. Red rectangular obstacle (cx,cy,hx,hy): {OBSTACLE!r}. "
-        "Every entire straight segment must avoid the obstacle expanded by 0.55 metres on all sides. "
+        f"The map and current position {start!r} are simulator ground truth, not camera observations. "
+        f"Named points (x,y metres): {WAYPOINTS!r}. Obstacles (cx,cy,hx,hy): {obstacles!r}. "
+        f"Every straight segment must avoid every obstacle expanded by {ROBOT_RADIUS + ROUTE_MARGIN} metres. "
         "Use north_gate to go around the north/positive-y side; south_gate for the south/negative-y side. "
-        "Blue and green are on the east side. home and gates are on the west side. "
+        "Blue, green and exit points are on the east side. home and gates are on the west side. "
         "Direct home-to-blue/green is unsafe. Use the same-side gate before crossing between west and east. "
         "At most 8 waypoints. Include the requested destinations in the requested order, plus necessary gates. "
         f"User request: {prompt!r}"
     )
-    return validate_navigation(_codex_json(instructions, ROOT / "schema/navigation-plan.schema.json", timeout))
+    if required is not None:
+        instructions += (
+            f" This is replanning after an observed route blockage. Remaining goals, in mandatory order: {required!r}. "
+            "Include exactly these goal visits (home/blue/green), no extra goal visits. "
+            "Gates/exits are transit points. "
+            "Previously reached goals must not be requested again. An original route-side preference may be abandoned "
+            "when blocked. Use south_exit/north_exit to go around without using an unrequested goal as transit. "
+            "Explain why this replacement route is needed in intent. No hidden future obstacle positions are available."
+        )
+    return validate_navigation(
+        _codex_json(instructions, ROOT / "schema/navigation-plan.schema.json", timeout), start, obstacles, required
+    )
 
 
 def _codex_json(instructions: str, schema: Path, timeout: int) -> object:

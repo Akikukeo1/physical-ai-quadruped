@@ -18,7 +18,16 @@ from pai_motion.executor import Velocity
 class MuJoCoGo2Sink:
     """Own physics and joint control; accept only bounded velocity segments."""
 
-    def __init__(self, *, headless: bool = False, video: Path | None = None, navigation: bool = False) -> None:
+    def __init__(
+        self,
+        *,
+        headless: bool = False,
+        video: Path | None = None,
+        navigation: bool = False,
+        dynamic_obstacle: bool = False,
+    ) -> None:
+        if dynamic_obstacle and not navigation:
+            raise ValueError("dynamic_obstacle requires navigation")
         try:
             import mujoco
             import numpy as np
@@ -32,6 +41,8 @@ class MuJoCoGo2Sink:
         self.ticks = 0
         self.stopped = False
         self.navigation = navigation
+        self.dynamic_obstacle = dynamic_obstacle
+        self.world_events: list[dict] = []
         assets = ensure_assets()
         scene = ET.parse(assets / "go2.xml").getroot()
         scene.find("compiler").set("meshdir", (assets / "assets").as_posix())
@@ -41,7 +52,7 @@ class MuJoCoGo2Sink:
           <asset><texture name="grid" type="2d" builtin="checker" width="512" height="512"
             rgb1=".18 .22 .26" rgb2=".28 .32 .36"/>
             <material name="floor" texture="grid" texrepeat="8 8" texuniform="true"/></asset>
-          <worldbody><light pos="0 -2 3" dir="0 0 -1" directional="true"/>
+          <worldbody><light pos="0 -2 3" dir="0 0 -1" directional="true" castshadow="false"/>
             <geom name="ground" type="plane" size="5 5 .1" material="floor" friction=".8 .02 .01"/>
           </worldbody></mujoco>""")
         scene.append(additions.find("visual"))
@@ -60,6 +71,14 @@ class MuJoCoGo2Sink:
                 size=f"{hx} {hy} 0.3",
                 rgba="0.85 0.1 0.1 1",
             )
+            if dynamic_obstacle:
+                from pai_motion.navigation import BLOCKER
+
+                x, _, hx, hy = BLOCKER
+                body = ET.SubElement(
+                    scene.find("worldbody"), "body", name="moving_blocker", mocap="true", pos=f"{x} 3.0 .3"
+                )
+                ET.SubElement(body, "geom", name="task_blocker", type="box", size=f"{hx} {hy} .3", rgba="1 .45 .05 1")
             for name, color in (("blue", "0.1 0.35 1 1"), ("green", "0.1 0.85 0.3 1"), ("home", "1 .8 .1 1")):
                 x, y = WAYPOINTS[name]
                 ET.SubElement(
@@ -90,7 +109,10 @@ class MuJoCoGo2Sink:
         ):
             raise ValueError("Go2 model does not match the released policy joint/torque contract")
         self.base = self.model.body("base_link").id
-        self.obstacle_id = self.model.geom("task_obstacle").id if navigation else None
+        self.obstacle_ids = [self.model.geom("task_obstacle").id] if navigation else []
+        if dynamic_obstacle:
+            self.obstacle_ids.append(self.model.geom("task_blocker").id)
+            self.blocker_mocap = self.model.body_mocapid[self.model.body("moving_blocker").id]
         self.home = np.array([0.1, 0.8, -1.5, -0.1, 0.8, -1.5, 0.1, 1.0, -1.5, -0.1, 1.0, -1.5], dtype=np.float32)
         self.action = np.zeros(12, dtype=np.float32)
         self.history = np.zeros((5, 45), dtype=np.float32)
@@ -157,14 +179,20 @@ class MuJoCoGo2Sink:
             "finite": bool(np.isfinite(self.data.qpos).all() and np.isfinite(self.data.qvel).all()),
         }
         if self.navigation:
-            from pai_motion.navigation import OBSTACLE, ROBOT_RADIUS
+            from pai_motion.navigation import ROBOT_RADIUS
 
-            x, y, hx, hy = OBSTACLE
-            state["obstacle_clearance"] = (
+            state["obstacles"] = [
+                self.data.geom_xpos[geom, :2].tolist() + self.model.geom_size[geom, :2].tolist()
+                for geom in self.obstacle_ids
+            ]
+            state["obstacle_clearance"] = min(
                 math.hypot(max(abs(state["position"][0] - x) - hx, 0), max(abs(state["position"][1] - y) - hy, 0))
                 - ROBOT_RADIUS
+                for x, y, hx, hy in state["obstacles"]
             )
-            state["obstacle_contact"] = any(self.obstacle_id in contact.geom for contact in self.data.contact)
+            state["obstacle_contact"] = any(
+                geom in contact.geom for contact in self.data.contact for geom in self.obstacle_ids
+            )
         return state
 
     def observe(self) -> dict:
@@ -176,6 +204,16 @@ class MuJoCoGo2Sink:
         # shortcut: upstream low-speed compensation; revalidate for other terrain/policies.
         for _ in range(round(seconds / 0.002)):
             start = time.monotonic()
+            if self.dynamic_obstacle:
+                from pai_motion.navigation import BLOCKER
+
+                x, y, _, _ = BLOCKER
+                fraction = min(1.0, max(0.0, (self.data.time - 4.0) / 2.0))
+                self.data.mocap_pos[self.blocker_mocap] = [x, 3.0 + (y - 3.0) * fraction, 0.3]
+                if not self.world_events and self.data.time >= 4.0 - 1e-9:
+                    self.world_events.append({"type": "blocker_motion_started", "time": float(self.data.time)})
+                if len(self.world_events) == 1 and self.data.time >= 6.0 - 1e-9:
+                    self.world_events.append({"type": "blocker_motion_finished", "time": float(self.data.time)})
             if self.ticks % 10 == 0:
                 rotation = self.data.xmat[self.base].reshape(3, 3)
                 measured = np.r_[(rotation.T @ self.data.qvel[:3])[:2], self.data.qvel[5]]

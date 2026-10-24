@@ -91,7 +91,7 @@ class TestCLI(unittest.TestCase):
             patch("pai_motion.sim_adapter.MuJoCoGo2Sink") as factory,
         ):
             sink = factory.return_value
-            sink.events, sink.trace = [], []
+            sink.events, sink.trace, sink.world_events = [], [], []
             sink.run_velocity.side_effect = RuntimeError("sim failed")
             self.assertEqual(main(), 1)
             sink.stop.assert_called_once()

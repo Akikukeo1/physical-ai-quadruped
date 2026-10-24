@@ -1,0 +1,430 @@
+{
+  "date": "2026-10-24",
+  "state_source": "simulator ground truth",
+  "initial_plan": [
+    "north_gate",
+    "blue",
+    "green"
+  ],
+  "runs": [
+    {
+      "mode": "stop",
+      "status": "failed",
+      "error": "Measured route is blocked; stopping without replanning",
+      "source_log": "outputs/replanning-comparison/stop/plan-20261024T133415528250Z.json",
+      "wall_seconds": 4.004059293016326,
+      "simulation_seconds": 6.399999999999407,
+      "goal_error_m": null,
+      "final_speed_m_s": 0.0005432797711597572,
+      "minimum_sampled_clearance_m": 0.19345158712552163,
+      "obstacle_contact_samples": 0,
+      "replans": [
+        {
+          "reason": "observed route blockage",
+          "detected": {
+            "time": 5.399999999999627,
+            "position": [
+              0.03470351352797982,
+              0.669360190143097,
+              0.3600675029411214
+            ],
+            "yaw": 1.6529394228017351,
+            "upright": 0.9995819905051644,
+            "body_velocity": [
+              0.2773779549509517,
+              -0.017497964687370592,
+              -0.004465275025842369
+            ],
+            "yaw_rate": 0.04355393798820814,
+            "contacts": 4,
+            "finite": true,
+            "obstacles": [
+              [
+                0.9,
+                0.0,
+                0.18,
+                0.28
+              ],
+              [
+                0.9,
+                1.6369500000003632,
+                0.24,
+                0.2
+              ]
+            ],
+            "obstacle_clearance": 0.3381831208793831,
+            "obstacle_contact": false
+          },
+          "remaining_goals": [
+            "blue",
+            "green"
+          ],
+          "old_route": [
+            "north_gate",
+            "blue",
+            "green"
+          ],
+          "status": "stopped"
+        }
+      ],
+      "world_events": [
+        {
+          "type": "blocker_motion_started",
+          "time": 3.999999999999781
+        },
+        {
+          "type": "blocker_motion_finished",
+          "time": 5.999999999999561
+        }
+      ]
+    },
+    {
+      "mode": "rules",
+      "status": "completed",
+      "error": null,
+      "source_log": "outputs/replanning-comparison/rules/plan-20261024T133419564306Z.json",
+      "wall_seconds": 7.849377774022287,
+      "simulation_seconds": 58.600000000026874,
+      "goal_error_m": 0.08591732733724104,
+      "final_speed_m_s": 0.0034019469806091914,
+      "minimum_sampled_clearance_m": 0.16733680919099386,
+      "obstacle_contact_samples": 0,
+      "replans": [
+        {
+          "reason": "observed route blockage",
+          "detected": {
+            "time": 5.399999999999627,
+            "position": [
+              0.03470351352797982,
+              0.669360190143097,
+              0.3600675029411214
+            ],
+            "yaw": 1.6529394228017351,
+            "upright": 0.9995819905051644,
+            "body_velocity": [
+              0.2773779549509517,
+              -0.017497964687370592,
+              -0.004465275025842369
+            ],
+            "yaw_rate": 0.04355393798820814,
+            "contacts": 4,
+            "finite": true,
+            "obstacles": [
+              [
+                0.9,
+                0.0,
+                0.18,
+                0.28
+              ],
+              [
+                0.9,
+                1.6369500000003632,
+                0.24,
+                0.2
+              ]
+            ],
+            "obstacle_clearance": 0.3381831208793831,
+            "obstacle_contact": false
+          },
+          "remaining_goals": [
+            "blue",
+            "green"
+          ],
+          "old_route": [
+            "north_gate",
+            "blue",
+            "green"
+          ],
+          "status": "accepted",
+          "stopped": {
+            "time": 6.399999999999517,
+            "position": [
+              0.0382048191313792,
+              0.6820897073709894,
+              0.3607021786916278
+            ],
+            "yaw": 1.6574258148338672,
+            "upright": 0.9999691170647661,
+            "body_velocity": [
+              0.00017581885308464565,
+              -0.00071117407656305,
+              -0.0008631820930861828
+            ],
+            "yaw_rate": 0.0002700979637266035,
+            "contacts": 4,
+            "finite": true,
+            "obstacles": [
+              [
+                0.9,
+                0.0,
+                0.18,
+                0.28
+              ],
+              [
+                0.9,
+                1.05,
+                0.24,
+                0.2
+              ]
+            ],
+            "obstacle_clearance": 0.1940676310157194,
+            "obstacle_contact": false
+          },
+          "intent": "更新地図に基づく最短の安全経路",
+          "new_route": [
+            "south_gate",
+            "south_exit",
+            "blue",
+            "green"
+          ],
+          "planning_wall_seconds": 8.476802031509578e-05,
+          "planning_sim_seconds": 0.0
+        }
+      ],
+      "world_events": [
+        {
+          "type": "blocker_motion_started",
+          "time": 3.999999999999781
+        },
+        {
+          "type": "blocker_motion_finished",
+          "time": 5.999999999999561
+        }
+      ]
+    },
+    {
+      "mode": "codex",
+      "status": "completed",
+      "error": null,
+      "source_log": "outputs/replanning-comparison/codex/plan-20261024T133427325439Z.json",
+      "wall_seconds": 23.951246270007687,
+      "simulation_seconds": 58.600000000026874,
+      "goal_error_m": 0.08591732733724104,
+      "final_speed_m_s": 0.0034019469806091914,
+      "minimum_sampled_clearance_m": 0.16733680919099386,
+      "obstacle_contact_samples": 0,
+      "replans": [
+        {
+          "reason": "observed route blockage",
+          "detected": {
+            "time": 5.399999999999627,
+            "position": [
+              0.03470351352797982,
+              0.669360190143097,
+              0.3600675029411214
+            ],
+            "yaw": 1.6529394228017351,
+            "upright": 0.9995819905051644,
+            "body_velocity": [
+              0.2773779549509517,
+              -0.017497964687370592,
+              -0.004465275025842369
+            ],
+            "yaw_rate": 0.04355393798820814,
+            "contacts": 4,
+            "finite": true,
+            "obstacles": [
+              [
+                0.9,
+                0.0,
+                0.18,
+                0.28
+              ],
+              [
+                0.9,
+                1.6369500000003632,
+                0.24,
+                0.2
+              ]
+            ],
+            "obstacle_clearance": 0.3381831208793831,
+            "obstacle_contact": false
+          },
+          "remaining_goals": [
+            "blue",
+            "green"
+          ],
+          "old_route": [
+            "north_gate",
+            "blue",
+            "green"
+          ],
+          "status": "accepted",
+          "stopped": {
+            "time": 6.399999999999517,
+            "position": [
+              0.0382048191313792,
+              0.6820897073709894,
+              0.3607021786916278
+            ],
+            "yaw": 1.6574258148338672,
+            "upright": 0.9999691170647661,
+            "body_velocity": [
+              0.00017581885308464565,
+              -0.00071117407656305,
+              -0.0008631820930861828
+            ],
+            "yaw_rate": 0.0002700979637266035,
+            "contacts": 4,
+            "finite": true,
+            "obstacles": [
+              [
+                0.9,
+                0.0,
+                0.18,
+                0.28
+              ],
+              [
+                0.9,
+                1.05,
+                0.24,
+                0.2
+              ]
+            ],
+            "obstacle_clearance": 0.1940676310157194,
+            "obstacle_contact": false
+          },
+          "intent": "北側経路が塞がったため、当初の北側優先を変更し、南ゲートと南出口を経由して青、緑の順に訪問する。全区間で既知の障害物を0.55m拡張した領域を避ける。",
+          "new_route": [
+            "south_gate",
+            "south_exit",
+            "blue",
+            "green"
+          ],
+          "planning_wall_seconds": 15.894937775010476,
+          "planning_sim_seconds": 0.0
+        }
+      ],
+      "world_events": [
+        {
+          "type": "blocker_motion_started",
+          "time": 3.999999999999781
+        },
+        {
+          "type": "blocker_motion_finished",
+          "time": 5.999999999999561
+        }
+      ]
+    }
+  ],
+  "checkpoint": "b080138",
+  "environment": {
+    "python": "3.12.12",
+    "mujoco": "3.3.7",
+    "onnxruntime": "1.23.2",
+    "os": "WSL2 Ubuntu 24.04"
+  },
+  "recorded_demo": {
+    "source_log": "outputs/plan-20261024T133715770283Z.json",
+    "initial_route": [
+      "north_gate",
+      "blue",
+      "green"
+    ],
+    "prompt": "青い地点へ行ってから緑へ。最初は北側を使い、塞がったら安全な別経路へ切り替えて",
+    "replans": [
+      {
+        "reason": "observed route blockage",
+        "detected": {
+          "time": 5.399999999999627,
+          "position": [
+            0.03470351352797982,
+            0.669360190143097,
+            0.3600675029411214
+          ],
+          "yaw": 1.6529394228017351,
+          "upright": 0.9995819905051644,
+          "body_velocity": [
+            0.2773779549509517,
+            -0.017497964687370592,
+            -0.004465275025842369
+          ],
+          "yaw_rate": 0.04355393798820814,
+          "contacts": 4,
+          "finite": true,
+          "obstacles": [
+            [
+              0.9,
+              0.0,
+              0.18,
+              0.28
+            ],
+            [
+              0.9,
+              1.6369500000003632,
+              0.24,
+              0.2
+            ]
+          ],
+          "obstacle_clearance": 0.3381831208793831,
+          "obstacle_contact": false
+        },
+        "remaining_goals": [
+          "blue",
+          "green"
+        ],
+        "old_route": [
+          "north_gate",
+          "blue",
+          "green"
+        ],
+        "status": "accepted",
+        "stopped": {
+          "time": 6.399999999999517,
+          "position": [
+            0.0382048191313792,
+            0.6820897073709894,
+            0.3607021786916278
+          ],
+          "yaw": 1.6574258148338672,
+          "upright": 0.9999691170647661,
+          "body_velocity": [
+            0.00017581885308464565,
+            -0.00071117407656305,
+            -0.0008631820930861828
+          ],
+          "yaw_rate": 0.0002700979637266035,
+          "contacts": 4,
+          "finite": true,
+          "obstacles": [
+            [
+              0.9,
+              0.0,
+              0.18,
+              0.28
+            ],
+            [
+              0.9,
+              1.05,
+              0.24,
+              0.2
+            ]
+          ],
+          "obstacle_clearance": 0.1940676310157194,
+          "obstacle_contact": false
+        },
+        "intent": "北側の経路は障害物の0.55m拡張領域に塞がれているため、南側へ切り替えます。south_gateとsouth_exitを経由し、全直線区間で拡張領域を避けながら、青、緑の順に訪問します。",
+        "new_route": [
+          "south_gate",
+          "south_exit",
+          "blue",
+          "green"
+        ],
+        "planning_wall_seconds": 11.678267003997462,
+        "planning_sim_seconds": 0.0
+      }
+    ],
+    "goal_error_m": 0.08591732733724104,
+    "simulation_seconds": 58.600000000026874,
+    "minimum_sampled_clearance_m": 0.16733680919099386,
+    "obstacle_contact_samples": 0,
+    "video": {
+      "path": "outputs/replanning-codex.mp4",
+      "fps": 25,
+      "width": 720,
+      "height": 480,
+      "duration_seconds": 59.600000000026874,
+      "sha256": "b8a2435f004c6ec615f3e882e164b85e1587597715d22979e3da251137fb7e4a"
+    }
+  }
+}

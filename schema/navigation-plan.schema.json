@@ -6,7 +6,7 @@
     "intent": {"type": "string", "minLength": 1, "maxLength": 120},
     "waypoints": {
       "type": "array", "minItems": 1, "maxItems": 8,
-      "items": {"type": "string", "enum": ["home", "north_gate", "south_gate", "blue", "green"]}
+      "items": {"type": "string", "enum": ["home", "north_gate", "south_gate", "north_exit", "south_exit", "blue", "green"]}
     }
   },
   "required": ["intent", "waypoints"]
