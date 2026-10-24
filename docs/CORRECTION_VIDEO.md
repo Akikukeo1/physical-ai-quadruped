@@ -57,4 +57,12 @@ npx --yes hyperframes@0.8.192 preview --background --port 3002
 最終の動画検査はエラー・警告とも0件、コントラスト45/45件成功。
 訂正待ちと分岐後の実フレーム、全体・縮小表示のレビュー画像を確認した。
 ロボット制御コードは変更していないため、既存の物理テスト一式は再実行していない。
-確認用プレビューまで作成し、編集後のMP4書き出しはまだ行っていない。
+プレビュー確認後の承認を受け、`outputs/correction-decision-comparison.mp4` に書き出した。
+1920×1080、30 fps、14.0秒、420フレーム、H.264、約1.2 MB、音声なし。
+書き出し前の再検査も成功し、完成ファイルの全フレームのデコードと、
+開始・訂正待ち・分岐後・終盤の画像を確認した。
+
+```powershell
+# outputs/correction-video で実行
+npx --yes hyperframes@0.8.192 render --quality delivery --fps 30 --output ../correction-decision-comparison.mp4
+```
