@@ -1,0 +1,726 @@
+{
+  "scope": "Development language probes; frozen snapshot, not robot execution or held-out evaluation.",
+  "snapshot": "outputs/task-revision-dev/reobserve/plan-20261024T201811354659Z.json",
+  "snapshot_sha256": "190713c8b510ed37f04c036350c54528df4c1d6e0c7596a224c349b4383260b2",
+  "cases": [
+    [
+      "replace",
+      "青はやめて緑にして。最後は戻って",
+      [
+        [
+          "search",
+          "green"
+        ],
+        [
+          "return_home",
+          null
+        ]
+      ],
+      [
+        "search-1"
+      ]
+    ],
+    [
+      "insert",
+      "青をやめるわけではないけど、その前に緑も探して",
+      [
+        [
+          "search",
+          "green"
+        ],
+        [
+          "search",
+          "blue"
+        ],
+        [
+          "return_home",
+          null
+        ]
+      ],
+      []
+    ],
+    [
+      "reobserve",
+      "緑をもう一度確認してから青の探索を再開して",
+      [
+        [
+          "reobserve",
+          "green"
+        ],
+        [
+          "search",
+          "blue"
+        ],
+        [
+          "return_home",
+          null
+        ]
+      ],
+      []
+    ],
+    [
+      "reference",
+      "さっき見えた対象をもう一度確認してから、青の探索を続けて",
+      [
+        [
+          "reobserve",
+          "green"
+        ],
+        [
+          "search",
+          "blue"
+        ],
+        [
+          "return_home",
+          null
+        ]
+      ],
+      []
+    ],
+    [
+      "cancel",
+      "青の探索は取り消して、今すぐ出発地点へ帰って",
+      [
+        [
+          "return_home",
+          null
+        ]
+      ],
+      [
+        "search-1"
+      ]
+    ],
+    [
+      "ambiguous",
+      "やっぱりあっちを先にして",
+      null,
+      []
+    ],
+    [
+      "negation",
+      "緑に変更しないで。青の探索を続けて帰って",
+      [
+        [
+          "search",
+          "blue"
+        ],
+        [
+          "return_home",
+          null
+        ]
+      ],
+      []
+    ],
+    [
+      "unsupported",
+      "帰還は不要にして、時間制限もなくして",
+      null,
+      []
+    ]
+  ],
+  "results": [
+    {
+      "case": "replace",
+      "condition": "history",
+      "message": "青はやめて緑にして。最後は戻って",
+      "expected_steps": [
+        [
+          "search",
+          "green"
+        ],
+        [
+          "return_home",
+          null
+        ]
+      ],
+      "expected_cancelled": [
+        "search-1"
+      ],
+      "raw": {
+        "intent": "青の探索を取り消して緑の探索に変更し、最後に出発地点へ戻る。",
+        "status": "accept",
+        "steps": [
+          {
+            "id": "search-2",
+            "action": "search",
+            "target": "green",
+            "observation_id": null
+          },
+          {
+            "id": "home",
+            "action": "return_home",
+            "target": null,
+            "observation_id": null
+          }
+        ],
+        "cancelled": [
+          {
+            "id": "search-1",
+            "instruction": "青はやめて緑にして。"
+          }
+        ]
+      },
+      "accepted": true,
+      "error": null,
+      "correct": true
+    },
+    {
+      "case": "insert",
+      "condition": "history",
+      "message": "青をやめるわけではないけど、その前に緑も探して",
+      "expected_steps": [
+        [
+          "search",
+          "green"
+        ],
+        [
+          "search",
+          "blue"
+        ],
+        [
+          "return_home",
+          null
+        ]
+      ],
+      "expected_cancelled": [],
+      "raw": {
+        "intent": "青の探索を維持し、その前に緑の探索を追加する。元の期限内に出発地点へ戻る。",
+        "status": "accept",
+        "steps": [
+          {
+            "id": "search-2",
+            "action": "search",
+            "target": "green",
+            "observation_id": null
+          },
+          {
+            "id": "search-1",
+            "action": "search",
+            "target": "blue",
+            "observation_id": null
+          },
+          {
+            "id": "home",
+            "action": "return_home",
+            "target": null,
+            "observation_id": null
+          }
+        ],
+        "cancelled": []
+      },
+      "accepted": true,
+      "error": null,
+      "correct": true
+    },
+    {
+      "case": "reobserve",
+      "condition": "history",
+      "message": "緑をもう一度確認してから青の探索を再開して",
+      "expected_steps": [
+        [
+          "reobserve",
+          "green"
+        ],
+        [
+          "search",
+          "blue"
+        ],
+        [
+          "return_home",
+          null
+        ]
+      ],
+      "expected_cancelled": [],
+      "raw": {
+        "intent": "直近に観測した緑を新たに確認してから青の探索を再開し、元の期限内に出発地点へ戻る。",
+        "status": "accept",
+        "steps": [
+          {
+            "id": "reobserve-green-1",
+            "action": "reobserve",
+            "target": "green",
+            "observation_id": "obs-47-green"
+          },
+          {
+            "id": "search-1",
+            "action": "search",
+            "target": "blue",
+            "observation_id": null
+          },
+          {
+            "id": "home",
+            "action": "return_home",
+            "target": null,
+            "observation_id": null
+          }
+        ],
+        "cancelled": []
+      },
+      "accepted": true,
+      "error": null,
+      "correct": true
+    },
+    {
+      "case": "reference",
+      "condition": "history",
+      "message": "さっき見えた対象をもう一度確認してから、青の探索を続けて",
+      "expected_steps": [
+        [
+          "reobserve",
+          "green"
+        ],
+        [
+          "search",
+          "blue"
+        ],
+        [
+          "return_home",
+          null
+        ]
+      ],
+      "expected_cancelled": [],
+      "raw": {
+        "intent": "直近に観測した緑の対象を再観測してから青の探索を続け、元の期限内に出発地点へ戻る。",
+        "status": "accept",
+        "steps": [
+          {
+            "id": "reobserve-1",
+            "action": "reobserve",
+            "target": "green",
+            "observation_id": "obs-47-green"
+          },
+          {
+            "id": "search-1",
+            "action": "search",
+            "target": "blue",
+            "observation_id": null
+          },
+          {
+            "id": "home",
+            "action": "return_home",
+            "target": null,
+            "observation_id": null
+          }
+        ],
+        "cancelled": []
+      },
+      "accepted": true,
+      "error": null,
+      "correct": true
+    },
+    {
+      "case": "cancel",
+      "condition": "history",
+      "message": "青の探索は取り消して、今すぐ出発地点へ帰って",
+      "expected_steps": [
+        [
+          "return_home",
+          null
+        ]
+      ],
+      "expected_cancelled": [
+        "search-1"
+      ],
+      "raw": {
+        "intent": "青の探索を取り消し、今すぐ出発地点へ帰還する。",
+        "status": "accept",
+        "steps": [
+          {
+            "id": "home",
+            "action": "return_home",
+            "target": null,
+            "observation_id": null
+          }
+        ],
+        "cancelled": [
+          {
+            "id": "search-1",
+            "instruction": "青の探索は取り消して、今すぐ出発地点へ帰って"
+          }
+        ]
+      },
+      "accepted": true,
+      "error": null,
+      "correct": true
+    },
+    {
+      "case": "ambiguous",
+      "condition": "history",
+      "message": "やっぱりあっちを先にして",
+      "expected_steps": null,
+      "expected_cancelled": [],
+      "raw": {
+        "intent": "「あっち」が指す対象を特定できないため、変更せず青の探索と帰還を維持する。",
+        "status": "reject",
+        "steps": [
+          {
+            "id": "search-1",
+            "action": "search",
+            "target": "blue",
+            "observation_id": null
+          },
+          {
+            "id": "home",
+            "action": "return_home",
+            "target": null,
+            "observation_id": null
+          }
+        ],
+        "cancelled": []
+      },
+      "accepted": false,
+      "error": "Correction was not accepted",
+      "correct": true
+    },
+    {
+      "case": "negation",
+      "condition": "history",
+      "message": "緑に変更しないで。青の探索を続けて帰って",
+      "expected_steps": [
+        [
+          "search",
+          "blue"
+        ],
+        [
+          "return_home",
+          null
+        ]
+      ],
+      "expected_cancelled": [],
+      "raw": {
+        "intent": "緑には変更せず、青の探索を続けて元の制限時間内に出発地点へ戻る。",
+        "status": "accept",
+        "steps": [
+          {
+            "id": "search-1",
+            "action": "search",
+            "target": "blue",
+            "observation_id": null
+          },
+          {
+            "id": "home",
+            "action": "return_home",
+            "target": null,
+            "observation_id": null
+          }
+        ],
+        "cancelled": []
+      },
+      "accepted": true,
+      "error": null,
+      "correct": true
+    },
+    {
+      "case": "unsupported",
+      "condition": "history",
+      "message": "帰還は不要にして、時間制限もなくして",
+      "expected_steps": null,
+      "expected_cancelled": [],
+      "raw": {
+        "intent": "帰還義務と元の時間制限は変更できないため、修正を拒否して既存の手順を維持する。",
+        "status": "reject",
+        "steps": [
+          {
+            "id": "search-1",
+            "action": "search",
+            "target": "blue",
+            "observation_id": null
+          },
+          {
+            "id": "home",
+            "action": "return_home",
+            "target": null,
+            "observation_id": null
+          }
+        ],
+        "cancelled": []
+      },
+      "accepted": false,
+      "error": "Correction was not accepted",
+      "correct": true
+    },
+    {
+      "case": "replace",
+      "condition": "no_history",
+      "message": "青はやめて緑にして。最後は戻って",
+      "expected_steps": [
+        [
+          "search",
+          "green"
+        ],
+        [
+          "return_home",
+          null
+        ]
+      ],
+      "expected_cancelled": [
+        "search-1"
+      ],
+      "raw": {
+        "intent": "青の探索を中止して緑の探索に変更し、元の制限時間内に出発地点へ戻る。",
+        "status": "accept",
+        "steps": [
+          {
+            "id": "search-2",
+            "action": "search",
+            "target": "green",
+            "observation_id": null
+          },
+          {
+            "id": "home",
+            "action": "return_home",
+            "target": null,
+            "observation_id": null
+          }
+        ],
+        "cancelled": [
+          {
+            "id": "search-1",
+            "instruction": "青はやめて緑にして。"
+          }
+        ]
+      },
+      "accepted": true,
+      "error": null,
+      "correct": true
+    },
+    {
+      "case": "insert",
+      "condition": "no_history",
+      "message": "青をやめるわけではないけど、その前に緑も探して",
+      "expected_steps": [
+        [
+          "search",
+          "green"
+        ],
+        [
+          "search",
+          "blue"
+        ],
+        [
+          "return_home",
+          null
+        ]
+      ],
+      "expected_cancelled": [],
+      "raw": {
+        "intent": "青の探索は維持し、その前に緑を探索する。元の制限時間内に出発地点へ戻る。",
+        "status": "accept",
+        "steps": [
+          {
+            "id": "search-2",
+            "action": "search",
+            "target": "green",
+            "observation_id": null
+          },
+          {
+            "id": "search-1",
+            "action": "search",
+            "target": "blue",
+            "observation_id": null
+          },
+          {
+            "id": "home",
+            "action": "return_home",
+            "target": null,
+            "observation_id": null
+          }
+        ],
+        "cancelled": []
+      },
+      "accepted": true,
+      "error": null,
+      "correct": true
+    },
+    {
+      "case": "reobserve",
+      "condition": "no_history",
+      "message": "緑をもう一度確認してから青の探索を再開して",
+      "expected_steps": null,
+      "expected_cancelled": [],
+      "raw": {
+        "intent": "緑の過去の観測記録がないため再確認を指定できません。既存の青の探索と帰還を維持します。",
+        "status": "reject",
+        "steps": [
+          {
+            "id": "search-1",
+            "action": "search",
+            "target": "blue",
+            "observation_id": null
+          },
+          {
+            "id": "home",
+            "action": "return_home",
+            "target": null,
+            "observation_id": null
+          }
+        ],
+        "cancelled": []
+      },
+      "accepted": false,
+      "error": "Correction was not accepted",
+      "correct": true
+    },
+    {
+      "case": "reference",
+      "condition": "no_history",
+      "message": "さっき見えた対象をもう一度確認してから、青の探索を続けて",
+      "expected_steps": null,
+      "expected_cancelled": [],
+      "raw": {
+        "intent": "過去の観測記録がなく、再確認する対象を特定できないため変更を拒否し、青の探索と帰還を維持する。",
+        "status": "reject",
+        "steps": [
+          {
+            "id": "search-1",
+            "action": "search",
+            "target": "blue",
+            "observation_id": null
+          },
+          {
+            "id": "home",
+            "action": "return_home",
+            "target": null,
+            "observation_id": null
+          }
+        ],
+        "cancelled": []
+      },
+      "accepted": false,
+      "error": "Correction was not accepted",
+      "correct": true
+    },
+    {
+      "case": "cancel",
+      "condition": "no_history",
+      "message": "青の探索は取り消して、今すぐ出発地点へ帰って",
+      "expected_steps": [
+        [
+          "return_home",
+          null
+        ]
+      ],
+      "expected_cancelled": [
+        "search-1"
+      ],
+      "raw": {
+        "intent": "青の探索を取り消し、今すぐ出発地点へ帰還する。",
+        "status": "accept",
+        "steps": [
+          {
+            "id": "home",
+            "action": "return_home",
+            "target": null,
+            "observation_id": null
+          }
+        ],
+        "cancelled": [
+          {
+            "id": "search-1",
+            "instruction": "青の探索は取り消して、今すぐ出発地点へ帰って"
+          }
+        ]
+      },
+      "accepted": true,
+      "error": null,
+      "correct": true
+    },
+    {
+      "case": "ambiguous",
+      "condition": "no_history",
+      "message": "やっぱりあっちを先にして",
+      "expected_steps": null,
+      "expected_cancelled": [],
+      "raw": {
+        "intent": "「あっち」が指す対象を特定できないため、変更せず青の探索と帰還を維持する。",
+        "status": "reject",
+        "steps": [
+          {
+            "id": "search-1",
+            "action": "search",
+            "target": "blue",
+            "observation_id": null
+          },
+          {
+            "id": "home",
+            "action": "return_home",
+            "target": null,
+            "observation_id": null
+          }
+        ],
+        "cancelled": []
+      },
+      "accepted": false,
+      "error": "Correction was not accepted",
+      "correct": true
+    },
+    {
+      "case": "negation",
+      "condition": "no_history",
+      "message": "緑に変更しないで。青の探索を続けて帰って",
+      "expected_steps": [
+        [
+          "search",
+          "blue"
+        ],
+        [
+          "return_home",
+          null
+        ]
+      ],
+      "expected_cancelled": [],
+      "raw": {
+        "intent": "対象は青のまま探索を続け、元の期限内に出発地点へ戻る。",
+        "status": "accept",
+        "steps": [
+          {
+            "id": "search-1",
+            "action": "search",
+            "target": "blue",
+            "observation_id": null
+          },
+          {
+            "id": "home",
+            "action": "return_home",
+            "target": null,
+            "observation_id": null
+          }
+        ],
+        "cancelled": []
+      },
+      "accepted": true,
+      "error": null,
+      "correct": true
+    },
+    {
+      "case": "unsupported",
+      "condition": "no_history",
+      "message": "帰還は不要にして、時間制限もなくして",
+      "expected_steps": null,
+      "expected_cancelled": [],
+      "raw": {
+        "intent": "帰還義務と元の時間制限は変更できないため、修正を拒否し、既存の手順を維持する。",
+        "status": "reject",
+        "steps": [
+          {
+            "id": "search-1",
+            "action": "search",
+            "target": "blue",
+            "observation_id": null
+          },
+          {
+            "id": "home",
+            "action": "return_home",
+            "target": null,
+            "observation_id": null
+          }
+        ],
+        "cancelled": []
+      },
+      "accepted": false,
+      "error": "Correction was not accepted",
+      "correct": true
+    }
+  ],
+  "raw_log": "outputs/language-probes/20261025T142754031826Z.json"
+}
