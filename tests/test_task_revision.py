@@ -107,6 +107,9 @@ class TestTaskRevision(unittest.TestCase):
         instructions = model.call_args.args[0]
         self.assertIn(json.dumps(self.context, ensure_ascii=False), instructions)
         self.assertIn("obs-1-green", instructions)
+        self.assertIn("one static target per color", instructions)
+        self.assertIn("observation with the greatest time", instructions)
+        self.assertIn("Respect explicit earlier/latest sighting", instructions)
         self.assertNotIn("WAYPOINTS", instructions)
 
     def test_pending_tasks_can_be_reordered_without_cancelling_them(self):
