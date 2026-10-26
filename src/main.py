@@ -38,6 +38,7 @@ def main() -> int:
     correction_input.add_argument(
         "--correction", help="Inject one natural-language correction at --correct-at for replay"
     )
+    correction_input.add_argument("--correction-script", type=Path, help="JSON list of timed correction messages")
     parser.add_argument("--correct-at", type=float, help="Seconds after search start to inject --correction")
     parser.add_argument(
         "--replanner",
@@ -68,7 +69,9 @@ def main() -> int:
         parser.error("navigation/search requires --executor mujoco; it uses measured physics state")
     if args.missing_target and not search:
         parser.error("--missing-target requires --task search")
-    if (args.correction_file or args.correction is not None or args.correct_at is not None) and not search:
+    if (
+        args.correction_file or args.correction_script or args.correction is not None or args.correct_at is not None
+    ) and not search:
         parser.error("correction input requires --task search")
     if (args.correction is None) != (args.correct_at is None):
         parser.error("--correction and --correct-at must be used together")
@@ -108,7 +111,28 @@ def main() -> int:
                 "file": str(args.correction_file) if args.correction_file else None,
                 "message": args.correction,
                 "at": args.correct_at,
+                "script": str(args.correction_script) if args.correction_script else None,
             }
+            scheduled = []
+            if args.correction_script:
+                if args.correction_script.stat().st_size > 16384:
+                    raise ValueError("Correction script exceeds 16384 bytes")
+                scheduled = json.loads(args.correction_script.read_text(encoding="utf-8"))
+                if not isinstance(scheduled, list) or not 1 <= len(scheduled) <= 12:
+                    raise ValueError("Correction script requires 1–12 entries")
+                for event in scheduled:
+                    if (
+                        not isinstance(event, dict)
+                        or set(event) != {"at", "message"}
+                        or type(event["at"]) not in (int, float)
+                        or not math.isfinite(event["at"])
+                        or not 0 <= event["at"] < plan.seconds - 2
+                        or not isinstance(event["message"], str)
+                        or not 1 <= len(event["message"].strip()) <= 500
+                    ):
+                        raise ValueError("Invalid timed correction entry")
+                if [e["at"] for e in scheduled] != sorted(e["at"] for e in scheduled):
+                    raise ValueError("Correction script times must be ordered")
         elif navigation:
             plan = codex_navigation(args.prompt) if args.planner == "codex" else sample_navigation()
             data.update(intent=plan.intent, waypoints=list(plan.waypoints))
@@ -143,16 +167,23 @@ def main() -> int:
             search_started = sink.observe()["time"]
 
             def get_correction(state):
+                if scheduled and state["time"] - search_started >= scheduled[0]["at"] - 1e-9:
+                    event = scheduled.pop(0)
+                    return {"id": f"scheduled-{len(scheduled)}", "message": event["message"]}
                 if args.correction_file and args.correction_file.exists():
                     if args.correction_file.stat().st_size > 4096:
                         raise ValueError("Correction file exceeds 4096 bytes")
                     message = args.correction_file.read_text(encoding="utf-8").strip()
+                    if message.startswith("{"):
+                        return json.loads(message)
                     return message or None
                 if args.correction is not None and state["time"] - search_started >= args.correct_at - 1e-9:
                     return args.correction
                 return None
 
-            correction_enabled = args.correction_file is not None or args.correction is not None
+            correction_enabled = (
+                args.correction_file is not None or args.correction is not None or args.correction_script is not None
+            )
             if args.correction_file:
                 print(
                     f"CORRECTION INPUT: {args.correction_file}; write one UTF-8 instruction during search", flush=True

@@ -189,7 +189,9 @@ def execute_search(
     tasks, completed, cancelled = initial_tasks(plan.target), [], []
     active_id, active_since = None, started
     worker = pending = revision = None
-    correction_received = False
+    seen_messages = set()
+    dialogue = []
+    awaiting_answer = False
     try:
         while True:
             state = sink.observe()
@@ -222,12 +224,26 @@ def execute_search(
                         first_seen.setdefault(color, record)
                         last_seen[color] = record
                 next_scan = state["time"] + 1.0
-            if get_correction and not correction_received and outcome is None:
+            if get_correction and pending is None and outcome is None:
                 message = get_correction(state)
+                message_id = None
+                if isinstance(message, dict):
+                    if set(message) != {"id", "message"} or not isinstance(message["id"], str):
+                        raise ValueError("Correction event requires a string id and message")
+                    message_id, message = message["id"], message["message"]
+                    if not 1 <= len(message_id) <= 80:
+                        raise ValueError("Correction event ID must contain 1–80 characters")
                 if message is not None:
                     if not isinstance(message, str) or not 1 <= len(message.strip()) <= 500:
                         raise ValueError("Correction must contain 1–500 characters")
-                    correction_received = True
+                    token = ("event", message_id) if message_id is not None else ("text", message)
+                    if token in seen_messages:
+                        message = None
+                if message is not None:
+                    if len(corrections) >= 12:
+                        raise ValueError("At most 12 correction messages per mission")
+                    seen_messages.add(token)
+                    dialogue.append({"role": "user", "text": message})
                     # A detached snapshot avoids sharing mutable task/history state with the planner thread.
                     context = deepcopy(
                         {
@@ -248,9 +264,20 @@ def execute_search(
                             },
                             "pending": tasks,
                             "completed": completed,
+                            "cancelled": cancelled,
+                            "dialogue": dialogue,
                             "observations": list(
                                 {
-                                    record["id"]: record for record in [*first_seen.values(), *last_seen.values()]
+                                    record["id"]: record
+                                    for record in [
+                                        *first_seen.values(),
+                                        *last_seen.values(),
+                                        *(
+                                            evidence_records[step["observation_id"]]
+                                            for step in tasks
+                                            if step["action"] == "reobserve"
+                                        ),
+                                    ]
                                 }.values()
                             ),
                             "map_summary": {
@@ -275,7 +302,8 @@ def execute_search(
                         "context": context,
                     }
                     corrections.append(revision)
-                    worker = ThreadPoolExecutor(max_workers=1)
+                    if worker is None:
+                        worker = ThreadPoolExecutor(max_workers=1)
                     pending = worker.submit(correction_planner, message, plan, deepcopy(context))
                     print(f"CORRECTION: {message}; holding position", flush=True)
             if pending is not None:
@@ -292,6 +320,17 @@ def execute_search(
                     correction = validate_correction(
                         asdict(pending.result()), context=revision["context"], prompt=revision["message"]
                     )
+                    if correction.status == "clarify":
+                        revision.update(
+                            status="clarification",
+                            correction=asdict(correction),
+                            question_time=stopped["time"],
+                            planning_wall_seconds=time.monotonic() - revision["wall_started"],
+                        )
+                        dialogue.append({"role": "assistant", "text": correction.question})
+                        print(f"QUESTION: {correction.question}", flush=True)
+                        awaiting_answer, pending = True, None
+                        continue
                     removed = {entry["id"]: entry for entry in correction.cancelled}
                     cancelled.extend(
                         {"step": step, "time": stopped["time"], "instruction": removed[step["id"]]["instruction"]}
@@ -314,6 +353,7 @@ def execute_search(
                         planning_sim_seconds=stopped["time"] - revision["received"]["time"],
                     )
                     pending = None
+                    awaiting_answer = False
                     goal = None
                     active_id = None
                     next_scan = stopped["time"]
@@ -324,6 +364,19 @@ def execute_search(
                     # Keep physics running while the model thinks, including in fast headless runs.
                     time.sleep(max(0.0, 0.2 - (time.monotonic() - tick)))
                 continue
+            if awaiting_answer:
+                tick = time.monotonic()
+                reserve = costs[home_cell] / 0.12 + 25.0
+                if elapsed + reserve >= plan.seconds:
+                    awaiting_answer = False
+                    outcome, goal = "not_found", home_cell
+                    decisions.append(
+                        {"phase": "return", "reason": "clarification return reserve", "time": state["time"]}
+                    )
+                else:
+                    sink.run_velocity(Velocity(0.0, 0.0, 0.0), 0.2)
+                    time.sleep(max(0.0, 0.2 - (time.monotonic() - tick)))
+                    continue
             if scanned:
                 step = tasks[0]
                 if active_id != step["id"]:
@@ -376,7 +429,7 @@ def execute_search(
                     goal = grid.cell(reference["position"])
                     if goal not in costs:
                         raise RuntimeError("Remembered sensing position is not reachable on the observed safe map")
-                    if math.dist(position, reference["position"]) < 0.15 and state["time"] > active_since + 1e-9:
+                    if math.dist(position, reference["position"]) < 0.04 and state["time"] > active_since + 1e-9:
                         raise RuntimeError("Target could not be reobserved from its remembered sensing position")
                 elif outcome is None and (goal not in costs or math.dist(position, grid.point(goal)) < 0.25):
                     if goal is not None:
@@ -394,6 +447,10 @@ def execute_search(
             if goal not in previous:
                 raise RuntimeError("Exploration goal left the observed safe map")
             target = home if outcome and math.dist(position, home) < 0.35 else grid.lookahead(position, goal, previous)
+            if outcome is None and tasks[0]["action"] == "reobserve":
+                viewpoint = evidence_records[tasks[0]["observation_id"]]["position"]
+                if math.dist(position, viewpoint) < 0.35:
+                    target = viewpoint
             heading = math.atan2(target[1] - position[1], target[0] - position[0])
             error = math.atan2(math.sin(heading - state["yaw"]), math.cos(heading - state["yaw"]))
             limit = 0.15 if any(math.dist(position, grid.point(c)) < 0.8 for c in grid.occupied) else 0.25

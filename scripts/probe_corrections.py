@@ -43,9 +43,9 @@ CASES = [
 ]
 
 
-def matches(raw, accepted, steps, cancelled):
+def matches(raw, accepted, steps, cancelled, status="reject"):
     if steps is None:
-        return isinstance(raw, dict) and raw.get("status") == "reject"
+        return isinstance(raw, dict) and raw.get("status") == status and (status == "reject" or accepted)
     return (
         accepted
         and [[s["action"], s["target"]] for s in raw["steps"]] == steps
@@ -95,22 +95,29 @@ def main():
             except (InvalidPlan, RuntimeError, OSError) as exc:
                 error = str(exc)
             target = None if condition == "no_history" and name in ("reobserve", "reference") else expected
-            correct = matches(raw, accepted, target, cancelled)
+            expected_status = "accept" if target is not None else "clarify" if name != "unsupported" else "reject"
+            infrastructure_error = raw is None and error is not None
+            correct = None if infrastructure_error else matches(raw, accepted, target, cancelled, expected_status)
             report["results"].append(
                 {
                     "case": name,
                     "condition": condition,
                     "message": message,
                     "expected_steps": target,
+                    "expected_status": expected_status,
                     "expected_cancelled": cancelled,
                     "raw": raw,
                     "accepted": accepted,
                     "error": error,
                     "correct": correct,
+                    "infrastructure_error": infrastructure_error,
                 }
             )
             output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
             print(f"{condition}/{name}: {'PASS' if correct else 'FAIL'} accepted={accepted}; {error or ''}", flush=True)
+            if infrastructure_error:
+                print(f"Stopped on infrastructure error; saved: {output}", flush=True)
+                raise SystemExit(1)
     print(f"Saved: {output}", flush=True)
 
 

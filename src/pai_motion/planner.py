@@ -103,7 +103,8 @@ def codex_correction(prompt: str, plan, context=None, timeout: int = 30):
         raise ValueError("Correction must contain 1–500 characters")
     context = context or {"pending": initial_tasks(plan.target), "completed": [], "observations": []}
     instructions = (
-        "Interpret ONE in-flight correction to a robot's search task. Output schema-compliant JSON; no tools/code. "
+        "Interpret the latest in-flight instruction or clarification answer. "
+        "Output schema-compliant JSON; no tools/code. "
         f"Current task: {json.dumps(asdict(plan), ensure_ascii=False)}. "
         f"Observed execution context (no hidden scene information): {json.dumps(context, ensure_ascii=False)}. "
         "Output the complete ORDERED remaining steps, at most 8. Capabilities: "
@@ -122,7 +123,11 @@ def codex_correction(prompt: str, plan, context=None, timeout: int = 30):
         "These records are prior observations, not current visibility. "
         "The original deadline, home obligation, physical limits and factual observation history cannot be edited. "
         "No coordinates, executable code, arbitrary conditions or unsupported colors/actions. "
-        "For ambiguity or an unsupported request, status=reject and retain the existing pending steps. "
+        "Use context.dialogue to resolve short answers to the most recent clarification question. "
+        "For ambiguity or missing observation evidence, status=clarify with a concise question to the user; "
+        "retain pending steps EXACTLY with cancelled=[] and do not guess a target or observation ID. "
+        "For unsupported changes to physical limits, the deadline or home obligation, status=reject. "
+        "For accept/reject set question to the empty string; for clarify supply a nonempty question. "
         "Explain the revision briefly in intent (1–120 characters). "
         f"Correction: {prompt!r}"
     )

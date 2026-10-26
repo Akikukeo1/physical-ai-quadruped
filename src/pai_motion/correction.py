@@ -19,15 +19,26 @@ class SearchCorrection:
     status: str
     steps: list[dict]
     cancelled: list[dict]
+    question: str = ""
 
 
 def validate_correction(value: object, *, context=None, prompt=None) -> SearchCorrection:
-    if not isinstance(value, dict) or set(value) != {"intent", "status", "steps", "cancelled"}:
+    if prompt is not None and context is not None:
+        prompt = "\n".join(
+            [entry["text"] for entry in context.get("dialogue", []) if entry["role"] == "user"] + [prompt]
+        )
+    required = {"intent", "status", "steps", "cancelled"}
+    if not isinstance(value, dict) or not required <= value.keys() or value.keys() - required - {"question"}:
         raise InvalidPlan("Correction requires intent, status, steps and cancelled only")
     if not isinstance(value["intent"], str) or not 1 <= len(value["intent"].strip()) <= 120:
         raise InvalidPlan("Correction intent must contain 1–120 characters")
-    if value["status"] != "accept":
+    if value["status"] not in ("accept", "clarify"):
         raise InvalidPlan("Correction was not accepted")
+    question = value.get("question", "")
+    if not isinstance(question, str) or len(question) > 200:
+        raise InvalidPlan("Question must be a bounded string")
+    if (value["status"] == "clarify") != bool(question.strip()):
+        raise InvalidPlan("Only clarify responses require a question")
     steps, cancelled = value["steps"], value["cancelled"]
     if not isinstance(steps, list) or not 1 <= len(steps) <= 8:
         raise InvalidPlan("Correction requires 1–8 remaining steps")
@@ -76,6 +87,7 @@ def validate_correction(value: object, *, context=None, prompt=None) -> SearchCo
     if context is not None:
         old = {step["id"]: step for step in context["pending"]}
         completed = {entry["step"]["id"] for entry in context["completed"]}
+        completed |= {entry["step"]["id"] for entry in context.get("cancelled", [])}
         observations = {entry["id"]: entry for entry in context["observations"]}
         if not removed <= old.keys() or (old.keys() - removed) - ids:
             raise InvalidPlan("Pending obligations cannot silently disappear")
@@ -86,6 +98,10 @@ def validate_correction(value: object, *, context=None, prompt=None) -> SearchCo
                 evidence = observations.get(step["observation_id"])
                 if evidence is None or evidence["color"] != step["target"]:
                     raise InvalidPlan("Reobserve must reference a supplied observation of that color")
+        if value["status"] == "clarify" and (steps != context["pending"] or cancelled):
+            raise InvalidPlan("Clarification cannot alter pending tasks")
+    elif value["status"] == "clarify":
+        raise InvalidPlan("Clarification requires an execution context")
     return SearchCorrection(**value)
 
 
