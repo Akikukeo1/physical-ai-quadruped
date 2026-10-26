@@ -52,3 +52,56 @@ class TestProbe(unittest.TestCase):
             self.assertEqual(len(report["results"]), 1)
             self.assertTrue(report["results"][0]["infrastructure_error"])
             self.assertIsNone(report["results"][0]["correct"])
+
+    def test_selected_case_and_condition_do_not_repeat_completed_calls(self):
+        snapshot = {
+            "corrections": [
+                {
+                    "original_plan": asdict(sample_search()),
+                    "context": {
+                        "pending": initial_tasks("blue"),
+                        "completed": [],
+                        "observations": [{"id": "green", "color": "green"}],
+                        "latest_scan": {"visible_colors": []},
+                    },
+                }
+            ]
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "snapshot.json"
+            path.write_text(json.dumps(snapshot), encoding="utf-8")
+            answer = {
+                "intent": "青を保持",
+                "status": "accept",
+                "question": "",
+                "steps": initial_tasks("blue"),
+                "cancelled": [],
+            }
+            with (
+                patch.object(
+                    sys,
+                    "argv",
+                    [
+                        "probe",
+                        str(path),
+                        "--out-dir",
+                        str(root / "results"),
+                        "--case",
+                        "negation",
+                        "--condition",
+                        "no_history",
+                    ],
+                ),
+                patch.object(probe_corrections.planner, "_codex_json", return_value=answer) as model,
+            ):
+                probe_corrections.main()
+                model.assert_called_once()
+                self.assertIn('"observations": []', model.call_args.args[0])
+            report = json.loads(next((root / "results").glob("*.json")).read_text(encoding="utf-8"))
+            self.assertEqual(report["selected_cases"], ["negation"])
+            self.assertEqual(report["selected_conditions"], ["no_history"])
+            self.assertEqual(report["requested_model"], "gpt-6-luna")
+            self.assertEqual(report["requested_reasoning_effort"], "xhigh")
+            self.assertEqual(len(report["results"]), 1)
+            self.assertTrue(report["results"][0]["correct"])

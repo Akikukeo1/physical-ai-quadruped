@@ -42,3 +42,19 @@
    確認回数・停止時間・物理失敗・インフラ失敗も分ける。
 
 現時点でLuna指定の対話付きロボット完遂、未知配置への汎化、他手法への優位性は未検証。
+
+## 未完了条件だけの実行
+
+実験スクリプトに `--case` と `--condition` を追加した。既定では従来と同じ16条件を実施する。
+429等の応答取得失敗は `ERROR` と表示し、意味解釈の不一致である `FAIL` と分ける。
+問い合わせを得た条件を再実行するときは、初回を上書きせず新しい試行として残す。
+モデル・推論強度・選択条件・計画生成ソースのSHA-256も結果へ保存する。
+通常のロボット実行ログにも `requested_codex_settings` を保存する。サーバー側モデルの証明ではなく、
+アプリからCLIへ要求した設定の記録である。
+
+```bash
+.venv-wsl/bin/python scripts/probe_corrections.py \
+  outputs/task-revision-dev/reobserve/plan-20261024T201811354659Z.json \
+  --out-dir outputs/language-probes-luna6-remaining \
+  --condition history --case ambiguous negation unsupported
+```

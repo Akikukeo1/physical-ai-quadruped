@@ -14,6 +14,8 @@ from pai_motion.navigation import OBSTACLE, ROBOT_RADIUS, ROUTE_MARGIN, WAYPOINT
 
 ROOT = Path(__file__).resolve().parents[2]
 SCHEMA = ROOT / "schema" / "motion-plan.schema.json"
+CODEX_MODEL = "gpt-6-luna"
+CODEX_REASONING_EFFORT = "xhigh"
 
 DEMO_PLAN = {
     "intent": "右方向を動きで示す",
@@ -157,9 +159,9 @@ def _codex_json(instructions: str, schema: Path, timeout: int) -> object:
             "--ephemeral",
             "--ignore-user-config",
             "--model",
-            "gpt-6-luna",
+            CODEX_MODEL,
             "--config",
-            'model_reasoning_effort="xhigh"',
+            f'model_reasoning_effort="{CODEX_REASONING_EFFORT}"',
             "--disable",
             "shell_tool",
             "--disable",

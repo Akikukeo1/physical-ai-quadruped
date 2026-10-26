@@ -57,6 +57,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("snapshot", type=Path, help="Completed real run containing corrections[0].context")
     parser.add_argument("--out-dir", type=Path, default=ROOT / "outputs/language-probes")
+    parser.add_argument("--case", nargs="+", choices=[case[0] for case in CASES], help="Run only selected cases")
+    parser.add_argument(
+        "--condition",
+        nargs="+",
+        choices=("history", "no_history"),
+        default=("history", "no_history"),
+        help="Run only selected history conditions",
+    )
     args = parser.parse_args()
     data = json.loads(args.snapshot.read_text(encoding="utf-8"))
     context = data["corrections"][0]["context"]
@@ -72,15 +80,22 @@ def main():
         "scope": "Development language probes; frozen snapshot, not robot execution or held-out evaluation.",
         "snapshot": str(args.snapshot),
         "snapshot_sha256": hashlib.sha256(args.snapshot.read_bytes()).hexdigest(),
+        "requested_model": planner.CODEX_MODEL,
+        "requested_reasoning_effort": planner.CODEX_REASONING_EFFORT,
+        "planner_source_sha256": hashlib.sha256(Path(planner.__file__).read_bytes()).hexdigest(),
+        "selected_conditions": args.condition,
+        "selected_cases": args.case or [case[0] for case in CASES],
         "cases": CASES,
         "results": [],
     }
     original = planner._codex_json
-    for condition in ("history", "no_history"):
+    for condition in args.condition:
         observed = deepcopy(context)
         if condition == "no_history":
             observed["observations"] = []
         for name, message, expected, cancelled in CASES:
+            if args.case and name not in args.case:
+                continue
             raw, error, accepted = None, None, False
 
             def capture(*arguments):
@@ -114,7 +129,8 @@ def main():
                 }
             )
             output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
-            print(f"{condition}/{name}: {'PASS' if correct else 'FAIL'} accepted={accepted}; {error or ''}", flush=True)
+            label = "ERROR" if infrastructure_error else "PASS" if correct else "FAIL"
+            print(f"{condition}/{name}: {label} accepted={accepted}; {error or ''}", flush=True)
             if infrastructure_error:
                 print(f"Stopped on infrastructure error; saved: {output}", flush=True)
                 raise SystemExit(1)

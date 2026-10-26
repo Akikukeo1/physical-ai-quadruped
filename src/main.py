@@ -18,7 +18,15 @@ from pai_motion.navigation import (
     rules_navigation,
     sample_navigation,
 )
-from pai_motion.planner import codex_correction, codex_navigation, codex_plan, codex_search, sample_plan
+from pai_motion.planner import (
+    CODEX_MODEL,
+    CODEX_REASONING_EFFORT,
+    codex_correction,
+    codex_navigation,
+    codex_plan,
+    codex_search,
+    sample_plan,
+)
 from pai_motion.search import execute_search, sample_search
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -88,6 +96,9 @@ def main() -> int:
     execution_completed = False
     data = {
         "planner": args.planner,
+        "requested_codex_settings": {"model": CODEX_MODEL, "reasoning_effort": CODEX_REASONING_EFFORT}
+        if args.planner == "codex" or args.replanner == "codex"
+        else None,
         "executor": args.executor,
         "task": args.task,
         "replanner": args.replanner,

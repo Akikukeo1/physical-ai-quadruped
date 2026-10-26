@@ -86,6 +86,18 @@ class TestCodexPlanner(unittest.TestCase):
 
 
 class TestCLI(unittest.TestCase):
+    def test_requested_model_settings_are_saved_with_a_codex_plan(self):
+        from pai_motion.planner import sample_plan
+
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            patch.object(sys, "argv", ["main", "--planner", "codex", "--out-dir", directory]),
+            patch("main.codex_plan", return_value=sample_plan()),
+        ):
+            self.assertEqual(main(), 0)
+            log = json.loads(next(Path(directory).glob("plan-*.json")).read_text(encoding="utf-8"))
+            self.assertEqual(log["requested_codex_settings"], {"model": "gpt-6-luna", "reasoning_effort": "xhigh"})
+
     def test_failure_keeps_plan_and_closes_simulator(self):
         with (
             tempfile.TemporaryDirectory() as directory,
