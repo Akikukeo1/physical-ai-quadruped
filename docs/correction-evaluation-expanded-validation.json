@@ -1,0 +1,2065 @@
+{
+  "scope": "Additional preregistered wave selected after low opportunity coverage; do not pool as an independent confirmatory sample.",
+  "frozen_commit": "9c04257",
+  "frozen_inputs": {
+    "protocol": {
+      "protocol": "correction-memory-v2-expanded",
+      "scope": "Twelve additional previously unused layouts in the same procedural static scene family; chosen after low opportunity coverage in the first wave, before inspecting any of these layouts. No planner/controller tuning.",
+      "seeds": [
+        801,
+        802,
+        803,
+        804,
+        805,
+        806,
+        807,
+        808,
+        809,
+        810,
+        811,
+        812
+      ],
+      "conditions": [
+        "history",
+        "current_only"
+      ],
+      "order": "Alternate condition order by seed index; run all declared seeds, including those without a correction opportunity.",
+      "plan": {
+        "intent": "青を探索して帰還。訂正後も元の帰還と期限を保持",
+        "target": "blue",
+        "seconds": 180,
+        "on_found": "return_home"
+      },
+      "trigger": "After a >=2-ray green observation, first scan with green absent, no blue observation in history, and elapsed <=90 seconds. All information comes from the robot's sensor log.",
+      "second_message": "Two simulation seconds after the first interpretation finishes, whether accepted or clarification; same rule in both conditions.",
+      "messages": [
+        [
+          "さっき見た緑を確認し直してから、青の探索を再開して",
+          "青は探さなくていいです。緑の再確認を続けて、最後に戻って"
+        ],
+        [
+          "青を探す前に、先ほど見えた緑をもう一度見てきて",
+          "青の探索は中止。緑を見直す作業は残して、終わったら出発地点へ"
+        ],
+        [
+          "さっきの緑を再確認するのを先にして。その後は青を探して帰って",
+          "やっぱり青は取り消します。緑の再確認と帰還はそのままで"
+        ],
+        [
+          "青の探索はいったん後にして、前に見えた緑を改めて確認して",
+          "青探しはやめて。緑をもう一度確認して戻る予定は維持して"
+        ],
+        [
+          "さっき見た緑を確認し直してから、青の探索を再開して",
+          "青は探さなくていいです。緑の再確認を続けて、最後に戻って"
+        ],
+        [
+          "青を探す前に、先ほど見えた緑をもう一度見てきて",
+          "青の探索は中止。緑を見直す作業は残して、終わったら出発地点へ"
+        ],
+        [
+          "さっきの緑を再確認するのを先にして。その後は青を探して帰って",
+          "やっぱり青は取り消します。緑の再確認と帰還はそのままで"
+        ],
+        [
+          "青の探索はいったん後にして、前に見えた緑を改めて確認して",
+          "青探しはやめて。緑をもう一度確認して戻る予定は維持して"
+        ],
+        [
+          "さっき見た緑を確認し直してから、青の探索を再開して",
+          "青は探さなくていいです。緑の再確認を続けて、最後に戻って"
+        ],
+        [
+          "青を探す前に、先ほど見えた緑をもう一度見てきて",
+          "青の探索は中止。緑を見直す作業は残して、終わったら出発地点へ"
+        ],
+        [
+          "さっきの緑を再確認するのを先にして。その後は青を探して帰って",
+          "やっぱり青は取り消します。緑の再確認と帰還はそのままで"
+        ],
+        [
+          "青の探索はいったん後にして、前に見えた緑を改めて確認して",
+          "青探しはやめて。緑をもう一度確認して戻る予定は維持して"
+        ]
+      ],
+      "ablation": "current_only changes only context.observations: retain records from the latest sensor scan and records already referenced by active tasks. Keep pending/completed/cancelled tasks, dialogue, map summary, home, deadline and controller identical. Do not remove observations from the executor or its validator.",
+      "success": "Both messages received; accepted observation-grounded green reobserve; blue explicitly cancelled with a user quote; fresh >=2-ray green evidence after last activation; home completed, no pending tasks, home error <=0.15m, within original180s; original deadline/home retained, zero velocity commands during model/question waits; finite upright trace without obstacle contact.",
+      "report": [
+        "opportunity coverage",
+        "mission success on triggered runs",
+        "safe deadline return",
+        "fresh observation",
+        "blue cancellation",
+        "clarification count",
+        "model wait wall seconds",
+        "distance",
+        "language error",
+        "physics error",
+        "infrastructure error"
+      ],
+      "freeze_rule": "Commit protocol, harness and source before inspecting any declared layout. Save fingerprints before first scene. No tuning on these seeds; if source or protocol changes after results are inspected, relabel these layouts as development and declare new seeds.",
+      "model": "gpt-6-luna",
+      "reasoning_effort": "xhigh",
+      "repeats": 1,
+      "limits": "Twelve additional paired layouts, fixed before inspection. Four frozen message variants cycled across seeds. Expansion was motivated by opportunity coverage in wave 1; do not pool waves as an independent confirmatory study. No initial-language inference, SLAM, camera, or hardware claim. Stop on infrastructure failure and preserve failed attempts. No replacement of non-triggered layouts."
+    },
+    "source_sha256": {
+      "assets/go2-assets.json": "514b9c396fe9be115ba39bf7bc726599a08b24c1cdc575db28b54c68cd486a33",
+      "docs/correction-evaluation-expanded.json": "35f8e31153b8292e3a874b9c75379d8a29403e50b8825c73c033b4b47e6e4bf3",
+      "schema/motion-plan.schema.json": "d4c34f7ac5fa1d3b73b8b5f83edd2424868f03e63a3248410b5c1a76416b3047",
+      "schema/navigation-plan.schema.json": "de40a70f9db7a55146c4a187cce16af4992e86ff76d34538a78a126d7d8f3ede",
+      "schema/search-correction.schema.json": "b353a700d1ddc1a55442ee5b964d8c66b2b5c7ed3626f51c19fff661c435c336",
+      "schema/search-plan.schema.json": "0e6fb7944f7eed123a01bc33498f90c9dc0140d1d89b8dc4a9815c2b447272e8",
+      "scripts/evaluate_corrections.py": "658e28197ef0d7fea9a2f5dc814c942a664f5ff31854676a3fa1757497ebca05",
+      "src/main.py": "1545606fc181fc136e0969c99168064eb7e6edd449df0cab3b53dd4df6dd640f",
+      "src/pai_motion/__init__.py": "1e734be59743ab4b4788e8c224b97546a33c0dfa051b74015242a5a8e0d8e931",
+      "src/pai_motion/assets.py": "d37498a34e1c7555efb1aaf7679ca94f94e13a04fac16f5272ac5ad7bfd254ee",
+      "src/pai_motion/correction.py": "617a76e3f779eeada8cc0754be7226268544b95d040fe16486b95d15255d8b0e",
+      "src/pai_motion/executor.py": "e26b8ba8a2c14f0f0b2afca81c676f7be9521678c54f1ac0a943217eb2fe7d17",
+      "src/pai_motion/motion.py": "a9a07958fb9694c7fc68cc06848f3570d47df278151e5da2a87de465ff9d6ba9",
+      "src/pai_motion/navigation.py": "4d8ae17d3b9b3e5ad8923de615fad091f078d8633ce072f7db27c64a86543425",
+      "src/pai_motion/planner.py": "6232167f82c28179ec69cb56a32325374abebe83121c7f276cf4dc4795dffa23",
+      "src/pai_motion/search.py": "05f3d5c13727717dc351cb13444e14f963e88f9e4788ad15eeb5c5781618c3f8",
+      "src/pai_motion/search_world.py": "efef1446aa809a8251aaaa259b8a22b5b75002f9dc064cf0134d98f05767ff30",
+      "src/pai_motion/sim_adapter.py": "c4f46fb1a3c5f35b2d962fbcc6c5001ce227593671e89b209e93d7809cefaef6"
+    },
+    "versions": {
+      "mujoco": "3.3.7",
+      "numpy": "2.2.6",
+      "onnxruntime": "1.23.2"
+    }
+  },
+  "summary": {
+    "declared_layouts": 12,
+    "expected_runs": 24,
+    "saved_attempts": 24,
+    "terminal_runs": 24,
+    "completed_pairs": 12,
+    "triggered_pairs": 1,
+    "history_success_on_triggered_pairs": 1,
+    "current_only_success_on_triggered_pairs": 0,
+    "safe_returns_on_terminal_runs": 24,
+    "infrastructure_attempts": 0,
+    "unresolved_runs": [],
+    "matrix_complete": true
+  },
+  "pairs": [
+    {
+      "seed": 801,
+      "triggered": false,
+      "history_success": null,
+      "current_only_success": null,
+      "first_context_equal_except_observations": null
+    },
+    {
+      "seed": 802,
+      "triggered": false,
+      "history_success": null,
+      "current_only_success": null,
+      "first_context_equal_except_observations": null
+    },
+    {
+      "seed": 803,
+      "triggered": false,
+      "history_success": null,
+      "current_only_success": null,
+      "first_context_equal_except_observations": null
+    },
+    {
+      "seed": 804,
+      "triggered": false,
+      "history_success": null,
+      "current_only_success": null,
+      "first_context_equal_except_observations": null
+    },
+    {
+      "seed": 805,
+      "triggered": false,
+      "history_success": null,
+      "current_only_success": null,
+      "first_context_equal_except_observations": null
+    },
+    {
+      "seed": 806,
+      "triggered": true,
+      "history_success": true,
+      "current_only_success": false,
+      "first_context_equal_except_observations": true
+    },
+    {
+      "seed": 807,
+      "triggered": false,
+      "history_success": null,
+      "current_only_success": null,
+      "first_context_equal_except_observations": null
+    },
+    {
+      "seed": 808,
+      "triggered": false,
+      "history_success": null,
+      "current_only_success": null,
+      "first_context_equal_except_observations": null
+    },
+    {
+      "seed": 809,
+      "triggered": false,
+      "history_success": null,
+      "current_only_success": null,
+      "first_context_equal_except_observations": null
+    },
+    {
+      "seed": 810,
+      "triggered": false,
+      "history_success": null,
+      "current_only_success": null,
+      "first_context_equal_except_observations": null
+    },
+    {
+      "seed": 811,
+      "triggered": false,
+      "history_success": null,
+      "current_only_success": null,
+      "first_context_equal_except_observations": null
+    },
+    {
+      "seed": 812,
+      "triggered": false,
+      "history_success": null,
+      "current_only_success": null,
+      "first_context_equal_except_observations": null
+    }
+  ],
+  "opportunity_reasons": [
+    {
+      "seed": 801,
+      "first_detection_times": {
+        "blue": 19.999999999999794,
+        "green": 25.99999999999647
+      },
+      "reason": "green_not_observed_before_blue"
+    },
+    {
+      "seed": 802,
+      "first_detection_times": {
+        "blue": 15.000000000001679,
+        "green": null
+      },
+      "reason": "green_not_observed_before_blue"
+    },
+    {
+      "seed": 803,
+      "first_detection_times": {
+        "blue": 17.000000000001457,
+        "green": null
+      },
+      "reason": "green_not_observed_before_blue"
+    },
+    {
+      "seed": 804,
+      "first_detection_times": {
+        "blue": 19.999999999999794,
+        "green": 15.000000000001679
+      },
+      "reason": "green_observed_but_not_lost_before_blue"
+    },
+    {
+      "seed": 805,
+      "first_detection_times": {
+        "blue": 19.000000000000348,
+        "green": null
+      },
+      "reason": "green_not_observed_before_blue"
+    },
+    {
+      "seed": 806,
+      "first_detection_times": {
+        "blue": null,
+        "green": 14.000000000001345
+      },
+      "reason": "triggered"
+    },
+    {
+      "seed": 807,
+      "first_detection_times": {
+        "blue": 24.999999999997023,
+        "green": 14.000000000001345
+      },
+      "reason": "green_observed_but_not_lost_before_blue"
+    },
+    {
+      "seed": 808,
+      "first_detection_times": {
+        "blue": 11.000000000000343,
+        "green": null
+      },
+      "reason": "green_not_observed_before_blue"
+    },
+    {
+      "seed": 809,
+      "first_detection_times": {
+        "blue": 51.000000000016364,
+        "green": 23.999999999997577
+      },
+      "reason": "green_observed_but_not_lost_before_blue"
+    },
+    {
+      "seed": 810,
+      "first_detection_times": {
+        "blue": 14.000000000001345,
+        "green": null
+      },
+      "reason": "green_not_observed_before_blue"
+    },
+    {
+      "seed": 811,
+      "first_detection_times": {
+        "blue": 11.000000000000343,
+        "green": null
+      },
+      "reason": "green_not_observed_before_blue"
+    },
+    {
+      "seed": 812,
+      "first_detection_times": {
+        "blue": 16.00000000000201,
+        "green": null
+      },
+      "reason": "green_not_observed_before_blue"
+    }
+  ],
+  "cases": [
+    {
+      "seed": 801,
+      "condition": "history",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 42.800000000007564,
+      "home_error": 0.09759931292781497,
+      "distance": 5.028529912810639,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v2/seed-801-history-attempt-1.json",
+      "sha256": "58a5392543053e9c9813b5b3117c3ebbd9fdf20f408a4649934bd032929af5a3",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 19.999999999999794,
+            "evidence": {
+              "time": 19.999999999999794,
+              "position": [
+                2.0469015585389765,
+                0.4593426891909213
+              ],
+              "range": 1.7899500794105592
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 41.80000000000512,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 801,
+      "condition": "current_only",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 42.800000000007564,
+      "home_error": 0.09759931292781497,
+      "distance": 5.028529912810639,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v2/seed-801-current_only-attempt-1.json",
+      "sha256": "40a8e03f68d3e5b9d7bd200d4d1c62eef871ed24425d84459975a55be5acba1e",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 19.999999999999794,
+            "evidence": {
+              "time": 19.999999999999794,
+              "position": [
+                2.0469015585389765,
+                0.4593426891909213
+              ],
+              "range": 1.7899500794105592
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 41.80000000000512,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 802,
+      "condition": "current_only",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 29.79999999999381,
+      "home_error": 0.10667913836554205,
+      "distance": 5.383905831137909,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v2/seed-802-current_only-attempt-1.json",
+      "sha256": "40a2ab67819e696251293b182743ba6555cfaba39723e05a9efae14ce6ce3842",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 15.000000000001679,
+            "evidence": {
+              "time": 15.000000000001679,
+              "position": [
+                1.9703655577967645,
+                1.5194651497317828
+              ],
+              "range": 1.5052011013570497
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 28.799999999994917,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 802,
+      "condition": "history",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 29.79999999999381,
+      "home_error": 0.10667913836554205,
+      "distance": 5.383905831137909,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v2/seed-802-history-attempt-1.json",
+      "sha256": "1e9f2dd48cc1fef162d1ec289ff853299560e31e70c1e01f1b47c410706680ea",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 15.000000000001679,
+            "evidence": {
+              "time": 15.000000000001679,
+              "position": [
+                1.9703655577967645,
+                1.5194651497317828
+              ],
+              "range": 1.5052011013570497
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 28.799999999994917,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 803,
+      "condition": "history",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 37.800000000001454,
+      "home_error": 0.1016179409454268,
+      "distance": 5.4485733785658965,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v2/seed-803-history-attempt-1.json",
+      "sha256": "39733d62cce2ab6082495f6e84216e35ac4320b3518dd494d52df1e1d1f63751",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 17.000000000001457,
+            "evidence": {
+              "time": 17.000000000001457,
+              "position": [
+                1.7079916445027417,
+                1.956927948256503
+              ],
+              "range": 1.7323502970839657
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 36.79999999999901,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 803,
+      "condition": "current_only",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 37.800000000001454,
+      "home_error": 0.1016179409454268,
+      "distance": 5.4485733785658965,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v2/seed-803-current_only-attempt-1.json",
+      "sha256": "3a729afb42f4e85550374915c796699e4593fdf578a460afe8f8ca5f760f412f",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 17.000000000001457,
+            "evidence": {
+              "time": 17.000000000001457,
+              "position": [
+                1.7079916445027417,
+                1.956927948256503
+              ],
+              "range": 1.7323502970839657
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 36.79999999999901,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 804,
+      "condition": "current_only",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 49.80000000001612,
+      "home_error": 0.0996941662576599,
+      "distance": 7.114251641884268,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v2/seed-804-current_only-attempt-1.json",
+      "sha256": "61b6fc192892f7043990efd61c8e644a0baf02199c6cf57fd32993130eda9ce2",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 19.999999999999794,
+            "evidence": {
+              "time": 19.999999999999794,
+              "position": [
+                2.669736973777071,
+                0.8334081741538563
+              ],
+              "range": 1.7183542381775097
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 48.800000000013675,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 804,
+      "condition": "history",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 49.80000000001612,
+      "home_error": 0.0996941662576599,
+      "distance": 7.114251641884268,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v2/seed-804-history-attempt-1.json",
+      "sha256": "1201e232e2414154eb46c6d23538f7c73726e04a4d864eb1f2fb6b8af4cebfcd",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 19.999999999999794,
+            "evidence": {
+              "time": 19.999999999999794,
+              "position": [
+                2.669736973777071,
+                0.8334081741538563
+              ],
+              "range": 1.7183542381775097
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 48.800000000013675,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 805,
+      "condition": "history",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 40.20000000000439,
+      "home_error": 0.118749254493354,
+      "distance": 6.075490205186815,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v2/seed-805-history-attempt-1.json",
+      "sha256": "f41a9f023245779c8fb8daba7b13cc0990b68426464d1d0246ce67b285e43ac7",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 19.000000000000348,
+            "evidence": {
+              "time": 19.000000000000348,
+              "position": [
+                2.2527981997398814,
+                -1.6810347548694033
+              ],
+              "range": 1.6544463140188148
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 39.20000000000194,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 805,
+      "condition": "current_only",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 40.20000000000439,
+      "home_error": 0.118749254493354,
+      "distance": 6.075490205186815,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v2/seed-805-current_only-attempt-1.json",
+      "sha256": "22646f7e972c52f79e7a4a75519201c70e788d3d20c1eec3c2bc507b2dd25205",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 19.000000000000348,
+            "evidence": {
+              "time": 19.000000000000348,
+              "position": [
+                2.2527981997398814,
+                -1.6810347548694033
+              ],
+              "range": 1.6544463140188148
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 39.20000000000194,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 806,
+      "condition": "current_only",
+      "triggered": true,
+      "mission_success": false,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 2,
+      "model_wait_wall_seconds": 19.89621386898216,
+      "elapsed": 148.39999999998525,
+      "home_error": 0.10005621377761428,
+      "distance": 8.969865916643505,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v2/seed-806-current_only-attempt-1.json",
+      "sha256": "189b3326873faf759b8c443f28732f7a8c2b7b96c407d943f48d989ebaae40db",
+      "tasks": {
+        "pending": [
+          {
+            "id": "search-1",
+            "action": "search",
+            "target": "blue",
+            "observation_id": null
+          }
+        ],
+        "completed": [
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 147.3999999999757,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": [
+        {
+          "message": "青を探す前に、先ほど見えた緑をもう一度見てきて",
+          "context": {
+            "time": 43.00000000000659,
+            "position": [
+              1.7214587003444006,
+              1.4112596350316537
+            ],
+            "yaw": -2.4745177380134016,
+            "home": [
+              -7.953999876922021e-05,
+              -0.00011282629718181661
+            ],
+            "deadline": 181.0,
+            "remaining_seconds": 137.9999999999934,
+            "latest_scan": {
+              "time": 43.00000000000659,
+              "visible_colors": [],
+              "range_limit": 1.8
+            },
+            "pending": [
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "completed": [],
+            "cancelled": [],
+            "dialogue": [
+              {
+                "role": "user",
+                "text": "青を探す前に、先ほど見えた緑をもう一度見てきて"
+              }
+            ],
+            "observations": [],
+            "map_summary": {
+              "resolution": 0.1,
+              "free_cells": 1809,
+              "occupied_cells": 133,
+              "visited_frontiers": [
+                [
+                  1.0,
+                  0.8
+                ],
+                [
+                  1.9000000000000001,
+                  1.6
+                ],
+                [
+                  3.1,
+                  1.7000000000000002
+                ],
+                [
+                  3.9000000000000004,
+                  1.8
+                ]
+              ]
+            }
+          },
+          "raw": {
+            "intent": "緑を再確認する観察記録が不足しているため、既存の探索と帰還を保持",
+            "status": "clarify",
+            "question": "緑を見た記録がありません。緑を見た時刻を教えてください。",
+            "steps": [
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": []
+          }
+        },
+        {
+          "message": "青の探索は中止。緑を見直す作業は残して、終わったら出発地点へ",
+          "context": {
+            "time": 55.40000000002174,
+            "position": [
+              1.7261084943287468,
+              1.4253356298962405
+            ],
+            "yaw": -2.469265703064385,
+            "home": [
+              -7.953999876922021e-05,
+              -0.00011282629718181661
+            ],
+            "deadline": 181.0,
+            "remaining_seconds": 125.59999999997825,
+            "latest_scan": {
+              "time": 55.00000000002125,
+              "visible_colors": [],
+              "range_limit": 1.8
+            },
+            "pending": [
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "completed": [],
+            "cancelled": [],
+            "dialogue": [
+              {
+                "role": "user",
+                "text": "青を探す前に、先ほど見えた緑をもう一度見てきて"
+              },
+              {
+                "role": "assistant",
+                "text": "緑を見た記録がありません。緑を見た時刻を教えてください。"
+              },
+              {
+                "role": "user",
+                "text": "青の探索は中止。緑を見直す作業は残して、終わったら出発地点へ"
+              }
+            ],
+            "observations": [],
+            "map_summary": {
+              "resolution": 0.1,
+              "free_cells": 1808,
+              "occupied_cells": 134,
+              "visited_frontiers": [
+                [
+                  1.0,
+                  0.8
+                ],
+                [
+                  1.9000000000000001,
+                  1.6
+                ],
+                [
+                  3.1,
+                  1.7000000000000002
+                ],
+                [
+                  3.9000000000000004,
+                  1.8
+                ]
+              ]
+            }
+          },
+          "raw": {
+            "intent": "青の探索中止と緑の再確認を反映します。緑の観察記録が必要です",
+            "status": "clarify",
+            "question": "緑を観察した時刻を教えてください。",
+            "steps": [
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": []
+          }
+        }
+      ]
+    },
+    {
+      "seed": 806,
+      "condition": "history",
+      "triggered": true,
+      "mission_success": true,
+      "safe_return": true,
+      "fresh_green": true,
+      "blue_cancelled": true,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 19.225620408018585,
+      "elapsed": 84.79999999998144,
+      "home_error": 0.11584867543254306,
+      "distance": 9.547122482135993,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v2/seed-806-history-attempt-1.json",
+      "sha256": "ac6e3098b4924e6a1b0f4a9f443e3b6ab2368baff11e7537bfc973347356f4dd",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "reobserve-green-1",
+              "action": "reobserve",
+              "target": "green",
+              "observation_id": "obs-42-green"
+            },
+            "time": 68.40000000002199,
+            "evidence": {
+              "id": "obs-70-green",
+              "color": "green",
+              "time": 68.40000000002199,
+              "position": [
+                1.815112055349092,
+                1.4716213978798025
+              ],
+              "range": 1.7539848881145197
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 83.7999999999861,
+            "evidence": null
+          }
+        ],
+        "cancelled": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 64.40000000003131,
+            "instruction": "青の探索は中止。緑を見直す作業は残して、終わったら出発地点へ"
+          }
+        ]
+      },
+      "planner_inputs": [
+        {
+          "message": "青を探す前に、先ほど見えた緑をもう一度見てきて",
+          "context": {
+            "time": 43.00000000000659,
+            "position": [
+              1.7214587003444006,
+              1.4112596350316537
+            ],
+            "yaw": -2.4745177380134016,
+            "home": [
+              -7.953999876922021e-05,
+              -0.00011282629718181661
+            ],
+            "deadline": 181.0,
+            "remaining_seconds": 137.9999999999934,
+            "latest_scan": {
+              "time": 43.00000000000659,
+              "visible_colors": [],
+              "range_limit": 1.8
+            },
+            "pending": [
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "completed": [],
+            "cancelled": [],
+            "dialogue": [
+              {
+                "role": "user",
+                "text": "青を探す前に、先ほど見えた緑をもう一度見てきて"
+              }
+            ],
+            "observations": [
+              {
+                "id": "obs-14-green",
+                "color": "green",
+                "time": 14.000000000001345,
+                "position": [
+                  1.7784721484308776,
+                  1.481411316090206
+                ],
+                "range": 1.7802093334662508
+              },
+              {
+                "id": "obs-42-green",
+                "color": "green",
+                "time": 42.000000000005365,
+                "position": [
+                  1.8600770203331234,
+                  1.520577004802515
+                ],
+                "range": 1.7215362446251905
+              }
+            ],
+            "map_summary": {
+              "resolution": 0.1,
+              "free_cells": 1809,
+              "occupied_cells": 133,
+              "visited_frontiers": [
+                [
+                  1.0,
+                  0.8
+                ],
+                [
+                  1.9000000000000001,
+                  1.6
+                ],
+                [
+                  3.1,
+                  1.7000000000000002
+                ],
+                [
+                  3.9000000000000004,
+                  1.8
+                ]
+              ]
+            }
+          },
+          "raw": {
+            "intent": "最新の緑を再確認してから青を探索し、期限と帰還を維持",
+            "status": "accept",
+            "question": "",
+            "steps": [
+              {
+                "id": "reobserve-green-1",
+                "action": "reobserve",
+                "target": "green",
+                "observation_id": "obs-42-green"
+              },
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": []
+          }
+        },
+        {
+          "message": "青の探索は中止。緑を見直す作業は残して、終わったら出発地点へ",
+          "context": {
+            "time": 54.200000000020275,
+            "position": [
+              1.7303137121749388,
+              1.4462961990888292
+            ],
+            "yaw": -1.2019451984018068,
+            "home": [
+              -7.953999876922021e-05,
+              -0.00011282629718181661
+            ],
+            "deadline": 181.0,
+            "remaining_seconds": 126.79999999997972,
+            "latest_scan": {
+              "time": 54.200000000020275,
+              "visible_colors": [],
+              "range_limit": 1.8
+            },
+            "pending": [
+              {
+                "id": "reobserve-green-1",
+                "action": "reobserve",
+                "target": "green",
+                "observation_id": "obs-42-green"
+              },
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "completed": [],
+            "cancelled": [],
+            "dialogue": [
+              {
+                "role": "user",
+                "text": "青を探す前に、先ほど見えた緑をもう一度見てきて"
+              },
+              {
+                "role": "user",
+                "text": "青の探索は中止。緑を見直す作業は残して、終わったら出発地点へ"
+              }
+            ],
+            "observations": [
+              {
+                "id": "obs-14-green",
+                "color": "green",
+                "time": 14.000000000001345,
+                "position": [
+                  1.7784721484308776,
+                  1.481411316090206
+                ],
+                "range": 1.7802093334662508
+              },
+              {
+                "id": "obs-42-green",
+                "color": "green",
+                "time": 42.000000000005365,
+                "position": [
+                  1.8600770203331234,
+                  1.520577004802515
+                ],
+                "range": 1.7215362446251905
+              }
+            ],
+            "map_summary": {
+              "resolution": 0.1,
+              "free_cells": 1808,
+              "occupied_cells": 134,
+              "visited_frontiers": [
+                [
+                  1.0,
+                  0.8
+                ],
+                [
+                  1.9000000000000001,
+                  1.6
+                ],
+                [
+                  3.1,
+                  1.7000000000000002
+                ],
+                [
+                  3.9000000000000004,
+                  1.8
+                ]
+              ]
+            }
+          },
+          "raw": {
+            "intent": "青の探索を取り消し、緑の再確認後に出発地点へ戻る",
+            "status": "accept",
+            "question": "",
+            "steps": [
+              {
+                "id": "reobserve-green-1",
+                "action": "reobserve",
+                "target": "green",
+                "observation_id": "obs-42-green"
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": [
+              {
+                "id": "search-1",
+                "instruction": "青の探索は中止。緑を見直す作業は残して、終わったら出発地点へ"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "seed": 807,
+      "condition": "history",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 44.00000000000903,
+      "home_error": 0.12411284801813502,
+      "distance": 8.24923766529913,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v2/seed-807-history-attempt-1.json",
+      "sha256": "f33b490392f9fb386a59d35aae04796f6d0ec88266a684dcbcdd05b4552038f7",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 24.999999999997023,
+            "evidence": {
+              "time": 24.999999999997023,
+              "position": [
+                3.2915358077114085,
+                0.6587285582512472
+              ],
+              "range": 1.7197698423361119
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 43.00000000000659,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 807,
+      "condition": "current_only",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 44.00000000000903,
+      "home_error": 0.12411284801813502,
+      "distance": 8.24923766529913,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v2/seed-807-current_only-attempt-1.json",
+      "sha256": "617865e65fbe8a50af53eb40b79bf2a51810fc9aa4f244d55f393df611f66fe2",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 24.999999999997023,
+            "evidence": {
+              "time": 24.999999999997023,
+              "position": [
+                3.2915358077114085,
+                0.6587285582512472
+              ],
+              "range": 1.7197698423361119
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 43.00000000000659,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 808,
+      "condition": "current_only",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 26.199999999995804,
+      "home_error": 0.10283759289790408,
+      "distance": 4.568370572255453,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v2/seed-808-current_only-attempt-1.json",
+      "sha256": "800f78e1cd5419b7e6baaa0810016d8d71e75b2bd1afbf09b2ad39be077d8ccd",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 11.000000000000343,
+            "evidence": {
+              "time": 11.000000000000343,
+              "position": [
+                1.4797684252371792,
+                -1.6563408042411067
+              ],
+              "range": 1.7924058391794664
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 25.199999999996912,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 808,
+      "condition": "history",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 26.199999999995804,
+      "home_error": 0.10283759289790408,
+      "distance": 4.568370572255453,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v2/seed-808-history-attempt-1.json",
+      "sha256": "45bcdf7866047c29cfa3f614cc9178feb924043940e57ce0f6f2f7a71d7bc767",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 11.000000000000343,
+            "evidence": {
+              "time": 11.000000000000343,
+              "position": [
+                1.4797684252371792,
+                -1.6563408042411067
+              ],
+              "range": 1.7924058391794664
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 25.199999999996912,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 809,
+      "condition": "history",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 89.19999999997118,
+      "home_error": 0.1091404590880557,
+      "distance": 11.886850925338171,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v2/seed-809-history-attempt-1.json",
+      "sha256": "92bfb8d8cf0de8476b9acf7f4a4cc4fc14d6526f1801c2cef8ee9b51b0fbbb16",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 51.000000000016364,
+            "evidence": {
+              "time": 51.000000000016364,
+              "position": [
+                2.9218348681327746,
+                0.525288885262134
+              ],
+              "range": 1.7873034219246027
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 88.19999999997584,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 809,
+      "condition": "current_only",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 89.19999999997118,
+      "home_error": 0.1091404590880557,
+      "distance": 11.886850925338171,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v2/seed-809-current_only-attempt-1.json",
+      "sha256": "9bbb51a89264e5ab967dcdb2388a297e3d8ce72b5b64bab5a492e26619d3e32a",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 51.000000000016364,
+            "evidence": {
+              "time": 51.000000000016364,
+              "position": [
+                2.9218348681327746,
+                0.525288885262134
+              ],
+              "range": 1.7873034219246027
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 88.19999999997584,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 810,
+      "condition": "current_only",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 30.799999999993254,
+      "home_error": 0.09667440791450965,
+      "distance": 5.7187408222418075,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v2/seed-810-current_only-attempt-1.json",
+      "sha256": "1979cd3661e129bc9574387454932f979d1aeba5903aa4141b568c8f8f9d1895",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 14.000000000001345,
+            "evidence": {
+              "time": 14.000000000001345,
+              "position": [
+                2.118921679152944,
+                1.6649877776567563
+              ],
+              "range": 1.7399242871897524
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 29.799999999994363,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 810,
+      "condition": "history",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 30.799999999993254,
+      "home_error": 0.09667440791450965,
+      "distance": 5.7187408222418075,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v2/seed-810-history-attempt-1.json",
+      "sha256": "ef998b7f59c11f529f21afbf73635b35ef726fd05a850c2df5d69795ab6ad089",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 14.000000000001345,
+            "evidence": {
+              "time": 14.000000000001345,
+              "position": [
+                2.118921679152944,
+                1.6649877776567563
+              ],
+              "range": 1.7399242871897524
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 29.799999999994363,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 811,
+      "condition": "history",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 26.399999999995693,
+      "home_error": 0.11463965808981812,
+      "distance": 4.670589687247171,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v2/seed-811-history-attempt-1.json",
+      "sha256": "ba7b1b5e7d0c1ee6ddbe713620afcd710b7062b5e40f2dd14e38a5d5f28bb07d",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 11.000000000000343,
+            "evidence": {
+              "time": 11.000000000000343,
+              "position": [
+                1.6012647742863824,
+                -1.5751279818723676
+              ],
+              "range": 1.7647822660785124
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 25.3999999999968,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 811,
+      "condition": "current_only",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 26.399999999995693,
+      "home_error": 0.11463965808981812,
+      "distance": 4.670589687247171,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v2/seed-811-current_only-attempt-1.json",
+      "sha256": "c5f80c2d274e07582f81bab316077ca4a176fc0d249a32926d807b1441463226",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 11.000000000000343,
+            "evidence": {
+              "time": 11.000000000000343,
+              "position": [
+                1.6012647742863824,
+                -1.5751279818723676
+              ],
+              "range": 1.7647822660785124
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 25.3999999999968,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 812,
+      "condition": "current_only",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 34.79999999999779,
+      "home_error": 0.10413274539623622,
+      "distance": 4.9096832015804655,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v2/seed-812-current_only-attempt-1.json",
+      "sha256": "00d61397bdc8d29ac7753802310d3e9c035877f8570e17ae17adcf48021fe9f3",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 16.00000000000201,
+            "evidence": {
+              "time": 16.00000000000201,
+              "position": [
+                1.7590934468873403,
+                -1.510075264243601
+              ],
+              "range": 1.7702510983474686
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 33.79999999999534,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 812,
+      "condition": "history",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 34.79999999999779,
+      "home_error": 0.10413274539623622,
+      "distance": 4.9096832015804655,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v2/seed-812-history-attempt-1.json",
+      "sha256": "956852c03518b8a38aae88691e9438ca63397d1d818f51daa35d9949c55dadd6",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 16.00000000000201,
+            "evidence": {
+              "time": 16.00000000000201,
+              "position": [
+                1.7590934468873403,
+                -1.510075264243601
+              ],
+              "range": 1.7702510983474686
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 33.79999999999534,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    }
+  ],
+  "verification": {
+    "all_frozen_fingerprints_match": true,
+    "production_source_same_as_wave1": true,
+    "all_log_hashes_and_scores_recomputed": true,
+    "windows_tests": 67,
+    "windows_skipped_physics": 9,
+    "new_evaluation_tests_on_wsl": 4,
+    "test_log": "outputs/correction-evaluation-v2-tests.log"
+  }
+}
