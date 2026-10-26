@@ -1,0 +1,188 @@
+{
+  "scope": "One development replay of a known failing seed and dialogue; not generalization or a model benchmark.",
+  "source_commit": "1d6713c",
+  "requested_codex_settings": {
+    "model": "gpt-6-luna",
+    "reasoning_effort": "xhigh"
+  },
+  "source_sha256": {
+    "src/pai_motion/planner.py": "6232167f82c28179ec69cb56a32325374abebe83121c7f276cf4dc4795dffa23",
+    "src/pai_motion/search.py": "05f3d5c13727717dc351cb13444e14f963e88f9e4788ad15eeb5c5781618c3f8",
+    "src/pai_motion/correction.py": "617a76e3f779eeada8cc0754be7226268544b95d040fe16486b95d15255d8b0e",
+    "src/main.py": "1545606fc181fc136e0969c99168064eb7e6edd449df0cab3b53dd4df6dd640f"
+  },
+  "log": "outputs/dialogue-luna6/latest-observation/plan-20261026T132935055156Z.json",
+  "sha256": "147d08ac786ddb6591fa5050b44635ca205cb9088914291f56667df5f4c43c53",
+  "seed": 305,
+  "mission_success": true,
+  "outcome": "returned",
+  "elapsed": 132.99999999991172,
+  "home_error": 0.10219054556970392,
+  "deadline": 181.0,
+  "selected_observation": {
+    "id": "obs-47-green",
+    "color": "green",
+    "time": 47.000000000011475,
+    "position": [
+      2.2691727856458033,
+      -2.0846918138324573
+    ],
+    "range": 1.4918153037567805
+  },
+  "last_activation": 96.1999999999572,
+  "fresh_evidence": {
+    "id": "obs-111-green",
+    "color": "green",
+    "time": 110.19999999992457,
+    "position": [
+      2.2460359847710896,
+      -2.0915143759677934
+    ],
+    "range": 1.5500361644599185
+  },
+  "tasks": {
+    "pending": [],
+    "completed": [
+      {
+        "step": {
+          "id": "reobserve-green-1",
+          "action": "reobserve",
+          "target": "green",
+          "observation_id": "obs-47-green"
+        },
+        "time": 110.19999999992457,
+        "evidence": {
+          "id": "obs-111-green",
+          "color": "green",
+          "time": 110.19999999992457,
+          "position": [
+            2.2460359847710896,
+            -2.0915143759677934
+          ],
+          "range": 1.5500361644599185
+        }
+      },
+      {
+        "step": {
+          "id": "home",
+          "action": "return_home",
+          "target": null,
+          "observation_id": null
+        },
+        "time": 131.99999999990217,
+        "evidence": null
+      }
+    ],
+    "cancelled": [
+      {
+        "step": {
+          "id": "search-1",
+          "action": "search",
+          "target": "blue",
+          "observation_id": null
+        },
+        "time": 96.1999999999572,
+        "instruction": "青の探索は取り消して。"
+      }
+    ]
+  },
+  "no_obstacle_contact_or_fall": true,
+  "zero_velocity_wait_commands": [
+    53,
+    104,
+    44
+  ],
+  "turns": [
+    {
+      "message": "青か緑のどちらかを再確認したいけど、まだ色を指定していません。どちらか質問して",
+      "status": "clarification",
+      "correction": {
+        "intent": "再確認する色が未指定のため、色の指定を確認します。",
+        "status": "clarify",
+        "steps": [
+          {
+            "id": "search-1",
+            "action": "search",
+            "target": "blue",
+            "observation_id": null
+          },
+          {
+            "id": "home",
+            "action": "return_home",
+            "target": null,
+            "observation_id": null
+          }
+        ],
+        "cancelled": [],
+        "question": "青と緑のどちらを再確認しますか？"
+      },
+      "planning_wall_seconds": 10.515993351989891
+    },
+    {
+      "message": "緑です。",
+      "status": "accepted",
+      "correction": {
+        "intent": "緑を再確認してから青を探し、見つけるか期限に達したら出発地点へ戻る。",
+        "status": "accept",
+        "steps": [
+          {
+            "id": "reobserve-green-1",
+            "action": "reobserve",
+            "target": "green",
+            "observation_id": "obs-47-green"
+          },
+          {
+            "id": "search-1",
+            "action": "search",
+            "target": "blue",
+            "observation_id": null
+          },
+          {
+            "id": "home",
+            "action": "return_home",
+            "target": null,
+            "observation_id": null
+          }
+        ],
+        "cancelled": [],
+        "question": ""
+      },
+      "planning_wall_seconds": 20.839472596009728
+    },
+    {
+      "message": "青の探索は取り消して。緑の再確認はそのまま続けて、最後は戻って",
+      "status": "accepted",
+      "correction": {
+        "intent": "緑を再確認してから、出発地点へ戻る。",
+        "status": "accept",
+        "steps": [
+          {
+            "id": "reobserve-green-1",
+            "action": "reobserve",
+            "target": "green",
+            "observation_id": "obs-47-green"
+          },
+          {
+            "id": "home",
+            "action": "return_home",
+            "target": null,
+            "observation_id": null
+          }
+        ],
+        "cancelled": [
+          {
+            "id": "search-1",
+            "instruction": "青の探索は取り消して。"
+          }
+        ],
+        "question": ""
+      },
+      "planning_wall_seconds": 8.698364740004763
+    }
+  ],
+  "tests": {
+    "windows_total": 63,
+    "windows_skipped_physics": 9,
+    "note": "Prior WSL 61-test suite included nine physics tests; two new tests check probe selection and metadata."
+  }
+}
