@@ -1,0 +1,24 @@
+{
+  "protocol": "correction-memory-v1",
+  "scope": "Four previously unused layouts in the existing procedural static scene family; not camera perception, SLAM or real hardware.",
+  "seeds": [701, 702, 703, 704],
+  "conditions": ["history", "current_only"],
+  "order": "Alternate condition order by seed index; run all declared seeds, including those without a correction opportunity.",
+  "plan": {"intent": "青を探索して帰還。訂正後も元の帰還と期限を保持", "target": "blue", "seconds": 180, "on_found": "return_home"},
+  "trigger": "After a >=2-ray green observation, first scan with green absent, no blue observation in history, and elapsed <=90 seconds. All information comes from the robot's sensor log.",
+  "second_message": "Two simulation seconds after the first interpretation finishes, whether accepted or clarification; same rule in both conditions.",
+  "messages": [
+    ["さっき見た緑を確認し直してから、青の探索を再開して", "青は探さなくていいです。緑の再確認を続けて、最後に戻って"],
+    ["青を探す前に、先ほど見えた緑をもう一度見てきて", "青の探索は中止。緑を見直す作業は残して、終わったら出発地点へ"],
+    ["さっきの緑を再確認するのを先にして。その後は青を探して帰って", "やっぱり青は取り消します。緑の再確認と帰還はそのままで"],
+    ["青の探索はいったん後にして、前に見えた緑を改めて確認して", "青探しはやめて。緑をもう一度確認して戻る予定は維持して"]
+  ],
+  "ablation": "current_only changes only context.observations: retain records from the latest sensor scan and records already referenced by active tasks. Keep pending/completed/cancelled tasks, dialogue, map summary, home, deadline and controller identical. Do not remove observations from the executor or its validator.",
+  "success": "Both messages received; accepted observation-grounded green reobserve; blue explicitly cancelled with a user quote; fresh >=2-ray green evidence after last activation; home completed, no pending tasks, home error <=0.15m, within original180s; original deadline/home retained, zero velocity commands during model/question waits; finite upright trace without obstacle contact.",
+  "report": ["opportunity coverage", "mission success on triggered runs", "safe deadline return", "fresh observation", "blue cancellation", "clarification count", "model wait wall seconds", "distance", "language error", "physics error", "infrastructure error"],
+  "freeze_rule": "Commit protocol, harness and source before inspecting any declared layout. Save fingerprints before first scene. No tuning on these seeds; if source or protocol changes after results are inspected, relabel these layouts as development and declare new seeds.",
+  "model": "gpt-6-luna",
+  "reasoning_effort": "xhigh",
+  "repeats": 1,
+  "limits": "Only four paired layouts, one language variant each and stochastic model latency. No statistical superiority claim; record non-triggered cases without replacing them. Initial plan is fixed to isolate correction interpretation; no live initial-language inference is evaluated. Stop entire batch on model infrastructure failure, preserve partial records, resume only with matching frozen inputs."
+}
