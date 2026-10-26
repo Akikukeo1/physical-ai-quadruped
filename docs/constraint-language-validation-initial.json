@@ -1,0 +1,138 @@
+{
+  "scope": "Three-turn development language probe; historical observation, no simulator execution.",
+  "snapshot": "outputs/task-revision-dev/reobserve/plan-20261024T201811354659Z.json",
+  "snapshot_sha256": "190713c8b510ed37f04c036350c54528df4c1d6e0c7596a224c349b4383260b2",
+  "schema_sha256": "9a59783533349abd4ba728a1f70ff5415425bc337062ae82f7af263021187d53",
+  "requested_model": "gpt-6-luna",
+  "requested_reasoning_effort": "xhigh",
+  "results": [
+    {
+      "turn": 1,
+      "message": "緑を見た地点から半径0.5m以内へは立ち入らず、青を引き続き探索して",
+      "context": {
+        "time": 56.000000000022474,
+        "position": [
+          1.2907165320180827,
+          -1.3176044051560716
+        ],
+        "yaw": 2.313526386203978,
+        "home": [
+          -7.953999876922021e-05,
+          -0.00011282629718181661
+        ],
+        "deadline": 181.0,
+        "remaining_seconds": 124.99999999997752,
+        "latest_scan": {
+          "time": 56.000000000022474,
+          "visible_colors": [],
+          "range_limit": 1.8
+        },
+        "pending": [
+          {
+            "id": "search-1",
+            "action": "search",
+            "target": "blue",
+            "observation_id": null
+          },
+          {
+            "id": "home",
+            "action": "return_home",
+            "target": null,
+            "observation_id": null
+          }
+        ],
+        "completed": [],
+        "observations": [
+          {
+            "id": "obs-22-green",
+            "color": "green",
+            "time": 21.999999999998685,
+            "position": [
+              2.355157376217962,
+              -2.090133571793647
+            ],
+            "range": 1.389082633046279
+          },
+          {
+            "id": "obs-47-green",
+            "color": "green",
+            "time": 47.000000000011475,
+            "position": [
+              2.2691727856458033,
+              -2.0846918138324573
+            ],
+            "range": 1.4918153037567805
+          }
+        ],
+        "map_summary": {
+          "resolution": 0.1,
+          "free_cells": 1772,
+          "occupied_cells": 150,
+          "visited_frontiers": [
+            [
+              1.0,
+              -0.9
+            ],
+            [
+              0.9,
+              -2.2
+            ],
+            [
+              1.8,
+              -1.9000000000000001
+            ],
+            [
+              3.0,
+              -2.1
+            ],
+            [
+              3.9000000000000004,
+              -1.7000000000000002
+            ]
+          ]
+        },
+        "constraints": [],
+        "released_constraints": [],
+        "dialogue": []
+      },
+      "raw": {
+        "intent": "未知の環境を距離・色の観測で探索しながら地図を作り、青い対象を探す。発見して観測したら出発地点へ戻る。探索終了または帰還時間を含む180秒の制限に達する前に、未発見ならnot_foundを報告して戻る。",
+        "status": "accept",
+        "question": "",
+        "steps": [
+          {
+            "id": "search-1",
+            "action": "search",
+            "target": "blue",
+            "observation_id": null
+          },
+          {
+            "id": "home",
+            "action": "return_home",
+            "target": null,
+            "observation_id": null
+          }
+        ],
+        "cancelled": [],
+        "constraints": [
+          {
+            "id": "avoid-green-22",
+            "observation_id": "obs-22-green",
+            "radius": 0.5,
+            "instruction": "緑を見た地点から半径0.5m以内へは立ち入らず"
+          },
+          {
+            "id": "avoid-green-47",
+            "observation_id": "obs-47-green",
+            "radius": 0.5,
+            "instruction": "緑を見た地点から半径0.5m以内へは立ち入らず"
+          }
+        ],
+        "released_constraints": []
+      },
+      "correct": false,
+      "error": null,
+      "infrastructure_error": false
+    }
+  ]
+}
