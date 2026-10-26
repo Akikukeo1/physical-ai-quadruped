@@ -90,6 +90,8 @@ def codex_constraint_revision(prompt: str, plan, context: dict, timeout: int = 3
         "retain existing IDs and keep the exact home step last. "
         "An area constraint forbids the robot CENTER inside a circle around a supplied observation's robot position, "
         "not around the object's hidden position. Select only a supplied observation_id and radius 0.2–1.5 metres. "
+        "Unless the user specifies an earlier observation or multiple places, use the latest matching observation "
+        "and create one constraint for it, not one per past observation. "
         "Each new constraint must include an exact user quote, not a paraphrase. "
         "Preserve existing constraints exactly; "
         "only an explicit user request may release one, with its ID and exact user quote in released_constraints. "

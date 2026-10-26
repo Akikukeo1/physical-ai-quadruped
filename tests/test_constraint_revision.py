@@ -101,6 +101,7 @@ class TestConstraintRevision(unittest.TestCase):
         self.assertEqual(result["constraints"][0]["observation_id"], "obs-green")
         self.assertEqual(model.call_args.args[1].name, "constraint-revision.schema.json")
         self.assertIn("not around the object's hidden position", model.call_args.args[0])
+        self.assertIn("latest matching observation", model.call_args.args[0])
 
     def test_probe_sends_prior_constraint_and_question_then_explicit_release(self):
         messages = probe_constraint_revision.MESSAGES
