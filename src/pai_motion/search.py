@@ -72,17 +72,28 @@ class ObservedMap:
                 self.occupied.add(self.cell((x + distance * dx, y + distance * dy)))
         self.free -= self.occupied
 
-    def traversable(self):
+    def traversable(self, restricted=()):
+        restricted = tuple(restricted)
         # shortcut: static 2-D world and exact odometry; upgrade for noise, slopes or moving objects.
         blocked = set()
         for x, y in self.occupied:
             blocked.update((x + dx, y + dy) for dx, dy in INFLATION)
         safe = self.free - blocked
+        # The radius constrains the robot center; the margin accounts for grid rounding and tracking error.
+        if restricted:
+            safe = {
+                cell
+                for cell in safe
+                if all(math.dist(self.point(cell), center) > radius + 0.15 for center, radius in restricted)
+            }
         # Unknown space also blocks the footprint, so exploration never plans through unseen areas.
         return {c for c in safe if all((c[0] + dx, c[1] + dy) in self.free for dx, dy in FOOTPRINT)}
 
-    def routes(self, position):
-        safe = self.traversable()
+    def routes(self, position, restricted=()):
+        restricted = tuple(restricted)
+        if any(math.dist(position, center) <= radius + 0.15 for center, radius in restricted):
+            raise RuntimeError("Robot is inside or too close to a restricted area")
+        safe = self.traversable(restricted)
         start = self.cell(position)
         if start not in safe:
             # Tracking drift can round a safe measured pose into an inflated cell.
