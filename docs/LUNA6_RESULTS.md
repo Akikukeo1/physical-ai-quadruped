@@ -58,3 +58,20 @@
   --out-dir outputs/language-probes-luna6-remaining \
   --condition history --case ambiguous negation unsupported
 ```
+
+## 同じ指示文での追加試行
+
+`cc1a0e9` で、未完了の履歴あり3条件はすべて期待どおりだった。初回の5応答と合わせて7/8が一致。
+履歴なしは最初の5条件すべて一致した。再確認2条件は過去の観測がないため `clarify` を返し、
+観測IDを捏造しなかった。6条件目の曖昧入力で再び429となり停止。履歴なしの残り3条件は未完了。
+生の応答と検証結果を [luna6-followup-validation.json](luna6-followup-validation.json) に保存した。
+
+同じコミットの実MuJoCoで `examples/dialogue-short-answer.json` を試した。
+「緑です。」の後も `obs-22-green` と `obs-47-green` のどちらかを質問し、
+次の青取消し入力でも同じ質問を繰り返した。全3入力が `clarify` で、緑の再確認も青の取消しも実行されなかった。
+152.0秒で `not_found` として帰還、帰還誤差0.1134 m。接触・転倒はなく、待機中の指令もゼロだった。
+処理の `status=completed` は帰還を終えた意味で、**訂正された任務を達成した成功例ではない**。
+青の未達成タスクと3件の質問をログに残した。
+
+この失敗から、単一対象を何度も観測した記録の選び方を明文化する必要があると分かった。
+以下の変更・再試行は、この既知の開発例への修正として扱い、新しい汎化評価には数えない。

@@ -1,0 +1,716 @@
+{
+  "scope": "Development follow-up; original prompt before selecting latest repeated observation.",
+  "source_commit": "cc1a0e9",
+  "model": {
+    "model": "gpt-6-luna",
+    "reasoning_effort": "xhigh"
+  },
+  "language_batches": [
+    {
+      "log": "outputs/language-probes-luna6-xhigh/20261026T100436457322Z.json",
+      "sha256": "b0aec13afb599d6fa0db9d254c98e27448cfda4cedee61d7a28905603fba4d03",
+      "results": [
+        {
+          "case": "replace",
+          "condition": "history",
+          "message": "青はやめて緑にして。最後は戻って",
+          "expected_steps": [
+            [
+              "search",
+              "green"
+            ],
+            [
+              "return_home",
+              null
+            ]
+          ],
+          "expected_status": "accept",
+          "expected_cancelled": [
+            "search-1"
+          ],
+          "raw": {
+            "intent": "青の探索を緑に変更し、最後に出発地点へ戻ります。",
+            "status": "accept",
+            "question": "",
+            "steps": [
+              {
+                "id": "search-green-1",
+                "action": "search",
+                "target": "green",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": [
+              {
+                "id": "search-1",
+                "instruction": "青はやめて緑にして。"
+              }
+            ]
+          },
+          "accepted": true,
+          "error": null,
+          "correct": true,
+          "infrastructure_error": false
+        },
+        {
+          "case": "insert",
+          "condition": "history",
+          "message": "青をやめるわけではないけど、その前に緑も探して",
+          "expected_steps": [
+            [
+              "search",
+              "green"
+            ],
+            [
+              "search",
+              "blue"
+            ],
+            [
+              "return_home",
+              null
+            ]
+          ],
+          "expected_status": "accept",
+          "expected_cancelled": [],
+          "raw": {
+            "intent": "青の探索を維持し、その前に緑も探索する。",
+            "status": "accept",
+            "question": "",
+            "steps": [
+              {
+                "id": "search-2",
+                "action": "search",
+                "target": "green",
+                "observation_id": null
+              },
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": []
+          },
+          "accepted": true,
+          "error": null,
+          "correct": true,
+          "infrastructure_error": false
+        },
+        {
+          "case": "reobserve",
+          "condition": "history",
+          "message": "緑をもう一度確認してから青の探索を再開して",
+          "expected_steps": [
+            [
+              "reobserve",
+              "green"
+            ],
+            [
+              "search",
+              "blue"
+            ],
+            [
+              "return_home",
+              null
+            ]
+          ],
+          "expected_status": "accept",
+          "expected_cancelled": [],
+          "raw": {
+            "intent": "緑の再観測を青の探索より先に追加するには、参照する過去の観測を選ぶ必要があります。",
+            "status": "clarify",
+            "question": "どちらの緑の観測を再確認しますか？ obs-22-green（時刻22秒）または obs-47-green（時刻47秒）",
+            "steps": [
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": []
+          },
+          "accepted": true,
+          "error": null,
+          "correct": false,
+          "infrastructure_error": false
+        },
+        {
+          "case": "reference",
+          "condition": "history",
+          "message": "さっき見えた対象をもう一度確認してから、青の探索を続けて",
+          "expected_steps": [
+            [
+              "reobserve",
+              "green"
+            ],
+            [
+              "search",
+              "blue"
+            ],
+            [
+              "return_home",
+              null
+            ]
+          ],
+          "expected_status": "accept",
+          "expected_cancelled": [],
+          "raw": {
+            "intent": "直近に観測した緑の対象を再確認し、その後に青を探索してから帰還する。",
+            "status": "accept",
+            "question": "",
+            "steps": [
+              {
+                "id": "reobserve-1",
+                "action": "reobserve",
+                "target": "green",
+                "observation_id": "obs-47-green"
+              },
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": []
+          },
+          "accepted": true,
+          "error": null,
+          "correct": true,
+          "infrastructure_error": false
+        },
+        {
+          "case": "cancel",
+          "condition": "history",
+          "message": "青の探索は取り消して、今すぐ出発地点へ帰って",
+          "expected_steps": [
+            [
+              "return_home",
+              null
+            ]
+          ],
+          "expected_status": "accept",
+          "expected_cancelled": [
+            "search-1"
+          ],
+          "raw": {
+            "intent": "青の探索を取り消し、出発地点へ帰還します。",
+            "status": "accept",
+            "question": "",
+            "steps": [
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": [
+              {
+                "id": "search-1",
+                "instruction": "青の探索は取り消して、今すぐ出発地点へ帰って"
+              }
+            ]
+          },
+          "accepted": true,
+          "error": null,
+          "correct": true,
+          "infrastructure_error": false
+        },
+        {
+          "case": "ambiguous",
+          "condition": "history",
+          "message": "やっぱりあっちを先にして",
+          "expected_steps": null,
+          "expected_status": "clarify",
+          "expected_cancelled": [],
+          "raw": null,
+          "accepted": false,
+          "error": "Codex failed (exit 1):  a new search with a new ID. For 'green before blue', INSERT green before the retained blue task; do NOT cancel blue. New task IDs must be unique and must not reuse completed IDs. Reobserve must reference an ID supplied in context.observations with the matching color. These records are prior observations, not current visibility. The original deadline, home obligation, physical limits and factual observation history cannot be edited. No coordinates, executable code, arbitrary conditions or unsupported colors/actions. Use context.dialogue to resolve short answers to the most recent clarification question. For ambiguity or missing observation evidence, status=clarify with a concise question to the user; retain pending steps EXACTLY with cancelled=[] and do not guess a target or observation ID. For unsupported changes to physical limits, the deadline or home obligation, status=reject. For accept/reject set question to the empty string; for clarify supply a nonempty question. Explain the revision briefly in intent (1–120 characters). Correction: 'やっぱりあっちを先にして'\nERROR: exceeded retry limit, last status: 429 Too Many Requests\nERROR: exceeded retry limit, last status: 429 Too Many Requests\n",
+          "correct": null,
+          "infrastructure_error": true
+        }
+      ]
+    },
+    {
+      "log": "outputs/language-probes-luna6-remaining/20261026T132328862138Z.json",
+      "sha256": "08c1df54c09242eebe325a2d34cfef64727e00be3be51f34b4aa146314f667ce",
+      "results": [
+        {
+          "case": "ambiguous",
+          "condition": "history",
+          "message": "やっぱりあっちを先にして",
+          "expected_steps": null,
+          "expected_status": "clarify",
+          "expected_cancelled": [],
+          "raw": {
+            "intent": "「あっち」が何を指すか不明です。",
+            "status": "clarify",
+            "question": "「先にして」とは、青の探索を先にする意味ですか？",
+            "steps": [
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": []
+          },
+          "accepted": true,
+          "error": null,
+          "correct": true,
+          "infrastructure_error": false
+        },
+        {
+          "case": "negation",
+          "condition": "history",
+          "message": "緑に変更しないで。青の探索を続けて帰って",
+          "expected_steps": [
+            [
+              "search",
+              "blue"
+            ],
+            [
+              "return_home",
+              null
+            ]
+          ],
+          "expected_status": "accept",
+          "expected_cancelled": [],
+          "raw": {
+            "intent": "青の探索を続け、発見後または制限前に出発地点へ戻る。",
+            "status": "accept",
+            "question": "",
+            "steps": [
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": []
+          },
+          "accepted": true,
+          "error": null,
+          "correct": true,
+          "infrastructure_error": false
+        },
+        {
+          "case": "unsupported",
+          "condition": "history",
+          "message": "帰還は不要にして、時間制限もなくして",
+          "expected_steps": null,
+          "expected_status": "reject",
+          "expected_cancelled": [],
+          "raw": {
+            "intent": "帰還義務と時間制限は変更できないため、青を探索して出発地点へ戻る手順を維持します。",
+            "status": "reject",
+            "question": "",
+            "steps": [
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": []
+          },
+          "accepted": false,
+          "error": "Correction was not accepted",
+          "correct": true,
+          "infrastructure_error": false
+        }
+      ]
+    },
+    {
+      "log": "outputs/language-probes-luna6-no-history/20261026T132653728224Z.json",
+      "sha256": "ee87f0ef1c4a261691200d8e9cbb0387246d4f58c8c53dd9c0c3107a8f3d3223",
+      "results": [
+        {
+          "case": "replace",
+          "condition": "no_history",
+          "message": "青はやめて緑にして。最後は戻って",
+          "expected_steps": [
+            [
+              "search",
+              "green"
+            ],
+            [
+              "return_home",
+              null
+            ]
+          ],
+          "expected_status": "accept",
+          "expected_cancelled": [
+            "search-1"
+          ],
+          "raw": {
+            "intent": "青の探索を緑に変更し、発見後は帰還します。",
+            "status": "accept",
+            "question": "",
+            "steps": [
+              {
+                "id": "search-2",
+                "action": "search",
+                "target": "green",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": [
+              {
+                "id": "search-1",
+                "instruction": "青はやめて緑にして。"
+              }
+            ]
+          },
+          "accepted": true,
+          "error": null,
+          "correct": true,
+          "infrastructure_error": false
+        },
+        {
+          "case": "insert",
+          "condition": "no_history",
+          "message": "青をやめるわけではないけど、その前に緑も探して",
+          "expected_steps": [
+            [
+              "search",
+              "green"
+            ],
+            [
+              "search",
+              "blue"
+            ],
+            [
+              "return_home",
+              null
+            ]
+          ],
+          "expected_status": "accept",
+          "expected_cancelled": [],
+          "raw": {
+            "intent": "緑を先に探し、その後は青を探して発見時に帰還します。",
+            "status": "accept",
+            "question": "",
+            "steps": [
+              {
+                "id": "search-2",
+                "action": "search",
+                "target": "green",
+                "observation_id": null
+              },
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": []
+          },
+          "accepted": true,
+          "error": null,
+          "correct": true,
+          "infrastructure_error": false
+        },
+        {
+          "case": "reobserve",
+          "condition": "no_history",
+          "message": "緑をもう一度確認してから青の探索を再開して",
+          "expected_steps": null,
+          "expected_status": "clarify",
+          "expected_cancelled": [],
+          "raw": {
+            "intent": "緑の再確認に必要な過去の観測記録がありません。",
+            "status": "clarify",
+            "question": "再確認する緑の対象を観測した記録がありません。どの観測を再確認しますか？",
+            "steps": [
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": []
+          },
+          "accepted": true,
+          "error": null,
+          "correct": true,
+          "infrastructure_error": false
+        },
+        {
+          "case": "reference",
+          "condition": "no_history",
+          "message": "さっき見えた対象をもう一度確認してから、青の探索を続けて",
+          "expected_steps": null,
+          "expected_status": "clarify",
+          "expected_cancelled": [],
+          "raw": {
+            "intent": "対象を再確認してから青の探索を続ける指示を反映します。",
+            "status": "clarify",
+            "question": "再確認できる観測記録がありません。参照する観測IDを指定してください。",
+            "steps": [
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": []
+          },
+          "accepted": true,
+          "error": null,
+          "correct": true,
+          "infrastructure_error": false
+        },
+        {
+          "case": "cancel",
+          "condition": "no_history",
+          "message": "青の探索は取り消して、今すぐ出発地点へ帰って",
+          "expected_steps": [
+            [
+              "return_home",
+              null
+            ]
+          ],
+          "expected_status": "accept",
+          "expected_cancelled": [
+            "search-1"
+          ],
+          "raw": {
+            "intent": "青の探索を取り消し、出発地点へ帰還します。",
+            "status": "accept",
+            "question": "",
+            "steps": [
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": [
+              {
+                "id": "search-1",
+                "instruction": "青の探索は取り消して、今すぐ出発地点へ帰って"
+              }
+            ]
+          },
+          "accepted": true,
+          "error": null,
+          "correct": true,
+          "infrastructure_error": false
+        },
+        {
+          "case": "ambiguous",
+          "condition": "no_history",
+          "message": "やっぱりあっちを先にして",
+          "expected_steps": null,
+          "expected_status": "clarify",
+          "expected_cancelled": [],
+          "raw": null,
+          "accepted": false,
+          "error": "Codex failed (exit 1):  a new search with a new ID. For 'green before blue', INSERT green before the retained blue task; do NOT cancel blue. New task IDs must be unique and must not reuse completed IDs. Reobserve must reference an ID supplied in context.observations with the matching color. These records are prior observations, not current visibility. The original deadline, home obligation, physical limits and factual observation history cannot be edited. No coordinates, executable code, arbitrary conditions or unsupported colors/actions. Use context.dialogue to resolve short answers to the most recent clarification question. For ambiguity or missing observation evidence, status=clarify with a concise question to the user; retain pending steps EXACTLY with cancelled=[] and do not guess a target or observation ID. For unsupported changes to physical limits, the deadline or home obligation, status=reject. For accept/reject set question to the empty string; for clarify supply a nonempty question. Explain the revision briefly in intent (1–120 characters). Correction: 'やっぱりあっちを先にして'\nERROR: exceeded retry limit, last status: 429 Too Many Requests\nERROR: exceeded retry limit, last status: 429 Too Many Requests\n",
+          "correct": null,
+          "infrastructure_error": true
+        }
+      ]
+    }
+  ],
+  "language_summary": {
+    "history_semantic_matches": 7,
+    "history_semantic_mismatches": 1,
+    "no_history_semantic_matches": 5,
+    "no_history_unresolved_cases": [
+      "ambiguous",
+      "negation",
+      "unsupported"
+    ],
+    "infrastructure_errors": 2
+  },
+  "robot": {
+    "log": "outputs/dialogue-luna6/short-answer/plan-20261026T132511810878Z.json",
+    "sha256": "83fc97dbfed5f5f815edbeddfbf763fe01f64ba7925d711e4fb1c6d653973895",
+    "mission_success": false,
+    "process_status": "completed",
+    "outcome": "not_found",
+    "elapsed": 152.00000000000244,
+    "home_error": 0.11340276381956278,
+    "tasks": {
+      "pending": [
+        {
+          "id": "search-1",
+          "action": "search",
+          "target": "blue",
+          "observation_id": null
+        }
+      ],
+      "completed": [
+        {
+          "step": {
+            "id": "home",
+            "action": "return_home",
+            "target": null,
+            "observation_id": null
+          },
+          "time": 150.9999999999929,
+          "evidence": null
+        }
+      ],
+      "cancelled": []
+    },
+    "turns": [
+      {
+        "message": "青か緑のどちらかを再確認したいけど、まだ色を指定していません。どちらか質問して",
+        "status": "clarification",
+        "correction": {
+          "intent": "再確認する色が未指定のため、青か緑か確認します。",
+          "status": "clarify",
+          "steps": [
+            {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            }
+          ],
+          "cancelled": [],
+          "question": "青と緑のどちらを再確認しますか？"
+        },
+        "deadline": 181.0
+      },
+      {
+        "message": "緑です。",
+        "status": "clarification",
+        "correction": {
+          "intent": "緑の再確認先となる観察記録が2件あります。",
+          "status": "clarify",
+          "steps": [
+            {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            }
+          ],
+          "cancelled": [],
+          "question": "どちらの緑の観察を再確認しますか？obs-22-green と obs-47-green"
+        },
+        "deadline": 181.0
+      },
+      {
+        "message": "青の探索は取り消して。緑の再確認はそのまま続けて、最後は戻って",
+        "status": "clarification",
+        "correction": {
+          "intent": "緑の再確認先が未指定のため確認が必要です。",
+          "status": "clarify",
+          "steps": [
+            {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            }
+          ],
+          "cancelled": [],
+          "question": "どちらの緑の観察を再確認しますか？obs-22-green と obs-47-green"
+        },
+        "deadline": 181.0
+      }
+    ],
+    "zero_velocity_wait_commands": 424,
+    "no_contact_or_fall": true,
+    "failure": "Repeated clarification about observation IDs prevented green reobservation and blue cancellation; returned under reserve with blue still pending."
+  }
+}
