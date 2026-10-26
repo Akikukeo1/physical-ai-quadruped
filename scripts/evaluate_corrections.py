@@ -133,8 +133,9 @@ def score(log):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out-dir", type=Path, default=ROOT / "outputs/correction-evaluation-v1")
+    parser.add_argument("--protocol", type=Path, default=ROOT / "docs/correction-evaluation.json")
     args = parser.parse_args()
-    protocol_path = ROOT / "docs/correction-evaluation.json"
+    protocol_path = args.protocol.resolve()
     protocol = json.loads(protocol_path.read_text(encoding="utf-8"))
     if (planner.CODEX_MODEL, planner.CODEX_REASONING_EFFORT) != (protocol["model"], protocol["reasoning_effort"]):
         raise RuntimeError("Requested model differs from frozen protocol")

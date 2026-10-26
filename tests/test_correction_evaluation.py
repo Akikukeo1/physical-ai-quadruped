@@ -1,12 +1,16 @@
 """Evaluation must not turn safe fallback, stale sensing, or excluded opportunities into success."""
 
+import json
 import sys
+import tempfile
 import unittest
 from copy import deepcopy
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from scripts import evaluate_corrections  # noqa: E402
 from scripts.evaluate_corrections import message_source, observed_context, score  # noqa: E402
 
 
@@ -15,6 +19,29 @@ def scan(time, color=None):
 
 
 class TestCorrectionEvaluation(unittest.TestCase):
+    def test_explicit_protocol_is_frozen_and_changes_are_refused(self):
+        parent = Path(__file__).resolve().parents[1] / "outputs/test-tmp"
+        parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=parent) as directory:
+            root = Path(directory)
+            path = root / "protocol.json"
+            protocol = {"model": "gpt-6-luna", "reasoning_effort": "xhigh", "seeds": [], "label": "first"}
+            path.write_text(json.dumps(protocol), encoding="utf-8")
+            with (
+                patch.object(sys, "argv", ["evaluate", "--protocol", str(path), "--out-dir", str(root / "run")]),
+                patch.object(evaluate_corrections.importlib.metadata, "version", return_value="test"),
+                patch.object(evaluate_corrections, "MuJoCoGo2Sink") as simulator,
+            ):
+                self.assertEqual(evaluate_corrections.main(), 0)
+                simulator.assert_not_called()
+                frozen = json.loads((root / "run/frozen-inputs.json").read_text(encoding="utf-8"))
+                self.assertEqual(frozen["protocol"], protocol)
+                self.assertEqual(evaluate_corrections.main(), 0)
+                protocol["label"] = "changed"
+                path.write_text(json.dumps(protocol), encoding="utf-8")
+                with self.assertRaisesRegex(RuntimeError, "Frozen inputs changed"):
+                    evaluate_corrections.main()
+
     def test_ablation_removes_only_stale_unreferenced_observations_without_mutation(self):
         context = {
             "pending": [{"action": "reobserve", "observation_id": "active"}],
