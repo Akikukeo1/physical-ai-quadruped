@@ -1,0 +1,982 @@
+{
+  "scope": "One preregistered four-layout evaluation in the existing scene family. Only one paired correction opportunity.",
+  "frozen_commit": "ca0dbd5",
+  "frozen_inputs": {
+    "protocol": {
+      "protocol": "correction-memory-v1",
+      "scope": "Four previously unused layouts in the existing procedural static scene family; not camera perception, SLAM or real hardware.",
+      "seeds": [
+        701,
+        702,
+        703,
+        704
+      ],
+      "conditions": [
+        "history",
+        "current_only"
+      ],
+      "order": "Alternate condition order by seed index; run all declared seeds, including those without a correction opportunity.",
+      "plan": {
+        "intent": "青を探索して帰還。訂正後も元の帰還と期限を保持",
+        "target": "blue",
+        "seconds": 180,
+        "on_found": "return_home"
+      },
+      "trigger": "After a >=2-ray green observation, first scan with green absent, no blue observation in history, and elapsed <=90 seconds. All information comes from the robot's sensor log.",
+      "second_message": "Two simulation seconds after the first interpretation finishes, whether accepted or clarification; same rule in both conditions.",
+      "messages": [
+        [
+          "さっき見た緑を確認し直してから、青の探索を再開して",
+          "青は探さなくていいです。緑の再確認を続けて、最後に戻って"
+        ],
+        [
+          "青を探す前に、先ほど見えた緑をもう一度見てきて",
+          "青の探索は中止。緑を見直す作業は残して、終わったら出発地点へ"
+        ],
+        [
+          "さっきの緑を再確認するのを先にして。その後は青を探して帰って",
+          "やっぱり青は取り消します。緑の再確認と帰還はそのままで"
+        ],
+        [
+          "青の探索はいったん後にして、前に見えた緑を改めて確認して",
+          "青探しはやめて。緑をもう一度確認して戻る予定は維持して"
+        ]
+      ],
+      "ablation": "current_only changes only context.observations: retain records from the latest sensor scan and records already referenced by active tasks. Keep pending/completed/cancelled tasks, dialogue, map summary, home, deadline and controller identical. Do not remove observations from the executor or its validator.",
+      "success": "Both messages received; accepted observation-grounded green reobserve; blue explicitly cancelled with a user quote; fresh >=2-ray green evidence after last activation; home completed, no pending tasks, home error <=0.15m, within original180s; original deadline/home retained, zero velocity commands during model/question waits; finite upright trace without obstacle contact.",
+      "report": [
+        "opportunity coverage",
+        "mission success on triggered runs",
+        "safe deadline return",
+        "fresh observation",
+        "blue cancellation",
+        "clarification count",
+        "model wait wall seconds",
+        "distance",
+        "language error",
+        "physics error",
+        "infrastructure error"
+      ],
+      "freeze_rule": "Commit protocol, harness and source before inspecting any declared layout. Save fingerprints before first scene. No tuning on these seeds; if source or protocol changes after results are inspected, relabel these layouts as development and declare new seeds.",
+      "model": "gpt-6-luna",
+      "reasoning_effort": "xhigh",
+      "repeats": 1,
+      "limits": "Only four paired layouts, one language variant each and stochastic model latency. No statistical superiority claim; record non-triggered cases without replacing them. Initial plan is fixed to isolate correction interpretation; no live initial-language inference is evaluated. Stop entire batch on model infrastructure failure, preserve partial records, resume only with matching frozen inputs."
+    },
+    "source_sha256": {
+      "assets/go2-assets.json": "514b9c396fe9be115ba39bf7bc726599a08b24c1cdc575db28b54c68cd486a33",
+      "docs/correction-evaluation.json": "e905a630b417cae409c84b2fe71a842a36e02c85eec291f9fffa3d974f3a5eb6",
+      "schema/motion-plan.schema.json": "d4c34f7ac5fa1d3b73b8b5f83edd2424868f03e63a3248410b5c1a76416b3047",
+      "schema/navigation-plan.schema.json": "de40a70f9db7a55146c4a187cce16af4992e86ff76d34538a78a126d7d8f3ede",
+      "schema/search-correction.schema.json": "b353a700d1ddc1a55442ee5b964d8c66b2b5c7ed3626f51c19fff661c435c336",
+      "schema/search-plan.schema.json": "0e6fb7944f7eed123a01bc33498f90c9dc0140d1d89b8dc4a9815c2b447272e8",
+      "scripts/evaluate_corrections.py": "4f804ed35ac8279a9f9a72abb065b8e10891488d1a08b3e0958678b0d9f6ef28",
+      "src/main.py": "1545606fc181fc136e0969c99168064eb7e6edd449df0cab3b53dd4df6dd640f",
+      "src/pai_motion/__init__.py": "1e734be59743ab4b4788e8c224b97546a33c0dfa051b74015242a5a8e0d8e931",
+      "src/pai_motion/assets.py": "d37498a34e1c7555efb1aaf7679ca94f94e13a04fac16f5272ac5ad7bfd254ee",
+      "src/pai_motion/correction.py": "617a76e3f779eeada8cc0754be7226268544b95d040fe16486b95d15255d8b0e",
+      "src/pai_motion/executor.py": "e26b8ba8a2c14f0f0b2afca81c676f7be9521678c54f1ac0a943217eb2fe7d17",
+      "src/pai_motion/motion.py": "a9a07958fb9694c7fc68cc06848f3570d47df278151e5da2a87de465ff9d6ba9",
+      "src/pai_motion/navigation.py": "4d8ae17d3b9b3e5ad8923de615fad091f078d8633ce072f7db27c64a86543425",
+      "src/pai_motion/planner.py": "6232167f82c28179ec69cb56a32325374abebe83121c7f276cf4dc4795dffa23",
+      "src/pai_motion/search.py": "05f3d5c13727717dc351cb13444e14f963e88f9e4788ad15eeb5c5781618c3f8",
+      "src/pai_motion/search_world.py": "efef1446aa809a8251aaaa259b8a22b5b75002f9dc064cf0134d98f05767ff30",
+      "src/pai_motion/sim_adapter.py": "c4f46fb1a3c5f35b2d962fbcc6c5001ce227593671e89b209e93d7809cefaef6"
+    },
+    "versions": {
+      "mujoco": "3.3.7",
+      "numpy": "2.2.6",
+      "onnxruntime": "1.23.2"
+    }
+  },
+  "frozen_inputs_sha256": "b360c51ad4e08699ebce149e3473017c3ede0def5e5785a75e7a01d6c522482f",
+  "summary": {
+    "declared_layouts": 4,
+    "completed_runs": 8,
+    "triggered_layouts": 1,
+    "non_triggered_layouts": [
+      701,
+      702,
+      704
+    ],
+    "safe_returns": 8,
+    "history_success_on_triggered": "1/1",
+    "current_only_success_on_triggered": "0/1",
+    "infrastructure_errors": 0,
+    "first_input_equal_except_observation_records": true
+  },
+  "cases": [
+    {
+      "seed": 701,
+      "condition": "history",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 51.000000000017586,
+      "home_error": 0.095822152766125,
+      "distance": 6.823247986750968,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v1/seed-701-history-attempt-1.json",
+      "sha256": "541714ff8b0937e15b9e578580a97fdc8d27b35784d612d97e61ef9da002cfa2",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 23.999999999997577,
+            "evidence": {
+              "time": 23.999999999997577,
+              "position": [
+                2.138898963492349,
+                -1.5018913514828722
+              ],
+              "range": 1.6584733545752826
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 50.00000000001514,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 701,
+      "condition": "current_only",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 51.000000000017586,
+      "home_error": 0.095822152766125,
+      "distance": 6.823247986750968,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v1/seed-701-current_only-attempt-1.json",
+      "sha256": "5dfacf1bf33f4c06a85e5b7cd4834204b237f46473f7771b9031ab27284f1a1e",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 23.999999999997577,
+            "evidence": {
+              "time": 23.999999999997577,
+              "position": [
+                2.138898963492349,
+                -1.5018913514828722
+              ],
+              "range": 1.6584733545752826
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 50.00000000001514,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 702,
+      "condition": "current_only",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 36.1999999999995,
+      "home_error": 0.11715474846294256,
+      "distance": 5.524725305897324,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v1/seed-702-current_only-attempt-1.json",
+      "sha256": "e7978e07553ef772bcf8e8df44a585e7efb2347a7dc48a1fce19e91293ae081c",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 16.00000000000201,
+            "evidence": {
+              "time": 16.00000000000201,
+              "position": [
+                1.9641003624831048,
+                1.6686364681988815
+              ],
+              "range": 1.7798326099420876
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 35.199999999997054,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 702,
+      "condition": "history",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 36.1999999999995,
+      "home_error": 0.11715474846294256,
+      "distance": 5.524725305897324,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v1/seed-702-history-attempt-1.json",
+      "sha256": "8ebd19e057632fd6524442976edd85ab51d2ed218f498592b9e6cc720364b332",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 16.00000000000201,
+            "evidence": {
+              "time": 16.00000000000201,
+              "position": [
+                1.9641003624831048,
+                1.6686364681988815
+              ],
+              "range": 1.7798326099420876
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 35.199999999997054,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 703,
+      "condition": "history",
+      "triggered": true,
+      "mission_success": true,
+      "safe_return": true,
+      "fresh_green": true,
+      "blue_cancelled": true,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 19.42676605604356,
+      "elapsed": 104.79999999993483,
+      "home_error": 0.12578825627254564,
+      "distance": 10.583175559477445,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v1/seed-703-history-attempt-1.json",
+      "sha256": "bec138aed8666145a09aa602ae6e8cac62f1daf573c4a8a44d50d9cd6526faa3",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "reobserve-1",
+              "action": "reobserve",
+              "target": "green",
+              "observation_id": "obs-60-green"
+            },
+            "time": 85.5999999999819,
+            "evidence": {
+              "id": "obs-87-green",
+              "color": "green",
+              "time": 85.5999999999819,
+              "position": [
+                1.4769529843819205,
+                1.6486871650894879
+              ],
+              "range": 1.7899848355607964
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 103.79999999993949,
+            "evidence": null
+          }
+        ],
+        "cancelled": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 82.5999999999889,
+            "instruction": "やっぱり青は取り消します。緑の再確認と帰還はそのままで"
+          }
+        ]
+      },
+      "planner_inputs": [
+        {
+          "message": "さっきの緑を再確認するのを先にして。その後は青を探して帰って",
+          "context": {
+            "time": 61.000000000028585,
+            "position": [
+              1.3962404694791979,
+              1.6022508469244288
+            ],
+            "yaw": -2.4832269012063963,
+            "home": [
+              -7.953999876922021e-05,
+              -0.00011282629718181661
+            ],
+            "deadline": 181.0,
+            "remaining_seconds": 119.99999999997141,
+            "latest_scan": {
+              "time": 61.000000000028585,
+              "visible_colors": [],
+              "range_limit": 1.8
+            },
+            "pending": [
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "completed": [],
+            "cancelled": [],
+            "dialogue": [
+              {
+                "role": "user",
+                "text": "さっきの緑を再確認するのを先にして。その後は青を探して帰って"
+              }
+            ],
+            "observations": [
+              {
+                "id": "obs-16-green",
+                "color": "green",
+                "time": 16.00000000000201,
+                "position": [
+                  1.6241410369385134,
+                  1.7461484732067285
+                ],
+                "range": 1.6600358408256868
+              },
+              {
+                "id": "obs-60-green",
+                "color": "green",
+                "time": 60.00000000002736,
+                "position": [
+                  1.5569076108889592,
+                  1.671274910598699
+                ],
+                "range": 1.7163497520129802
+              }
+            ],
+            "map_summary": {
+              "resolution": 0.1,
+              "free_cells": 1799,
+              "occupied_cells": 141,
+              "visited_frontiers": [
+                [
+                  1.0,
+                  0.9
+                ],
+                [
+                  1.6,
+                  1.9000000000000001
+                ],
+                [
+                  2.8000000000000003,
+                  1.7000000000000002
+                ],
+                [
+                  4.0,
+                  1.9000000000000001
+                ]
+              ]
+            }
+          },
+          "raw": {
+            "intent": "緑を再確認してから青を探索し、元の期限内に帰還します。",
+            "status": "accept",
+            "question": "",
+            "steps": [
+              {
+                "id": "reobserve-1",
+                "action": "reobserve",
+                "target": "green",
+                "observation_id": "obs-60-green"
+              },
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": []
+          }
+        },
+        {
+          "message": "やっぱり青は取り消します。緑の再確認と帰還はそのままで",
+          "context": {
+            "time": 74.20000000000847,
+            "position": [
+              1.351374209618589,
+              1.6194325706577044
+            ],
+            "yaw": -1.2242004663733712,
+            "home": [
+              -7.953999876922021e-05,
+              -0.00011282629718181661
+            ],
+            "deadline": 181.0,
+            "remaining_seconds": 106.79999999999153,
+            "latest_scan": {
+              "time": 74.20000000000847,
+              "visible_colors": [],
+              "range_limit": 1.8
+            },
+            "pending": [
+              {
+                "id": "reobserve-1",
+                "action": "reobserve",
+                "target": "green",
+                "observation_id": "obs-60-green"
+              },
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "completed": [],
+            "cancelled": [],
+            "dialogue": [
+              {
+                "role": "user",
+                "text": "さっきの緑を再確認するのを先にして。その後は青を探して帰って"
+              },
+              {
+                "role": "user",
+                "text": "やっぱり青は取り消します。緑の再確認と帰還はそのままで"
+              }
+            ],
+            "observations": [
+              {
+                "id": "obs-16-green",
+                "color": "green",
+                "time": 16.00000000000201,
+                "position": [
+                  1.6241410369385134,
+                  1.7461484732067285
+                ],
+                "range": 1.6600358408256868
+              },
+              {
+                "id": "obs-60-green",
+                "color": "green",
+                "time": 60.00000000002736,
+                "position": [
+                  1.5569076108889592,
+                  1.671274910598699
+                ],
+                "range": 1.7163497520129802
+              }
+            ],
+            "map_summary": {
+              "resolution": 0.1,
+              "free_cells": 1801,
+              "occupied_cells": 141,
+              "visited_frontiers": [
+                [
+                  1.0,
+                  0.9
+                ],
+                [
+                  1.6,
+                  1.9000000000000001
+                ],
+                [
+                  2.8000000000000003,
+                  1.7000000000000002
+                ],
+                [
+                  4.0,
+                  1.9000000000000001
+                ]
+              ]
+            }
+          },
+          "raw": {
+            "intent": "青の探索を取り消し、緑の再確認後に帰還します。",
+            "status": "accept",
+            "question": "",
+            "steps": [
+              {
+                "id": "reobserve-1",
+                "action": "reobserve",
+                "target": "green",
+                "observation_id": "obs-60-green"
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": [
+              {
+                "id": "search-1",
+                "instruction": "やっぱり青は取り消します。緑の再確認と帰還はそのままで"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "seed": 703,
+      "condition": "current_only",
+      "triggered": true,
+      "mission_success": false,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 2,
+      "model_wait_wall_seconds": 17.206795650010463,
+      "elapsed": 149.79999999999194,
+      "home_error": 0.11747091523328426,
+      "distance": 9.980787753329194,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v1/seed-703-current_only-attempt-1.json",
+      "sha256": "e4537c6e11815b0ea9b6b3c1a71a4a2d1bc5a33fa4b0b957529307f7c9e3361a",
+      "tasks": {
+        "pending": [
+          {
+            "id": "search-1",
+            "action": "search",
+            "target": "blue",
+            "observation_id": null
+          }
+        ],
+        "completed": [
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 148.7999999999824,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": [
+        {
+          "message": "さっきの緑を再確認するのを先にして。その後は青を探して帰って",
+          "context": {
+            "time": 61.000000000028585,
+            "position": [
+              1.3962404694791979,
+              1.6022508469244288
+            ],
+            "yaw": -2.4832269012063963,
+            "home": [
+              -7.953999876922021e-05,
+              -0.00011282629718181661
+            ],
+            "deadline": 181.0,
+            "remaining_seconds": 119.99999999997141,
+            "latest_scan": {
+              "time": 61.000000000028585,
+              "visible_colors": [],
+              "range_limit": 1.8
+            },
+            "pending": [
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "completed": [],
+            "cancelled": [],
+            "dialogue": [
+              {
+                "role": "user",
+                "text": "さっきの緑を再確認するのを先にして。その後は青を探して帰って"
+              }
+            ],
+            "observations": [],
+            "map_summary": {
+              "resolution": 0.1,
+              "free_cells": 1799,
+              "occupied_cells": 141,
+              "visited_frontiers": [
+                [
+                  1.0,
+                  0.9
+                ],
+                [
+                  1.6,
+                  1.9000000000000001
+                ],
+                [
+                  2.8000000000000003,
+                  1.7000000000000002
+                ],
+                [
+                  4.0,
+                  1.9000000000000001
+                ]
+              ]
+            }
+          },
+          "raw": {
+            "intent": "緑の観測記録がないため再確認を保留",
+            "status": "clarify",
+            "question": "再確認する緑の観測記録がありません。緑を見た記録を提示してください。",
+            "steps": [
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": []
+          }
+        },
+        {
+          "message": "やっぱり青は取り消します。緑の再確認と帰還はそのままで",
+          "context": {
+            "time": 71.400000000015,
+            "position": [
+              1.3986518261035217,
+              1.63038793025176
+            ],
+            "yaw": -2.4851828651808447,
+            "home": [
+              -7.953999876922021e-05,
+              -0.00011282629718181661
+            ],
+            "deadline": 181.0,
+            "remaining_seconds": 109.599999999985,
+            "latest_scan": {
+              "time": 71.00000000001593,
+              "visible_colors": [],
+              "range_limit": 1.8
+            },
+            "pending": [
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "completed": [],
+            "cancelled": [],
+            "dialogue": [
+              {
+                "role": "user",
+                "text": "さっきの緑を再確認するのを先にして。その後は青を探して帰って"
+              },
+              {
+                "role": "assistant",
+                "text": "再確認する緑の観測記録がありません。緑を見た記録を提示してください。"
+              },
+              {
+                "role": "user",
+                "text": "やっぱり青は取り消します。緑の再確認と帰還はそのままで"
+              }
+            ],
+            "observations": [],
+            "map_summary": {
+              "resolution": 0.1,
+              "free_cells": 1799,
+              "occupied_cells": 141,
+              "visited_frontiers": [
+                [
+                  1.0,
+                  0.9
+                ],
+                [
+                  1.6,
+                  1.9000000000000001
+                ],
+                [
+                  2.8000000000000003,
+                  1.7000000000000002
+                ],
+                [
+                  4.0,
+                  1.9000000000000001
+                ]
+              ]
+            }
+          },
+          "raw": {
+            "intent": "青の取り消しと緑の再確認を希望していますが、緑の観測記録がありません。",
+            "status": "clarify",
+            "question": "緑を再確認するため、緑を見た観測記録を提示してください。",
+            "steps": [
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": []
+          }
+        }
+      ]
+    },
+    {
+      "seed": 704,
+      "condition": "current_only",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 43.80000000000879,
+      "home_error": 0.1242623770672104,
+      "distance": 6.069584966311485,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v1/seed-704-current_only-attempt-1.json",
+      "sha256": "2f91d3fe9001b74483c5e64e8ed46ec9608ea1766510e0f6645e8b15f1ff1603",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 19.000000000000348,
+            "evidence": {
+              "time": 19.000000000000348,
+              "position": [
+                1.730880050649795,
+                1.8792900138058224
+              ],
+              "range": 1.7601715561423539
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 42.80000000000634,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    },
+    {
+      "seed": 704,
+      "condition": "history",
+      "triggered": false,
+      "mission_success": null,
+      "safe_return": true,
+      "fresh_green": false,
+      "blue_cancelled": false,
+      "home_deadline_retained": true,
+      "zero_wait_commands": true,
+      "clarifications": 0,
+      "model_wait_wall_seconds": 0,
+      "elapsed": 43.80000000000879,
+      "home_error": 0.1242623770672104,
+      "distance": 6.069584966311485,
+      "error_kind": null,
+      "error": null,
+      "log": "outputs/correction-evaluation-v1/seed-704-history-attempt-1.json",
+      "sha256": "f1528f5e0c3ee9dd364bbe214f79636f57b323cc93ab937839f2c1e6d0f3c10b",
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 19.000000000000348,
+            "evidence": {
+              "time": 19.000000000000348,
+              "position": [
+                1.730880050649795,
+                1.8792900138058224
+              ],
+              "range": 1.7601715561423539
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 42.80000000000634,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "planner_inputs": []
+    }
+  ],
+  "verification": {
+    "source_fingerprints_match": true,
+    "all_raw_log_hashes_match": true,
+    "all_scores_recomputed": true,
+    "windows_tests": 66,
+    "windows_skipped_physics": 9,
+    "new_evaluation_tests_on_wsl": 3,
+    "wsl_test_log": "outputs/correction-evaluation-tests.log",
+    "resume_after_completion_exit": 0,
+    "limits": "No new full physical unit-test suite; eight real MuJoCo runs used frozen production source."
+  },
+  "interpretation": "A new-layout demonstration that past observations enabled a grounded reobserve and cancellation under these scripted messages. One eligible pair does not estimate generalization success or statistical superiority; safe baseline fallback is not mission completion."
+}
