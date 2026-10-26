@@ -1,0 +1,260 @@
+{
+  "scope": "Saved development trials, not held-out evaluation; historical unspecified model.",
+  "cases": [
+    {
+      "case": "answered-fixed",
+      "log": "outputs/dialogue-dev/answered-fixed/plan-20261025T143903788628Z.json",
+      "sha256": "8a66aecc4e53fbedacb040784a9a2d3a93701559ee119f06088ffcae05225e64",
+      "model": "Unspecified CLI default at execution; not retrospectively attributed to Luna 6.",
+      "seed": 305,
+      "outcome": "returned",
+      "elapsed": 115.39999999991012,
+      "home_error": 0.11504865530313159,
+      "deadline": 181.0,
+      "turn_statuses": [
+        "clarification",
+        "accepted",
+        "accepted"
+      ],
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "reobserve-green-1",
+              "action": "reobserve",
+              "target": "green",
+              "observation_id": "obs-47-green"
+            },
+            "time": 91.39999999996839,
+            "evidence": {
+              "id": "obs-92-green",
+              "color": "green",
+              "time": 91.39999999996839,
+              "position": [
+                2.2149304381132007,
+                -2.0839831084323457
+              ],
+              "range": 1.534265120050172
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 114.39999999991478,
+            "evidence": null
+          }
+        ],
+        "cancelled": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 79.39999999999635,
+            "instruction": "青の探索は取り消して。"
+          }
+        ]
+      },
+      "zero_velocity_commands_during_waits": [
+        50,
+        32,
+        32
+      ],
+      "no_obstacle_contact_or_fall_in_trace": true
+    },
+    {
+      "case": "repeated",
+      "log": "outputs/dialogue-dev/repeated/plan-20261025T143948042585Z.json",
+      "sha256": "d48cfa9f5b8e25c71cb0dddbf3bb3e37d8cc7a02530b46ad63d678e9517fc93a",
+      "model": "Unspecified CLI default at execution; not retrospectively attributed to Luna 6.",
+      "seed": 305,
+      "outcome": "returned",
+      "elapsed": 113.19999999991525,
+      "home_error": 0.10735493947797303,
+      "deadline": 181.0,
+      "turn_statuses": [
+        "accepted",
+        "accepted"
+      ],
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "reobserve-green-1",
+              "action": "reobserve",
+              "target": "green",
+              "observation_id": "obs-47-green"
+            },
+            "time": 84.59999999998423,
+            "evidence": {
+              "id": "obs-86-green",
+              "color": "green",
+              "time": 84.59999999998423,
+              "position": [
+                2.222663267293054,
+                -2.072807474562827
+              ],
+              "range": 1.5449751528792028
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 112.19999999991991,
+            "evidence": null
+          }
+        ],
+        "cancelled": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 80.59999999999356,
+            "instruction": "青の探索は中止。"
+          }
+        ]
+      },
+      "zero_velocity_commands_during_waits": [
+        41,
+        38
+      ],
+      "no_obstacle_contact_or_fall_in_trace": true
+    },
+    {
+      "case": "unanswered",
+      "log": "outputs/dialogue-dev/unanswered/plan-20261025T144034068122Z.json",
+      "sha256": "87d3381141e3ed5ad6b822285938651461f5f409cd347da2b76a057f424d1987",
+      "model": "Unspecified CLI default at execution; not retrospectively attributed to Luna 6.",
+      "seed": 0,
+      "outcome": "not_found",
+      "elapsed": 34.199999999997054,
+      "home_error": 0.11249592708435459,
+      "deadline": 61.0,
+      "turn_statuses": [
+        "clarification"
+      ],
+      "tasks": {
+        "pending": [
+          {
+            "id": "search-1",
+            "action": "search",
+            "target": "blue",
+            "observation_id": null
+          }
+        ],
+        "completed": [
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 33.19999999999461,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "zero_velocity_commands_during_waits": [
+        62
+      ],
+      "no_obstacle_contact_or_fall_in_trace": true
+    },
+    {
+      "case": "short-answer",
+      "log": "outputs/dialogue-dev/short-answer/plan-20261025T144225402476Z.json",
+      "sha256": "ff88d683cd130f267b3f8299912bba73b3f2e3816f6ada207f3143deb56ff887",
+      "model": "Unspecified CLI default at execution; not retrospectively attributed to Luna 6.",
+      "seed": 305,
+      "outcome": "returned",
+      "elapsed": 120.19999999989894,
+      "home_error": 0.10531510929565742,
+      "deadline": 181.0,
+      "turn_statuses": [
+        "clarification",
+        "accepted",
+        "accepted"
+      ],
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "reobserve-green-1",
+              "action": "reobserve",
+              "target": "green",
+              "observation_id": "obs-47-green"
+            },
+            "time": 93.39999999996373,
+            "evidence": {
+              "id": "obs-94-green",
+              "color": "green",
+              "time": 93.39999999996373,
+              "position": [
+                2.208935397374333,
+                -2.081526490867341
+              ],
+              "range": 1.5648779800356705
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 119.1999999999036,
+            "evidence": null
+          }
+        ],
+        "cancelled": [
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 80.39999999999402,
+            "instruction": "青の探索は取り消して。"
+          }
+        ]
+      },
+      "zero_velocity_commands_during_waits": [
+        50,
+        40,
+        32
+      ],
+      "no_obstacle_contact_or_fall_in_trace": true
+    }
+  ],
+  "initial_failure": {
+    "log": "outputs/dialogue-dev/answered/plan-20261025T143636150506Z.json",
+    "error": "Target could not be reobserved from its remembered sensing position",
+    "sha256": "aec27f6dcedc6c9b636ea3cfae8550751c9dfaadbfd6348be1ebdb21efa53aab"
+  },
+  "regression_tests": {
+    "total": 61,
+    "skipped": 0,
+    "physics_methods": 9,
+    "log": "outputs/luna6-physics-tests.log",
+    "note": "Current pinned source; tests mock CLI calls, no live LLM in this suite."
+  }
+}

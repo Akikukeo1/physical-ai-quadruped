@@ -8,9 +8,11 @@ from dataclasses import asdict
 from pathlib import Path
 from unittest.mock import patch
 
-from pai_motion.correction import initial_tasks
-from pai_motion.search import sample_search
-from scripts import probe_corrections
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+from pai_motion.correction import initial_tasks  # noqa: E402
+from pai_motion.search import sample_search  # noqa: E402
+from scripts import probe_corrections  # noqa: E402
 
 
 class TestProbe(unittest.TestCase):
