@@ -56,6 +56,8 @@ class TestCodexPlanner(unittest.TestCase):
             self.assertEqual(command[command.index("--sandbox") + 1], "read-only")
             self.assertEqual(command[command.index("--disable") + 1], "shell_tool")
             self.assertIn("--ignore-user-config", command)
+            self.assertEqual(command[command.index("--model") + 1], "gpt-6-luna")
+            self.assertEqual(command[command.index("--config") + 1], 'model_reasoning_effort="xhigh"')
             self.assertEqual(kwargs["encoding"], "utf-8")
             output = Path(command[command.index("--output-last-message") + 1])
             self.assertEqual(Path(kwargs["cwd"]), output.parent)
