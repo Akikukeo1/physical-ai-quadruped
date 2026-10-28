@@ -26,13 +26,30 @@
 
 ```bash
 .venv-wsl/bin/python scripts/compare_constraint_baselines.py --baseline rules \
-  --plan-log outputs/constraint-dialogue-ordered/実行時に作られたJSONファイル \
+  --plan-log outputs/constraint-dialogue-ordered/plan-20261028T114839896655Z.json \
   --out-dir outputs/constraint-baseline-rules
 .venv-wsl/bin/python scripts/compare_constraint_baselines.py --baseline no-history \
-  --plan-log outputs/constraint-dialogue-ordered/実行時に作られたJSONファイル \
+  --plan-log outputs/constraint-dialogue-ordered/plan-20261028T114839896655Z.json \
   --out-dir outputs/constraint-baseline-no-history
 ```
 
 入力・初期計画のSHA-256、観測、実行器への指令、制約、タスクの状態を保存する。
 履歴削減でのCodexへの入力・生JSON応答も保存する。既存の結果は上書きしない。
 この1組の入力では、LLMやルールの汎化性能を比較したとは言えない。
+
+## 実行結果
+
+| 構成 | 結果 | 終了時刻 | 帰還誤差 |
+| --- | --- | ---: | ---: |
+| Luna・履歴あり | 制約追加、質問、解除、緑の再確認、青の発見、帰還を完了 | 165.8秒 | 0.111m |
+| ルール | 同じ順序で完了 | 171.8秒 | 0.115m |
+| Luna・履歴削減 | 過去の緑の観測を参照できず質問し、青を未達成のまま帰還 | 211.8秒 | 0.079m |
+
+訂正を受け取った最初の時点の元の観測状況は3試行で一致した。履歴ありの入力には2件の観測があり、
+履歴削減の最初の入力にはなかった。その後はモデルの待機時間が異なり、軌跡も一致しない。
+ルールは今回の発言に合わせた限定的な語彙を扱うため、この1例はLLMの優位性の証明ではない。
+
+範囲が有効な間のロボット中心と基準点のサンプル上の最短距離は、履歴ありで1.244m、
+ルールで1.252mだった。禁止半径は0.5mであり、この試行だけでは範囲に接近した際の迂回性能は検証できない。
+詳細と元ログのハッシュは [constraint-comparison-validation.json](constraint-comparison-validation.json) に保存した。
+元ログと実録画は `outputs/` にあり、Gitの管理対象外である。

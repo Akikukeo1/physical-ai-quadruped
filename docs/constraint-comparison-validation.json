@@ -1,0 +1,578 @@
+{
+  "scope": "One tuned development layout and message sequence; not a generalization benchmark.",
+  "llm_source_commit": "53e6dac",
+  "baseline_source_commit": "38ee178",
+  "seed": 305,
+  "initial_plan": {
+    "intent": "青い対象を探し、見つけたら出発地点へ戻る。見つからない場合も探索終了または時間切れで帰還し、not_foundを報告する。",
+    "target": "blue",
+    "seconds": 240,
+    "on_found": "return_home"
+  },
+  "initial_full_context_equal": true,
+  "current_only_first_observations": 0,
+  "full_context_first_observations": 2,
+  "same_initial_plan_log_sha256": "f06c19c02499fff3db957ea1995467c0af2103b6f5740f239cc759aa4cde4549",
+  "same_input_sha256": "6e66381b2f03c8070269325f5396fce382c6c65d2d12e1f3ecff771fd0a9957e",
+  "rule_scope": "green-only keyword grammar defined in scripts/compare_constraint_baselines.py",
+  "cases": [
+    {
+      "condition": "luna_history",
+      "log": "outputs/constraint-dialogue-ordered/plan-20261028T114839896655Z.json",
+      "sha256": "f06c19c02499fff3db957ea1995467c0af2103b6f5740f239cc759aa4cde4549",
+      "success": true,
+      "outcome": "found",
+      "elapsed": 165.80000000006834,
+      "home_error": 0.11083477846889465,
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "reobserve-green-47",
+              "action": "reobserve",
+              "target": "green",
+              "observation_id": "obs-47-green"
+            },
+            "time": 103.39999999994042,
+            "evidence": {
+              "id": "obs-104-green",
+              "color": "green",
+              "time": 103.39999999994042,
+              "position": [
+                2.2161547591316135,
+                -2.080393595621255
+              ],
+              "range": 1.5389374833176686
+            }
+          },
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 146.39999999997093,
+            "evidence": {
+              "time": 146.39999999997093,
+              "position": [
+                1.927965482049947,
+                1.7321271769914544
+              ],
+              "range": 1.7573756453282632
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 164.8000000000588,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "constraints": {
+        "active": [],
+        "released": [
+          {
+            "constraint": {
+              "id": "avoid-green-47",
+              "observation_id": "obs-47-green",
+              "radius": 0.5,
+              "instruction": "最後に緑を見た地点の半径0.5m以内に入らないで。"
+            },
+            "time": 88.39999999997538,
+            "instruction": "緑を見た地点の立入禁止を解除して、そこで緑を再確認してから、青の探索と帰還を続けて"
+          }
+        ]
+      },
+      "area_evidence": {
+        "radius": 0.5,
+        "anchor": {
+          "id": "obs-47-green",
+          "color": "green",
+          "time": 47.000000000011475,
+          "position": [
+            2.2691727856458033,
+            -2.0846918138324573
+          ],
+          "range": 1.4918153037567805
+        },
+        "begin": 66.00000000002758,
+        "end": 88.39999999997538,
+        "minimum_sampled_center_distance": 1.2444619869759912,
+        "samples": 224
+      },
+      "turns": [
+        {
+          "message": "最後に緑を見た地点の半径0.5m以内に入らないで。青の探索と帰還は続けて",
+          "status": "accepted",
+          "question": "",
+          "received": 56.000000000022474,
+          "applied": 66.00000000002758,
+          "question_time": null,
+          "planning_wall_seconds": 12.34931288900043,
+          "proposal": {
+            "intent": "青い対象を探し、見つけたら出発地点へ戻る。見つからない場合も探索終了または時間切れで帰還し、not_foundを報告する。",
+            "status": "accept",
+            "question": "",
+            "steps": [
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": [],
+            "constraints": [
+              {
+                "id": "avoid-green-47",
+                "observation_id": "obs-47-green",
+                "radius": 0.5,
+                "instruction": "最後に緑を見た地点の半径0.5m以内に入らないで。"
+              }
+            ],
+            "released_constraints": []
+          }
+        },
+        {
+          "message": "その緑を見た地点に戻って緑をもう一度確認して。青の探索は続けて",
+          "status": "clarification",
+          "question": "最後に緑を確認した場所は、半径0.5mの立入回避範囲内です。そこへ戻って緑を再確認するため、この回避を解除してよいですか？",
+          "received": 68.00000000002292,
+          "applied": null,
+          "question_time": 77.00000000000195,
+          "planning_wall_seconds": 13.101924587001122,
+          "proposal": {
+            "intent": "青い対象を探し、見つけたら出発地点へ戻る。見つからない場合も探索終了または時間切れで帰還し、not_foundを報告する。",
+            "status": "clarify",
+            "question": "最後に緑を確認した場所は、半径0.5mの立入回避範囲内です。そこへ戻って緑を再確認するため、この回避を解除してよいですか？",
+            "steps": [
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": [],
+            "constraints": [
+              {
+                "id": "avoid-green-47",
+                "observation_id": "obs-47-green",
+                "radius": 0.5,
+                "instruction": "最後に緑を見た地点の半径0.5m以内に入らないで。"
+              }
+            ],
+            "released_constraints": []
+          }
+        },
+        {
+          "message": "緑を見た地点の立入禁止を解除して、そこで緑を再確認してから、青の探索と帰還を続けて",
+          "status": "accepted",
+          "question": "",
+          "received": 80.99999999999262,
+          "applied": 88.39999999997538,
+          "question_time": null,
+          "planning_wall_seconds": 10.400786918999074,
+          "proposal": {
+            "intent": "青い対象を探し、見つけたら出発地点へ戻る。見つからない場合も探索終了または時間切れで帰還し、not_foundを報告する。",
+            "status": "accept",
+            "question": "",
+            "steps": [
+              {
+                "id": "reobserve-green-47",
+                "action": "reobserve",
+                "target": "green",
+                "observation_id": "obs-47-green"
+              },
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": [],
+            "constraints": [],
+            "released_constraints": [
+              {
+                "id": "avoid-green-47",
+                "instruction": "緑を見た地点の立入禁止を解除して、そこで緑を再確認してから、青の探索と帰還を続けて"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "condition": "rules",
+      "log": "outputs/constraint-baseline-rules/run.json",
+      "sha256": "88f057cc00a988be4874fd45f0e8116d547d77ec76d6feba8fabdecedecba6b2",
+      "success": true,
+      "outcome": "found",
+      "elapsed": 171.800000000097,
+      "home_error": 0.11531047534270421,
+      "tasks": {
+        "pending": [],
+        "completed": [
+          {
+            "step": {
+              "id": "rule-reobserve",
+              "action": "reobserve",
+              "target": "green",
+              "observation_id": "obs-47-green"
+            },
+            "time": 105.19999999993622,
+            "evidence": {
+              "id": "obs-106-green",
+              "color": "green",
+              "time": 105.19999999993622,
+              "position": [
+                2.2352015956238835,
+                -2.0880604135465597
+              ],
+              "range": 1.5495309714493972
+            }
+          },
+          {
+            "step": {
+              "id": "search-1",
+              "action": "search",
+              "target": "blue",
+              "observation_id": null
+            },
+            "time": 148.19999999997953,
+            "evidence": {
+              "time": 148.19999999997953,
+              "position": [
+                1.917063034789344,
+                1.4416595973591861
+              ],
+              "range": 1.7634728518656198
+            }
+          },
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 170.80000000008744,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "constraints": {
+        "active": [],
+        "released": [
+          {
+            "constraint": {
+              "id": "rule-area",
+              "observation_id": "obs-47-green",
+              "radius": 0.5,
+              "instruction": "最後に緑を見た地点の半径0.5m以内に入らないで。青の探索と帰還は続けて"
+            },
+            "time": 81.19999999999216,
+            "instruction": "緑を見た地点の立入禁止を解除して、そこで緑を再確認してから、青の探索と帰還を続けて"
+          }
+        ]
+      },
+      "area_evidence": {
+        "radius": 0.5,
+        "anchor": {
+          "id": "obs-47-green",
+          "color": "green",
+          "time": 47.000000000011475,
+          "position": [
+            2.2691727856458033,
+            -2.0846918138324573
+          ],
+          "range": 1.4918153037567805
+        },
+        "begin": 56.20000000002272,
+        "end": 81.19999999999216,
+        "minimum_sampled_center_distance": 1.2522983227347062,
+        "samples": 250
+      },
+      "turns": [
+        {
+          "message": "最後に緑を見た地点の半径0.5m以内に入らないで。青の探索と帰還は続けて",
+          "status": "accepted",
+          "question": "",
+          "received": 56.000000000022474,
+          "applied": 56.20000000002272,
+          "question_time": null,
+          "planning_wall_seconds": 0.03093648300091445,
+          "proposal": {
+            "intent": "ルールによる訂正",
+            "status": "accept",
+            "steps": [
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": [],
+            "question": "",
+            "constraints": [
+              {
+                "id": "rule-area",
+                "observation_id": "obs-47-green",
+                "radius": 0.5,
+                "instruction": "最後に緑を見た地点の半径0.5m以内に入らないで。青の探索と帰還は続けて"
+              }
+            ],
+            "released_constraints": []
+          }
+        },
+        {
+          "message": "その緑を見た地点に戻って緑をもう一度確認して。青の探索は続けて",
+          "status": "clarification",
+          "question": "立入制限を解除しますか？",
+          "received": 68.00000000002292,
+          "applied": null,
+          "question_time": 68.20000000002246,
+          "planning_wall_seconds": 0.02140708899969468,
+          "proposal": {
+            "intent": "ルールによる訂正",
+            "status": "clarify",
+            "steps": [
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": [],
+            "question": "立入制限を解除しますか？",
+            "constraints": [
+              {
+                "id": "rule-area",
+                "observation_id": "obs-47-green",
+                "radius": 0.5,
+                "instruction": "最後に緑を見た地点の半径0.5m以内に入らないで。青の探索と帰還は続けて"
+              }
+            ],
+            "released_constraints": []
+          }
+        },
+        {
+          "message": "緑を見た地点の立入禁止を解除して、そこで緑を再確認してから、青の探索と帰還を続けて",
+          "status": "accepted",
+          "question": "",
+          "received": 80.99999999999262,
+          "applied": 81.19999999999216,
+          "question_time": null,
+          "planning_wall_seconds": 0.02748553399942466,
+          "proposal": {
+            "intent": "ルールによる訂正",
+            "status": "accept",
+            "steps": [
+              {
+                "id": "rule-reobserve",
+                "action": "reobserve",
+                "target": "green",
+                "observation_id": "obs-47-green"
+              },
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": [],
+            "question": "",
+            "constraints": [],
+            "released_constraints": [
+              {
+                "id": "rule-area",
+                "instruction": "緑を見た地点の立入禁止を解除して、そこで緑を再確認してから、青の探索と帰還を続けて"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "condition": "luna_current_only",
+      "log": "outputs/constraint-baseline-no-history/run.json",
+      "sha256": "1306818adddbc12354ec7cd7c81c512e490c1d17feb9b30e2ed2228344e064ca",
+      "success": false,
+      "outcome": "not_found",
+      "elapsed": 211.80000000028798,
+      "home_error": 0.07887436342029683,
+      "tasks": {
+        "pending": [
+          {
+            "id": "search-1",
+            "action": "search",
+            "target": "blue",
+            "observation_id": null
+          }
+        ],
+        "completed": [
+          {
+            "step": {
+              "id": "home",
+              "action": "return_home",
+              "target": null,
+              "observation_id": null
+            },
+            "time": 210.80000000027843,
+            "evidence": null
+          }
+        ],
+        "cancelled": []
+      },
+      "constraints": {
+        "active": [],
+        "released": []
+      },
+      "area_evidence": null,
+      "turns": [
+        {
+          "message": "最後に緑を見た地点の半径0.5m以内に入らないで。青の探索と帰還は続けて",
+          "status": "clarification",
+          "question": "この実行記録には緑を見た場所がありません。どの場所を避ける範囲の中心にしますか？",
+          "received": 56.000000000022474,
+          "applied": null,
+          "question_time": 65.00000000002991,
+          "planning_wall_seconds": 8.897190792999027,
+          "proposal": {
+            "intent": "青い対象を探し、見つけたら出発地点へ戻る。見つからない場合も探索終了または時間切れで帰還し、not_foundを報告する。",
+            "status": "clarify",
+            "question": "この実行記録には緑を見た場所がありません。どの場所を避ける範囲の中心にしますか？",
+            "steps": [
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": [],
+            "constraints": [],
+            "released_constraints": []
+          }
+        },
+        {
+          "message": "その緑を見た地点に戻って緑をもう一度確認して。青の探索は続けて",
+          "status": "clarification",
+          "question": "この記録には緑を見た地点がありません。緑を見た場所を教えてください。",
+          "received": 68.00000000002292,
+          "applied": null,
+          "question_time": 77.40000000000101,
+          "planning_wall_seconds": 9.45202637500006,
+          "proposal": {
+            "intent": "青い対象の探索を続け、見つけたら出発地点へ戻る。緑を見た地点で再確認する。",
+            "status": "clarify",
+            "question": "この記録には緑を見た地点がありません。緑を見た場所を教えてください。",
+            "steps": [
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": [],
+            "constraints": [],
+            "released_constraints": []
+          }
+        },
+        {
+          "message": "緑を見た地点の立入禁止を解除して、そこで緑を再確認してから、青の探索と帰還を続けて",
+          "status": "clarification",
+          "question": "緑を見た地点の記録がなく、解除できる立入禁止範囲もありません。緑を再確認したい場所を教えてください。",
+          "received": 80.99999999999262,
+          "applied": null,
+          "question_time": 91.19999999996885,
+          "planning_wall_seconds": 10.239458639000077,
+          "proposal": {
+            "intent": "青い対象を探し、見つけたら出発地点へ戻る。見つからない場合も探索終了または時間切れで帰還し、not_foundを報告する。",
+            "status": "clarify",
+            "question": "緑を見た地点の記録がなく、解除できる立入禁止範囲もありません。緑を再確認したい場所を教えてください。",
+            "steps": [
+              {
+                "id": "search-1",
+                "action": "search",
+                "target": "blue",
+                "observation_id": null
+              },
+              {
+                "id": "home",
+                "action": "return_home",
+                "target": null,
+                "observation_id": null
+              }
+            ],
+            "cancelled": [],
+            "constraints": [],
+            "released_constraints": []
+          }
+        }
+      ]
+    }
+  ]
+}
