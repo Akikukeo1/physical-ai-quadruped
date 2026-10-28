@@ -11,6 +11,8 @@ from pathlib import Path
 from pai_motion.constraint_revision import codex_constraint_revision
 from pai_motion.correction import sample_correction
 from pai_motion.executor import DryRunSink, execute_plan
+from pai_motion.field_areas import validate_areas
+from pai_motion.field_revision import codex_field_revision
 from pai_motion.navigation import (
     MAX_TASK_SECONDS,
     OBSTACLE,
@@ -49,6 +51,7 @@ def main() -> int:
     )
     correction_input.add_argument("--correction-script", type=Path, help="JSON list of timed correction messages")
     parser.add_argument("--constraint-revisions", action="store_true", help="Enable experimental area constraints")
+    parser.add_argument("--field-areas", type=Path, help="JSON file of named rectangles drawn on the field")
     parser.add_argument("--correct-at", type=float, help="Seconds after search start to inject --correction")
     parser.add_argument(
         "--replanner",
@@ -81,6 +84,10 @@ def main() -> int:
         parser.error("--missing-target requires --task search")
     if args.constraint_revisions and (not search or args.planner != "codex"):
         parser.error("--constraint-revisions requires --task search --planner codex")
+    if args.field_areas and (not search or args.planner != "codex" or args.constraint_revisions):
+        parser.error("--field-areas requires --task search --planner codex and excludes --constraint-revisions")
+    if args.field_areas and not (args.correction_file or args.correction_script or args.correction is not None):
+        parser.error("--field-areas requires a correction input")
     if args.constraint_revisions and not (
         args.correction_file or args.correction_script or args.correction is not None
     ):
@@ -120,6 +127,13 @@ def main() -> int:
         "disclaimer": "dry-run only, not a physical simulation" if args.executor == "dry-run" else None,
     }
     try:
+        field_areas = None
+        if args.field_areas:
+            if args.field_areas.stat().st_size > 16384:
+                raise ValueError("Area file exceeds 16384 bytes")
+            field_areas = validate_areas(json.loads(args.field_areas.read_text(encoding="utf-8")))
+            data["field_areas"] = field_areas
+            print("FIELD AREAS: " + ", ".join(f"{i + 1}={a['id']}" for i, a in enumerate(field_areas)), flush=True)
         if search:
             plan = codex_search(args.prompt) if args.planner == "codex" else sample_search()
             if args.correct_at is not None and args.correct_at >= plan.seconds - 2:
@@ -177,6 +191,7 @@ def main() -> int:
                 dynamic_obstacle=dynamic,
                 search_seed=args.seed if search else None,
                 missing_target=args.missing_target,
+                field_areas=field_areas,
             )
             from pai_motion.assets import MANIFEST
 
@@ -216,7 +231,9 @@ def main() -> int:
                 decisions=data["decisions"],
                 get_correction=get_correction if correction_enabled else None,
                 correction_planner=(
-                    codex_constraint_revision
+                    codex_field_revision
+                    if args.field_areas
+                    else codex_constraint_revision
                     if args.constraint_revisions
                     else codex_correction
                     if args.planner == "codex"
@@ -226,6 +243,7 @@ def main() -> int:
                 else None,
                 corrections=data["corrections"],
                 constraint_mode=args.constraint_revisions,
+                field_areas=field_areas,
             )
         elif navigation:
 

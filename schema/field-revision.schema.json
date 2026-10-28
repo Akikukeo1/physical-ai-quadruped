@@ -1,0 +1,21 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "question", "changes"],
+  "properties": {
+    "status": {"type": "string", "enum": ["accept", "clarify"]},
+    "question": {"type": "string", "maxLength": 200},
+    "changes": {
+      "type": "array", "maxItems": 8,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "permission", "instruction"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1, "maxLength": 40},
+          "permission": {"type": "string", "enum": ["allow", "avoid"]},
+          "instruction": {"type": "string", "minLength": 1, "maxLength": 500}
+        }
+      }
+    }
+  }
+}

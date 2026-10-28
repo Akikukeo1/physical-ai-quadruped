@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><title>フィールドのエリア設定</title>
+<style>
+body{font:16px sans-serif;margin:2rem;color:#1c3030}canvas{border:2px solid #364b4b;touch-action:none;max-width:100%;background:#f6f8f7}button{font-size:16px;padding:.6rem;margin:.3rem}#status{min-height:1.5em}
+</style></head><body>
+<h1>フィールドのエリア設定</h1>
+<p>マウスでドラッグして長方形を描きます。最大8個。エリアは通行可能な状態で始まります。</p>
+<p>図は座標の枠で、障害物や対象物の配置は表示していません。黄色は出発地点です。</p>
+<canvas id="field" width="696" height="648" aria-label="エリアをドラッグで作成するフィールド"></canvas>
+<p id="status" aria-live="polite"></p>
+<button id="undo">最後のエリアを削除</button><button id="save">JSONを保存</button>
+<script>
+const canvas=document.getElementById('field'), ctx=canvas.getContext('2d'), status=document.getElementById('status');
+const areas=[]; let start=null, current=null;
+const left=-1.2, fieldTop=2.7, scale=120;
+function world(p){return [+(left+p.x/scale).toFixed(2), +(fieldTop-p.y/scale).toFixed(2)]}
+function point(e){const r=canvas.getBoundingClientRect();return {x:Math.max(0,Math.min(canvas.width,(e.clientX-r.left)*canvas.width/r.width)),y:Math.max(0,Math.min(canvas.height,(e.clientY-r.top)*canvas.height/r.height))}}
+function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);ctx.strokeStyle='#d8e2df';for(let x=0;x<canvas.width;x+=60){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.stroke()}for(let y=0;y<canvas.height;y+=60){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.stroke()}
+  ctx.fillStyle='#dcaa00';ctx.beginPath();ctx.arc(-left*scale,fieldTop*scale,8,0,2*Math.PI);ctx.fill();
+  function rect(b,label){const [a,c,d,e]=b, x=(a-left)*scale,y=(fieldTop-e)*scale,w=(d-a)*scale,h=(e-c)*scale;ctx.fillStyle='rgba(33,144,170,.24)';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#087c8e';ctx.lineWidth=3;ctx.strokeRect(x,y,w,h);ctx.fillStyle='#164950';ctx.font='bold 18px sans-serif';ctx.fillText(label,x+5,y+20)}
+  areas.forEach(a=>rect(a.bounds,a.id));if(start&&current){const a=world(start),b=world(current);rect([Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.max(a[0],b[0]),Math.max(a[1],b[1])],'')}
+  status.textContent=`${areas.length} / 8 エリア: ${areas.map(a=>a.id).join(', ')}`}
+canvas.addEventListener('pointerdown',e=>{if(areas.length>=8)return; start=point(e);current=start;canvas.setPointerCapture(e.pointerId);draw()});
+canvas.addEventListener('pointermove',e=>{if(start){current=point(e);draw()}});
+canvas.addEventListener('pointerup',e=>{if(!start)return;const a=world(start),b=world(point(e));const bounds=[Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.max(a[0],b[0]),Math.max(a[1],b[1])];if(bounds[2]-bounds[0]>=.1&&bounds[3]-bounds[1]>=.1)areas.push({id:`area${areas.length+1}`,bounds});start=current=null;draw()});
+canvas.addEventListener('pointercancel',()=>{start=current=null;draw()});
+document.getElementById('undo').onclick=()=>{areas.pop();draw()};
+document.getElementById('save').onclick=()=>{if(!areas.length){status.textContent='先にエリアを描いてください';return}const blob=new Blob([JSON.stringify(areas,null,2)+'\n'],{type:'application/json'}), url=URL.createObjectURL(blob), a=document.createElement('a');a.href=url;a.download='field-areas.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};draw();
+</script></body></html>

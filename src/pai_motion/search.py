@@ -12,6 +12,8 @@ from dataclasses import asdict, dataclass, replace
 from pai_motion.constraint_revision import validate_constraint_revision
 from pai_motion.correction import SearchCorrection, initial_tasks, validate_correction
 from pai_motion.executor import Velocity
+from pai_motion.field_areas import distance_to_area, validate_areas
+from pai_motion.field_revision import validate_field_revision
 from pai_motion.motion import InvalidPlan
 
 RESOLUTION = 0.1
@@ -20,6 +22,11 @@ HOME_TOLERANCE = 0.15
 FOOTPRINT = [(dx, dy) for dx in range(-5, 6) for dy in range(-5, 6) if math.hypot(dx, dy) * RESOLUTION <= 0.45]
 # .45 m body + .05 m reserve + .071 m worst-case cell quantization.
 INFLATION = [(dx, dy) for dx in range(-6, 7) for dy in range(-6, 7) if math.hypot(dx, dy) * RESOLUTION <= 0.58]
+
+
+def area_clearance(point, area):
+    center, radius = area
+    return distance_to_area(point, radius) if center == "rect" else math.dist(point, center) - radius
 
 
 @dataclass(frozen=True)
@@ -85,14 +92,14 @@ class ObservedMap:
             safe = {
                 cell
                 for cell in safe
-                if all(math.dist(self.point(cell), center) > radius + 0.15 for center, radius in restricted)
+                if all(area_clearance(self.point(cell), area) > 0.15 for area in restricted)
             }
         # Unknown space also blocks the footprint, so exploration never plans through unseen areas.
         return {c for c in safe if all((c[0] + dx, c[1] + dy) in self.free for dx, dy in FOOTPRINT)}
 
     def routes(self, position, restricted=()):
         restricted = tuple(restricted)
-        if any(math.dist(position, center) <= radius + 0.15 for center, radius in restricted):
+        if any(area_clearance(position, area) <= 0.15 for area in restricted):
             raise RuntimeError("Robot is inside or too close to a restricted area")
         safe = self.traversable(restricted)
         start = self.cell(position)
@@ -179,6 +186,7 @@ def execute_search(
     correction_planner=None,
     corrections: list | None = None,
     constraint_mode: bool = False,
+    field_areas: list | None = None,
 ) -> dict:
     plan = validate_search(asdict(plan))
     if (get_correction is None) != (correction_planner is None):
@@ -201,6 +209,8 @@ def execute_search(
     first_seen, last_seen = {}, {}
     tasks, completed, cancelled = initial_tasks(plan.target), [], []
     constraints, released_constraints = [], []
+    field_areas = validate_areas(deepcopy(field_areas)) if field_areas is not None else None
+    blocked_fields = set()
     active_id, active_since = None, started
     worker = pending = revision = None
     seen_messages = set()
@@ -211,7 +221,9 @@ def execute_search(
             state = sink.observe()
             position = tuple(state["position"][:2])
             areas = [(evidence_records[c["observation_id"]]["position"], c["radius"]) for c in constraints]
-            if any(math.dist(position, center) <= radius + 0.05 for center, radius in areas):
+            if field_areas is not None:
+                areas += [("rect", area["bounds"]) for area in field_areas if area["id"] in blocked_fields]
+            if any(area_clearance(position, area) <= 0.05 for area in areas):
                 raise RuntimeError("Robot entered the restricted-area stopping margin")
             distance_travelled += math.dist(last, position)
             last = position
@@ -310,6 +322,8 @@ def execute_search(
                         context.update(
                             constraints=deepcopy(constraints), released_constraints=deepcopy(released_constraints)
                         )
+                    if field_areas is not None:
+                        context.update(field_areas=deepcopy(field_areas), blocked_areas=sorted(blocked_fields))
                     revision = {
                         "message": message,
                         "status": "planning",
@@ -340,7 +354,32 @@ def execute_search(
                         raise RuntimeError("Robot did not settle during correction")
                 if pending.done() and "settled" in revision:
                     raw = pending.result()
-                    if constraint_mode:
+                    if field_areas is not None:
+                        proposal = validate_field_revision(raw, context=revision["context"], prompt=revision["message"])
+                        updated_fields = set(blocked_fields)
+                        for change in proposal["changes"]:
+                            if change["permission"] == "avoid":
+                                updated_fields.add(change["id"])
+                            else:
+                                updated_fields.discard(change["id"])
+                        reason = proposal["question"]
+                        if proposal["status"] == "accept":
+                            proposed_areas = [("rect", a["bounds"]) for a in field_areas if a["id"] in updated_fields]
+                            try:
+                                reachable, _ = grid.routes(tuple(stopped["position"][:2]), proposed_areas)
+                                if grid.cell(home) not in reachable:
+                                    reason = "制限すると現在の地図では帰還経路を確保できません。制限を変更しますか？"
+                            except RuntimeError:
+                                reason = (
+                                    "現在地が制限範囲内か、制限後の安全な経路を確認できません。制限を変更しますか？"
+                                )
+                        correction = SearchCorrection(
+                            "エリア通行条件の変更", "clarify" if reason else "accept", deepcopy(tasks), [], reason
+                        )
+                        revision["field_proposal"] = deepcopy(proposal)
+                        if reason and proposal["status"] == "accept":
+                            revision["clarification_source"] = "feasibility_check"
+                    elif constraint_mode:
                         proposal = validate_constraint_revision(
                             raw, context=revision["context"], prompt=revision["message"]
                         )
@@ -397,6 +436,10 @@ def execute_search(
                         if step["id"] in removed
                     )
                     tasks = deepcopy(correction.steps)
+                    if field_areas is not None:
+                        blocked_fields = updated_fields
+                        sink.set_field_permissions(blocked_fields)
+                        revision["blocked_areas"] = sorted(blocked_fields)
                     if constraint_mode:
                         removed_areas = {item["id"]: item["instruction"] for item in proposal["released_constraints"]}
                         released_constraints.extend(
@@ -559,5 +602,6 @@ def execute_search(
         "corrections": corrections,
         "tasks": {"pending": tasks, "completed": completed, "cancelled": cancelled},
         **({"constraints": {"active": constraints, "released": released_constraints}} if constraint_mode else {}),
+        **({"field_areas": field_areas, "blocked_areas": sorted(blocked_fields)} if field_areas is not None else {}),
         "map": {"resolution": RESOLUTION, "free": sorted(grid.free), "occupied": sorted(grid.occupied)},
     }

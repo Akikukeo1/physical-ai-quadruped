@@ -9,6 +9,7 @@ from __future__ import annotations
 import math
 import time
 import xml.etree.ElementTree as ET
+from contextlib import nullcontext
 from pathlib import Path
 
 from pai_motion.assets import ensure_assets
@@ -27,6 +28,7 @@ class MuJoCoGo2Sink:
         dynamic_obstacle: bool = False,
         search_seed: int | None = None,
         missing_target: bool = False,
+        field_areas: list | None = None,
     ) -> None:
         if dynamic_obstacle and not navigation:
             raise ValueError("dynamic_obstacle requires navigation")
@@ -41,6 +43,7 @@ class MuJoCoGo2Sink:
         self.trace: list[dict] = []
         self.viewer = self.renderer = self.writer = None
         self.visual_options = mujoco.MjvOption()
+        self.visual_options.geomgroup[4] = 1
         self.visual_options.geomgroup[5] = 1
         self.ticks = 0
         self.stopped = False
@@ -50,6 +53,7 @@ class MuJoCoGo2Sink:
         if self.search and navigation:
             raise ValueError("Search and known-map navigation are separate scenes")
         self.world_events: list[dict] = []
+        self.field_areas = field_areas or []
         assets = ensure_assets()
         scene = ET.parse(assets / "go2.xml").getroot()
         scene.find("compiler").set("meshdir", (assets / "assets").as_posix())
@@ -127,8 +131,33 @@ class MuJoCoGo2Sink:
                 contype="0",
                 conaffinity="0",
             )
+            for index, area in enumerate(self.field_areas):
+                x1, y1, x2, y2 = area["bounds"]
+                ET.SubElement(
+                    scene.find("worldbody"), "geom", name=f"field_area_{index}", type="box", group="4",
+                    pos=f"{(x1+x2)/2} {(y1+y2)/2} .008", size=f"{(x2-x1)/2} {(y2-y1)/2} .004",
+                    rgba="0.05 0.65 0.75 0.35", contype="0", conaffinity="0",
+                )
+                # Seven-segment number gives the viewer a stable area-to-ID legend.
+                digit_segments = ("bc", "abged", "abgcd", "fgbc", "afgcd", "afgecd", "abc", "abcdefg")
+                w = min(0.08, (x2 - x1) / 6, (y2 - y1) / 10)
+                segments = {
+                    "a": (0, 2*w, w, .13*w), "g": (0, 0, w, .13*w), "d": (0, -2*w, w, .13*w),
+                    "f": (-w, w, .13*w, w), "b": (w, w, .13*w, w),
+                    "e": (-w, -w, .13*w, w), "c": (w, -w, .13*w, w),
+                }
+                for segment in digit_segments[index]:
+                    dx, dy, hx, hy = segments[segment]
+                    ET.SubElement(
+                        scene.find("worldbody"), "geom", type="box", group="4",
+                        pos=f"{(x1+x2)/2+dx} {(y1+y2)/2+dy} .016", size=f"{hx} {hy} .003",
+                        rgba="0.05 0.08 0.08 1", contype="0", conaffinity="0",
+                    )
         self.model = mujoco.MjModel.from_xml_string(ET.tostring(scene, encoding="unicode"))
         self.data = mujoco.MjData(self.model)
+        self.field_geom_ids = {
+            area["id"]: self.model.geom(f"field_area_{i}").id for i, area in enumerate(self.field_areas)
+        }
         names = [f"{leg}_{joint}" for leg in ("FL", "FR", "RL", "RR") for joint in ("hip", "thigh", "calf")]
         joints = [self.model.joint(f"{name}_joint").id for name in names]
         self.actuators = np.array([self.model.actuator(name).id for name in names])
@@ -195,6 +224,7 @@ class MuJoCoGo2Sink:
 
                 self.viewer = mujoco.viewer.launch_passive(self.model, self.data)
                 with self.viewer.lock():
+                    self.viewer.opt.geomgroup[4] = 1
                     self.viewer.opt.geomgroup[5] = 1
                 self.viewer.cam.distance = 2.7
                 self.viewer.cam.elevation = -25
@@ -245,6 +275,15 @@ class MuJoCoGo2Sink:
         if self.search:
             return {name: state[name] for name in ("time", "position", "yaw", "body_velocity", "yaw_rate")}
         return state
+
+    def set_field_permissions(self, blocked):
+        """Color only visual geoms; range sensing and collisions ignore them."""
+        with self.viewer.lock() if self.viewer is not None else nullcontext():
+            for name, geom in self.field_geom_ids.items():
+                self.model.geom_rgba[geom] = [0.9, 0.12, 0.12, 0.5] if name in blocked else [0.05, 0.65, 0.75, 0.35]
+        self.world_events.append(
+            {"type": "field_permissions", "time": float(self.data.time), "blocked": sorted(blocked)}
+        )
 
     def sense(self) -> dict:
         """Ideal horizontal range scanner with surface color at the FIRST visible ray hit."""
