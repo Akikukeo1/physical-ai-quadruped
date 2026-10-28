@@ -8,6 +8,7 @@ from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
 
+from pai_motion.constraint_revision import codex_constraint_revision
 from pai_motion.correction import sample_correction
 from pai_motion.executor import DryRunSink, execute_plan
 from pai_motion.navigation import (
@@ -47,6 +48,7 @@ def main() -> int:
         "--correction", help="Inject one natural-language correction at --correct-at for replay"
     )
     correction_input.add_argument("--correction-script", type=Path, help="JSON list of timed correction messages")
+    parser.add_argument("--constraint-revisions", action="store_true", help="Enable experimental area constraints")
     parser.add_argument("--correct-at", type=float, help="Seconds after search start to inject --correction")
     parser.add_argument(
         "--replanner",
@@ -77,6 +79,12 @@ def main() -> int:
         parser.error("navigation/search requires --executor mujoco; it uses measured physics state")
     if args.missing_target and not search:
         parser.error("--missing-target requires --task search")
+    if args.constraint_revisions and (not search or args.planner != "codex"):
+        parser.error("--constraint-revisions requires --task search --planner codex")
+    if args.constraint_revisions and not (
+        args.correction_file or args.correction_script or args.correction is not None
+    ):
+        parser.error("--constraint-revisions requires a correction input")
     if (
         args.correction_file or args.correction_script or args.correction is not None or args.correct_at is not None
     ) and not search:
@@ -124,6 +132,8 @@ def main() -> int:
                 "at": args.correct_at,
                 "script": str(args.correction_script) if args.correction_script else None,
             }
+            if args.constraint_revisions:
+                data["constraint_revisions"] = True
             scheduled = []
             if args.correction_script:
                 if args.correction_script.stat().st_size > 16384:
@@ -205,10 +215,17 @@ def main() -> int:
                 observations=data["observations"],
                 decisions=data["decisions"],
                 get_correction=get_correction if correction_enabled else None,
-                correction_planner=(codex_correction if args.planner == "codex" else sample_correction)
+                correction_planner=(
+                    codex_constraint_revision
+                    if args.constraint_revisions
+                    else codex_correction
+                    if args.planner == "codex"
+                    else sample_correction
+                )
                 if correction_enabled
                 else None,
                 corrections=data["corrections"],
+                constraint_mode=args.constraint_revisions,
             )
         elif navigation:
 

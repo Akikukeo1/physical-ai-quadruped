@@ -1,4 +1,4 @@
-"""Experimental, non-executed revisions with observation-grounded area constraints."""
+"""Revisions with observation-grounded area constraints."""
 
 import math
 import re
@@ -71,7 +71,7 @@ def validate_constraint_revision(value: object, *, context: dict, prompt: str) -
 
 
 def codex_constraint_revision(prompt: str, plan, context: dict, timeout: int = 30) -> dict:
-    """Interpret a revision for an offline experiment; do not send it to the robot."""
+    """Interpret a revision; the executor must validate feasibility before applying it."""
     import json
     from dataclasses import asdict
 
@@ -97,6 +97,7 @@ def codex_constraint_revision(prompt: str, plan, context: dict, timeout: int = 3
         "only an explicit user request may release one, with its ID and exact user quote in released_constraints. "
         "A released ID cannot be reused. No arbitrary coordinates, unknown observations, or executable code. "
         "If a user explicitly asks to enter an area that is still forbidden, ask before making any changes. "
+        "Questions for the user must describe the color and place in ordinary language, not internal observation IDs. "
         "If a request is ambiguous, unsupported, lacks evidence, or the current reobserve method cannot reach its "
         "referenced sensing position due to an active area, ask a concise question with status clarify. "
         "Clarification must leave the pending steps and active constraints exactly unchanged, with no cancellations "

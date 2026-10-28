@@ -9,7 +9,8 @@ from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from dataclasses import asdict, dataclass, replace
 
-from pai_motion.correction import initial_tasks, validate_correction
+from pai_motion.constraint_revision import validate_constraint_revision
+from pai_motion.correction import SearchCorrection, initial_tasks, validate_correction
 from pai_motion.executor import Velocity
 from pai_motion.motion import InvalidPlan
 
@@ -177,6 +178,7 @@ def execute_search(
     get_correction=None,
     correction_planner=None,
     corrections: list | None = None,
+    constraint_mode: bool = False,
 ) -> dict:
     plan = validate_search(asdict(plan))
     if (get_correction is None) != (correction_planner is None):
@@ -198,6 +200,7 @@ def execute_search(
     evidence_records = {}
     first_seen, last_seen = {}, {}
     tasks, completed, cancelled = initial_tasks(plan.target), [], []
+    constraints, released_constraints = [], []
     active_id, active_since = None, started
     worker = pending = revision = None
     seen_messages = set()
@@ -207,6 +210,9 @@ def execute_search(
         while True:
             state = sink.observe()
             position = tuple(state["position"][:2])
+            areas = [(evidence_records[c["observation_id"]]["position"], c["radius"]) for c in constraints]
+            if any(math.dist(position, center) <= radius + 0.05 for center, radius in areas):
+                raise RuntimeError("Robot entered the restricted-area stopping margin")
             distance_travelled += math.dist(last, position)
             last = position
             elapsed = state["time"] - started
@@ -217,7 +223,7 @@ def execute_search(
                 observation = sink.sense()
                 observations.append(observation)
                 grid.update(observation)
-                costs, previous = grid.routes(position)
+                costs, previous = grid.routes(position, areas)
                 home_cell = grid.cell(home)
                 if home_cell not in costs:
                     raise RuntimeError("No observed safe route home")
@@ -288,6 +294,7 @@ def execute_search(
                                             for step in tasks
                                             if step["action"] == "reobserve"
                                         ),
+                                        *(evidence_records[item["observation_id"]] for item in constraints),
                                     ]
                                 }.values()
                             ),
@@ -299,6 +306,10 @@ def execute_search(
                             },
                         }
                     )
+                    if constraint_mode:
+                        context.update(
+                            constraints=deepcopy(constraints), released_constraints=deepcopy(released_constraints)
+                        )
                     revision = {
                         "message": message,
                         "status": "planning",
@@ -328,9 +339,46 @@ def execute_search(
                     elif stopped["time"] - revision["received"]["time"] > 3.0:
                         raise RuntimeError("Robot did not settle during correction")
                 if pending.done() and "settled" in revision:
-                    correction = validate_correction(
-                        asdict(pending.result()), context=revision["context"], prompt=revision["message"]
-                    )
+                    raw = pending.result()
+                    if constraint_mode:
+                        proposal = validate_constraint_revision(
+                            raw, context=revision["context"], prompt=revision["message"]
+                        )
+                        correction = validate_correction(
+                            {k: proposal[k] for k in ("intent", "status", "steps", "cancelled", "question")},
+                            context=revision["context"],
+                            prompt=revision["message"],
+                        )
+                        revision["constraint_proposal"] = deepcopy(proposal)
+                        if correction.status == "accept":
+                            proposed_areas = [
+                                (evidence_records[c["observation_id"]]["position"], c["radius"])
+                                for c in proposal["constraints"]
+                            ]
+                            reason = None
+                            try:
+                                reachable, _ = grid.routes(tuple(stopped["position"][:2]), proposed_areas)
+                                if grid.cell(home) not in reachable:
+                                    reason = (
+                                        "制限を適用すると現在の地図では帰還経路を確保できません。制限を変更しますか？"
+                                    )
+                                elif any(
+                                    step["action"] == "reobserve"
+                                    and grid.cell(evidence_records[step["observation_id"]]["position"]) not in reachable
+                                    for step in proposal["steps"]
+                                ):
+                                    reason = "現在の再確認方式では観測した地点に近づけません。制限を変更しますか？"
+                            except RuntimeError:
+                                reason = (
+                                    "現在地が制限範囲内か、制限後の安全な経路を確認できません。制限を変更しますか？"
+                                )
+                            if reason:
+                                correction = SearchCorrection(reason[:120], "clarify", deepcopy(tasks), [], reason)
+                                revision["clarification_source"] = "feasibility_check"
+                    else:
+                        correction = validate_correction(
+                            asdict(raw), context=revision["context"], prompt=revision["message"]
+                        )
                     if correction.status == "clarify":
                         revision.update(
                             status="clarification",
@@ -349,6 +397,18 @@ def execute_search(
                         if step["id"] in removed
                     )
                     tasks = deepcopy(correction.steps)
+                    if constraint_mode:
+                        removed_areas = {item["id"]: item["instruction"] for item in proposal["released_constraints"]}
+                        released_constraints.extend(
+                            {
+                                "constraint": deepcopy(item),
+                                "time": stopped["time"],
+                                "instruction": removed_areas[item["id"]],
+                            }
+                            for item in constraints
+                            if item["id"] in removed_areas
+                        )
+                        constraints = deepcopy(proposal["constraints"])
                     searches = [step for step in tasks if step["action"] == "search"]
                     plan = replace(
                         plan, target=searches[-1]["target"] if searches else plan.target, intent=correction.intent
@@ -363,6 +423,8 @@ def execute_search(
                         planning_wall_seconds=time.monotonic() - revision["wall_started"],
                         planning_sim_seconds=stopped["time"] - revision["received"]["time"],
                     )
+                    if constraint_mode:
+                        revision["active_constraints"] = deepcopy(constraints)
                     pending = None
                     awaiting_answer = False
                     goal = None
@@ -457,10 +519,14 @@ def execute_search(
                 break
             if goal not in previous:
                 raise RuntimeError("Exploration goal left the observed safe map")
-            target = home if outcome and math.dist(position, home) < 0.35 else grid.lookahead(position, goal, previous)
+            target = (
+                home
+                if outcome and math.dist(position, home) < 0.35 and not areas
+                else grid.lookahead(position, goal, previous)
+            )
             if outcome is None and tasks[0]["action"] == "reobserve":
                 viewpoint = evidence_records[tasks[0]["observation_id"]]["position"]
-                if math.dist(position, viewpoint) < 0.35:
+                if math.dist(position, viewpoint) < 0.35 and not areas:
                     target = viewpoint
             heading = math.atan2(target[1] - position[1], target[0] - position[0])
             error = math.atan2(math.sin(heading - state["yaw"]), math.cos(heading - state["yaw"]))
@@ -492,5 +558,6 @@ def execute_search(
         "detections": detections,
         "corrections": corrections,
         "tasks": {"pending": tasks, "completed": completed, "cancelled": cancelled},
+        **({"constraints": {"active": constraints, "released": released_constraints}} if constraint_mode else {}),
         "map": {"resolution": RESOLUTION, "free": sorted(grid.free), "occupied": sorted(grid.occupied)},
     }
