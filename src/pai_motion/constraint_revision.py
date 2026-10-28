@@ -98,6 +98,7 @@ def codex_constraint_revision(prompt: str, plan, context: dict, timeout: int = 3
         "A released ID cannot be reused. No arbitrary coordinates, unknown observations, or executable code. "
         "If a user explicitly asks to enter an area that is still forbidden, ask before making any changes. "
         "Questions for the user must describe the color and place in ordinary language, not internal observation IDs. "
+        "Do not offer finding an alternative observation viewpoint: this controller cannot plan such a viewpoint. "
         "If a request is ambiguous, unsupported, lacks evidence, or the current reobserve method cannot reach its "
         "referenced sensing position due to an active area, ask a concise question with status clarify. "
         "Clarification must leave the pending steps and active constraints exactly unchanged, with no cancellations "
