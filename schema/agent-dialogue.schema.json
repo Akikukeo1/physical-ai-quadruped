@@ -50,18 +50,14 @@
             "enum": [
               "search",
               "reobserve",
-              "return_home"
+              "return_home",
+              "visit_point"
             ]
           },
           "target": {
             "type": [
               "string",
               "null"
-            ],
-            "enum": [
-              "blue",
-              "green",
-              null
             ]
           },
           "observation_id": {

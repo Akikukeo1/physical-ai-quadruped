@@ -7,18 +7,25 @@ from pathlib import Path
 from pai_motion.planner import ROOT, _codex_json
 
 
-def interpret_initial(message, history, timeout=60):
+def interpret_initial(message, history, timeout=60, *, points=None):
     instructions = (
         "You are a simulated robot assistant using Codex CLI. Answer the user in Japanese. "
         "You can search for blue or green targets, return home, reobserve sightings and allow or avoid named areas. "
         "Do not claim you can inspect a named area as a task, use a camera, or control a physical robot. "
-        "Return search_request only if the user explicitly requests searching for a blue or green target; "
-        "otherwise use null and ask for a concrete search task when appropriate. Never invent a task or target. "
+        "Return search_request only if the user explicitly requests searching for a blue or green target"
+        + (" or visiting an available named point; " if points else "; ")
+        + "otherwise use null and ask for a concrete search task when appropriate. Never invent a task or target. "
         "If the message combines a task and question, answer the question and include the task. "
         "search_request must preserve the user's task and constraints in Japanese. "
         "A search will start only after this response; do not claim it has already happened. "
         f"Dialogue: {json.dumps(history, ensure_ascii=False)}. Latest message: {message!r}"
     )
+    if points:
+        instructions += (
+            " The user may also request visiting named points without searching for a color. "
+            "Treat that as a valid task and place the full request in search_request. "
+            f"Available point IDs and coordinates: {json.dumps(points, ensure_ascii=False)}."
+        )
     value = _codex_json(instructions, ROOT / "schema/initial-dialogue.schema.json", timeout)
     if not isinstance(value, dict) or set(value) != {"reply", "search_request"}:
         raise ValueError("Invalid initial dialogue response")

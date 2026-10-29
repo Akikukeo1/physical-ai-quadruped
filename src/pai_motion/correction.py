@@ -61,6 +61,9 @@ def validate_correction(value: object, *, context=None, prompt=None) -> SearchCo
                 raise InvalidPlan("Search cannot claim an observation reference")
             if action == "reobserve" and (not isinstance(reference, str) or not 1 <= len(reference) <= 60):
                 raise InvalidPlan("Reobserve requires an observation ID")
+        elif action == "visit_point" and context is not None:
+            if reference is not None or target not in {p["id"] for p in context.get("points", [])}:
+                raise InvalidPlan("Visit must reference a supplied point")
         else:
             raise InvalidPlan("Unsupported task action or target")
     home = {"id": "home", "action": "return_home", "target": None, "observation_id": None}

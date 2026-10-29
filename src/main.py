@@ -52,6 +52,7 @@ def main() -> int:
     )
     correction_input.add_argument("--correction-script", type=Path, help="JSON list of timed correction messages")
     parser.add_argument("--field-areas", type=Path, help="JSON file of named rectangles drawn on the field")
+    parser.add_argument("--map", type=Path, help="User-created search map JSON")
     parser.add_argument("--agent", action="store_true", help="Experimental LLM task and frontier decisions")
     parser.add_argument("--interactive-dialogue", action="store_true", help="Wait for a search task and answer chat")
     parser.add_argument("--correct-at", type=float, help="Seconds after search start to inject --correction")
@@ -88,6 +89,8 @@ def main() -> int:
         parser.error("--agent requires --task search --planner codex")
     if args.interactive_dialogue and (not args.agent or args.correction_file is None):
         parser.error("--interactive-dialogue requires --agent and --correction-file")
+    if args.map and (not search or not args.agent or not args.interactive_dialogue):
+        parser.error("--map requires interactive search agent mode")
     if args.field_areas and (not search or args.planner != "codex"):
         parser.error("--field-areas requires --task search --planner codex")
     if args.field_areas and not (
@@ -130,26 +133,48 @@ def main() -> int:
     }
     try:
         field_areas = None
-        if args.field_areas:
+        custom_map = None
+        if args.map:
+            from pai_motion.custom_map import validate_map
+
+            if args.map.stat().st_size > 32768:
+                raise ValueError("Map file exceeds 32768 bytes")
+            custom_map = validate_map(json.loads(args.map.read_text(encoding="utf-8")))
+            field_areas = custom_map["areas"] or None
+            data["custom_map"] = custom_map
+            print("POINTS: " + ", ".join(f"{i + 1}={p['id']}" for i, p in enumerate(custom_map["points"])), flush=True)
+        elif args.field_areas:
             if args.field_areas.stat().st_size > 16384:
                 raise ValueError("Area file exceeds 16384 bytes")
             field_areas = validate_areas(json.loads(args.field_areas.read_text(encoding="utf-8")))
+        if field_areas:
             data["field_areas"] = field_areas
             print("FIELD AREAS: " + ", ".join(f"{i + 1}={a['id']}" for i, a in enumerate(field_areas)), flush=True)
         if search:
             search_prompt = args.prompt
             if args.interactive_dialogue:
-                from pai_motion.initial_dialogue import wait_for_search
+                from pai_motion.initial_dialogue import interpret_initial, wait_for_search
 
                 data["initial_dialogue"] = []
-                search_prompt = wait_for_search(args.prompt, args.correction_file, history=data["initial_dialogue"])
+                search_prompt = wait_for_search(
+                    args.prompt,
+                    args.correction_file,
+                    history=data["initial_dialogue"],
+                    interpret=partial(interpret_initial, points=custom_map["points"] if custom_map else None),
+                )
             plan = codex_search(search_prompt) if args.planner == "codex" else sample_search()
             if args.correct_at is not None and args.correct_at >= plan.seconds - 2:
                 raise ValueError("--correct-at must precede the original task deadline")
             data["search_plan"] = asdict(plan)
+            if custom_map:
+                data["search_plan_target_role"] = (
+                    "The initial target is a protocol placeholder; only the agent's validated tasks drive the mission."
+                )
             if args.agent:
                 data["agent"] = True
-            data["scene"] = {"seed": args.seed, "missing_blue": args.missing_target}
+            data["scene"] = (
+                {"source": "custom_map"} if custom_map else {"seed": args.seed, "missing_blue": args.missing_target}
+            )
             data["correction_input"] = {
                 "file": str(args.correction_file) if args.correction_file else None,
                 "message": args.correction,
@@ -200,6 +225,7 @@ def main() -> int:
                 search_seed=args.seed if search else None,
                 missing_target=args.missing_target,
                 field_areas=field_areas,
+                custom_map=custom_map,
             )
             from pai_motion.assets import MANIFEST
 
@@ -261,6 +287,8 @@ def main() -> int:
                 field_areas=field_areas,
                 agent_revision=args.agent,
                 frontier_planner=codex_frontier_choice if args.agent else None,
+                points=custom_map["points"] if custom_map else None,
+                initial_home_only=custom_map is not None,
             )
         elif navigation:
 

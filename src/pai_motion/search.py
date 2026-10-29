@@ -185,6 +185,8 @@ def execute_search(
     field_areas: list | None = None,
     agent_revision: bool = False,
     frontier_planner=None,
+    points: list | None = None,
+    initial_home_only: bool = False,
 ) -> dict:
     plan = validate_search(asdict(plan))
     if (get_correction is None) != (correction_planner is None):
@@ -206,6 +208,9 @@ def execute_search(
     evidence_records = {}
     first_seen, last_seen = {}, {}
     tasks, completed, cancelled = initial_tasks(plan.target), [], []
+    if initial_home_only:
+        tasks = tasks[-1:]
+    points = deepcopy(points or [])
     field_areas = validate_areas(deepcopy(field_areas)) if field_areas is not None else None
     blocked_fields = set()
     active_id, active_since = None, started
@@ -315,6 +320,8 @@ def execute_search(
                             },
                         }
                     )
+                    if initial_home_only:
+                        context.update(points=deepcopy(points), starting_mission=not corrections)
                     if field_areas is not None or agent_revision:
                         context.update(field_areas=deepcopy(field_areas), blocked_areas=sorted(blocked_fields))
                         if field_areas is None:
@@ -462,7 +469,10 @@ def execute_search(
                 if elapsed + reserve >= plan.seconds:
                     frontier_pending.cancel()
                     frontier_pending = None
-                    outcome, goal = "not_found", home_cell
+                    outcome, goal = (
+                        ("point_unreached" if tasks[0]["action"] == "visit_point" else "not_found"),
+                        home_cell,
+                    )
                     decisions.append(
                         {"phase": "return", "reason": "frontier decision return reserve", "time": state["time"]}
                     )
@@ -508,7 +518,10 @@ def execute_search(
                 reserve = costs[home_cell] / 0.12 + 25.0
                 if elapsed + reserve >= plan.seconds:
                     awaiting_answer = False
-                    outcome, goal = "not_found", home_cell
+                    outcome, goal = (
+                        ("point_unreached" if tasks[0]["action"] == "visit_point" else "not_found"),
+                        home_cell,
+                    )
                     decisions.append(
                         {"phase": "return", "reason": "clarification return reserve", "time": state["time"]}
                     )
@@ -521,7 +534,14 @@ def execute_search(
                 if active_id != step["id"]:
                     active_id, active_since, goal = step["id"], state["time"], home_cell if outcome else None
                     decisions.append({"phase": "task_started", "step": deepcopy(step), "time": active_since})
-                if outcome is None and step["action"] != "return_home":
+                if outcome is None and step["action"] == "visit_point":
+                    point = next(p for p in points if p["id"] == step["target"])
+                    if math.dist(position, point["position"]) < 0.25:
+                        completed.append({"step": tasks.pop(0), "time": state["time"], "evidence": list(position)})
+                        print(f"TASK DONE: {step['id']}; point {step['target']} reached", flush=True)
+                        active_id, goal = None, None
+                        step = tasks[0]
+                if outcome is None and step["action"] in ("search", "reobserve"):
                     color = step["target"]
                     fresh = last_seen.get(color)
                     evidence = detections.get(color) if step["action"] == "search" else None
@@ -561,9 +581,18 @@ def execute_search(
                         decisions.append({"phase": "return", "reason": "remaining task is home", "time": state["time"]})
                 reserve = costs[home_cell] / 0.12 + 25.0
                 if outcome is None and elapsed + reserve >= plan.seconds:
-                    outcome, goal = "not_found", home_cell
+                    outcome, goal = (
+                        ("point_unreached" if tasks[0]["action"] == "visit_point" else "not_found"),
+                        home_cell,
+                    )
                     decisions.append({"phase": "return", "reason": "return reserve", "time": state["time"]})
-                if outcome is None and step["action"] == "reobserve":
+                if (
+                    outcome is None
+                    and step["action"] == "visit_point"
+                    and grid.cell(next(p["position"] for p in points if p["id"] == step["target"])) in costs
+                ):
+                    goal = grid.cell(next(p["position"] for p in points if p["id"] == step["target"]))
+                elif outcome is None and step["action"] == "reobserve":
                     reference = evidence_records[step["observation_id"]]
                     goal = grid.cell(reference["position"])
                     if goal not in costs:
@@ -649,6 +678,8 @@ def execute_search(
                                 ][-8:],
                                 "trigger": {"reason": frontier_trigger, "previous_goal": previous_goal},
                             }
+                            if initial_home_only:
+                                frontier_context["points"] = deepcopy(points)
                             frontier_pending = worker.submit(
                                 frontier_planner, frontier_context, deepcopy(frontier_candidates)
                             )
@@ -667,7 +698,10 @@ def execute_search(
                     else:
                         goal = grid.frontier(costs, visited)
                     if goal is None:
-                        outcome, goal = "not_found", home_cell
+                        outcome, goal = (
+                            ("point_unreached" if tasks[0]["action"] == "visit_point" else "not_found"),
+                            home_cell,
+                        )
                     decisions.append(
                         {"phase": "return" if outcome else "explore", "goal": grid.point(goal), "time": state["time"]}
                     )

@@ -56,13 +56,19 @@ def describe_line(line: str) -> tuple[str | None, bool]:
                 "return_home:None": "帰還",
             }
             label = "現在の計画: " if unchanged else "計画を更新: "
-            return label + " → ".join(names.get(task, str(task)) for task in tasks), True
+            return label + " → ".join(
+                f"{task.split(':', 1)[1]}を経由" if task.startswith("visit_point:") else names.get(task, str(task))
+                for task in tasks
+            ), True
         except (SyntaxError, ValueError, TypeError):
             return "計画を更新しました。", True
     if line.startswith("FRONTIER: "):
         return "探索先の判断: " + line.removeprefix("FRONTIER: "), False
     if line.startswith("TASK DONE:"):
-        return "タスク完了: " + line.removeprefix("TASK DONE:").strip(), False
+        task = line.removeprefix("TASK DONE:").strip()
+        if "; point " in task and task.endswith(" reached"):
+            return "タスク完了: " + task.split("; point ", 1)[1].removesuffix(" reached") + "に到達", False
+        return "タスク完了: " + task, False
     if line.startswith("ERROR:"):
         return "エラー: " + line.removeprefix("ERROR:").strip(), False
     if line.startswith("CORRECTION INPUT:"):
@@ -82,6 +88,7 @@ class InteractiveApp:
         self.pid_file = None
         self.ready = False
         self.area_path = tk.StringVar(value=str(ROOT / "examples" / "field-areas.json"))
+        self.map_path = tk.StringVar(value="")
         self.status = tk.StringVar(value="初期指示を確認して「開始」を押してください。")
 
         outer = ttk.Frame(root, padding=14)
@@ -100,6 +107,18 @@ class InteractiveApp:
         ttk.Entry(area, textvariable=self.area_path, state="readonly").pack(side="left", fill="x", expand=True, padx=6)
         self.choose = ttk.Button(area, text="JSONを選択", command=self.choose_areas)
         self.choose.pack(side="left")
+        map_row = ttk.Frame(outer)
+        map_row.pack(fill="x", pady=(6, 0))
+        ttk.Label(map_row, text="マップ:").pack(side="left")
+        ttk.Entry(map_row, textvariable=self.map_path, state="readonly").pack(
+            side="left", fill="x", expand=True, padx=6
+        )
+        self.map_choose = ttk.Button(map_row, text="JSONを選択", command=self.choose_map)
+        self.map_choose.pack(side="left")
+        self.map_edit = ttk.Button(map_row, text="マップを作る", command=self.edit_map)
+        self.map_edit.pack(side="left", padx=(6, 0))
+        self.map_clear = ttk.Button(map_row, text="解除", command=lambda: self.map_path.set(""), width=5)
+        self.map_clear.pack(side="left", padx=(6, 0))
         self.start_button = ttk.Button(outer, text="開始", command=self.start)
         self.start_button.pack(anchor="w", pady=8)
         ttk.Label(outer, textvariable=self.status).pack(anchor="w", pady=(0, 5))
@@ -130,6 +149,21 @@ class InteractiveApp:
         if path:
             self.area_path.set(path)
 
+    def choose_map(self):
+        path = filedialog.askopenfilename(title="マップJSON", filetypes=[("JSON", "*.json")])
+        if path:
+            self.map_path.set(path)
+
+    def edit_map(self):
+        from map_editor import MapEditor
+
+        window = tk.Toplevel(self.root)
+        try:
+            MapEditor(window, on_saved=self.map_path.set, path=self.map_path.get() or None)
+        except (ValueError, OSError) as exc:
+            window.destroy()
+            messagebox.showerror("マップを開けません", str(exc))
+
     def start(self):
         if self.process is not None:
             return
@@ -139,11 +173,16 @@ class InteractiveApp:
             return
         try:
             areas = Path(self.area_path.get())
-            if not areas.is_file():
+            if not self.map_path.get() and not areas.is_file():
                 raise ValueError("エリアJSONが見つかりません。")
             out = ROOT / "outputs" / "interactive"
             out.mkdir(parents=True, exist_ok=True)
             self.session_dir = Path(tempfile.mkdtemp(prefix="run-", dir=out))
+            if self.map_path.get():
+                map_file = Path(self.map_path.get())
+                if map_file.stat().st_size > 32768:
+                    raise ValueError("マップJSONは32768バイト以下にしてください。")
+                (self.session_dir / "map.json").write_bytes(map_file.read_bytes())
             correction = self.session_dir / "correction.txt"
             correction.write_text("", encoding="utf-8")
             self.pid_file = self.session_dir / "process.pid"
@@ -154,11 +193,13 @@ class InteractiveApp:
                 "--wait",
                 "bash",
                 "-c",
-                'set -e; root=$(wslpath -a "$1"); area=$(wslpath -a "$2"); out=$(wslpath -a "$3"); '
+                'set -e; root=$(wslpath -a "$1"); area=$(wslpath -a "$2"); out=$(wslpath -a "$3"); prompt=$4; '
                 'cd "$root"; printf "%s\\n" "$$" > "$out/process.pid"; '
+                'if test -f "$out/map.json"; then set -- --map "$out/map.json"; '
+                'else set -- --field-areas "$area"; fi; '
                 "exec bash scripts/demo.sh --task search --planner codex --seed 305 --agent "
-                '--interactive-dialogue --field-areas "$area" --correction-file "$out/correction.txt" '
-                '--prompt "$4" --out-dir "$out"',
+                '--interactive-dialogue --correction-file "$out/correction.txt" '
+                '--prompt "$prompt" --out-dir "$out" "$@"',
                 "robot-session",
                 str(ROOT),
                 str(areas),
@@ -180,6 +221,9 @@ class InteractiveApp:
             return
         self.start_button.configure(state="disabled")
         self.choose.configure(state="disabled")
+        self.map_choose.configure(state="disabled")
+        self.map_edit.configure(state="disabled")
+        self.map_clear.configure(state="disabled")
         self.initial.configure(state="disabled")
         self.status.set("起動中。最初の指示の処理を待っています。")
         self.append("開始: " + prompt)
@@ -225,6 +269,9 @@ class InteractiveApp:
                 self.send_button.configure(state="disabled")
                 self.start_button.configure(state="normal")
                 self.choose.configure(state="normal")
+                self.map_choose.configure(state="normal")
+                self.map_edit.configure(state="normal")
+                self.map_clear.configure(state="normal")
                 self.initial.configure(state="normal")
                 self.status.set("終了しました。開始を押すと新しい試行を行います。")
                 files = sorted(self.session_dir.glob("plan-*.json"))
@@ -232,7 +279,10 @@ class InteractiveApp:
                     try:
                         data = json.loads(files[-1].read_text(encoding="utf-8"))
                         result = data.get("result", {})
-                        self.append(f"結果: {result.get('outcome', data.get('status'))} ／ ログ: {files[-1]}")
+                        outcome = result.get("outcome", data.get("status"))
+                        if outcome == "point_unreached":
+                            outcome = "ポイントに到達できず帰還（探索または時間の余裕が尽きました）"
+                        self.append(f"結果: {outcome} ／ ログ: {files[-1]}")
                     except (OSError, ValueError):
                         self.append("終了ログを読み取れませんでした。")
                 else:

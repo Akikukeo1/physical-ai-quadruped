@@ -53,6 +53,18 @@ def codex_agent_revision(prompt, plan, context, timeout=30, *, dialogue=False):
             "You can search blue or green, return, reobserve known sightings and control named area permissions."
             " You cannot inspect a named area as a task, use a camera, or control a physical robot."
         )
+        if context.get("points"):
+            instructions += (
+                " Named points are supplied in context.points. You may add visit_point steps using the point ID "
+                "as target and null observation_id. Visit means the robot must reach that point, not just allow it. "
+                "If there is no search task, do not invent one. Retain home as the final step."
+            )
+        if context.get("starting_mission"):
+            instructions += (
+                " This is the initial mission: pending contains only the required home step by design. "
+                "Add all explicitly requested search and visit steps before home; do not ask confirmation "
+                "just because they are absent from pending. The original plan's color may be a placeholder."
+            )
     schema = "agent-dialogue.schema.json" if dialogue else "agent-revision.schema.json"
     return _codex_json(instructions, ROOT / "schema" / schema, timeout)
 

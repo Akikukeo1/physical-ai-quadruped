@@ -29,6 +29,7 @@ class MuJoCoGo2Sink:
         search_seed: int | None = None,
         missing_target: bool = False,
         field_areas: list | None = None,
+        custom_map: dict | None = None,
     ) -> None:
         if dynamic_obstacle and not navigation:
             raise ValueError("dynamic_obstacle requires navigation")
@@ -107,7 +108,13 @@ class MuJoCoGo2Sink:
         if self.search:
             from pai_motion.search_world import search_scene
 
-            for index, item in enumerate(search_scene(search_seed, missing_target)):
+            if custom_map is not None:
+                from pai_motion.custom_map import map_scene
+
+                objects = map_scene(custom_map)
+            else:
+                objects = search_scene(search_seed, missing_target)
+            for index, item in enumerate(objects):
                 x, y, hx, hy = item["box"]
                 name = f"search_object_{index}"
                 search_names.append(name)
@@ -125,33 +132,88 @@ class MuJoCoGo2Sink:
                 scene.find("worldbody"),
                 "geom",
                 type="cylinder",
-                pos="0 0 .006",
+                pos=f"{custom_map['start'][0]} {custom_map['start'][1]} .006" if custom_map else "0 0 .006",
                 size=".18 .005",
                 rgba="1 .8 .1 1",
                 contype="0",
                 conaffinity="0",
             )
+            for index, point in enumerate((custom_map or {}).get("points", [])):
+                x, y = point["position"]
+                ET.SubElement(
+                    scene.find("worldbody"),
+                    "geom",
+                    name=f"point_{point['id']}",
+                    type="cylinder",
+                    group="4",
+                    pos=f"{x} {y} .012",
+                    size=".16 .008",
+                    rgba="1 .4 0 .8",
+                    contype="0",
+                    conaffinity="0",
+                )
+                digit_segments = ("bc", "abged", "abgcd", "fgbc", "afgcd", "afgecd", "abc", "abcdefg")
+                w = 0.035
+                segments = {
+                    "a": (0, 2 * w, w, 0.13 * w),
+                    "g": (0, 0, w, 0.13 * w),
+                    "d": (0, -2 * w, w, 0.13 * w),
+                    "f": (-w, w, 0.13 * w, w),
+                    "b": (w, w, 0.13 * w, w),
+                    "e": (-w, -w, 0.13 * w, w),
+                    "c": (w, -w, 0.13 * w, w),
+                }
+                for segment in digit_segments[index]:
+                    dx, dy, hx, hy = segments[segment]
+                    ET.SubElement(
+                        scene.find("worldbody"),
+                        "geom",
+                        type="box",
+                        group="4",
+                        pos=f"{x + dx} {y + dy} .023",
+                        size=f"{hx} {hy} .003",
+                        rgba=".1 .06 .02 1",
+                        contype="0",
+                        conaffinity="0",
+                    )
             for index, area in enumerate(self.field_areas):
                 x1, y1, x2, y2 = area["bounds"]
                 ET.SubElement(
-                    scene.find("worldbody"), "geom", name=f"field_area_{index}", type="box", group="4",
-                    pos=f"{(x1+x2)/2} {(y1+y2)/2} .008", size=f"{(x2-x1)/2} {(y2-y1)/2} .004",
-                    rgba="0.05 0.65 0.75 0.35", contype="0", conaffinity="0",
+                    scene.find("worldbody"),
+                    "geom",
+                    name=f"field_area_{index}",
+                    type="box",
+                    group="4",
+                    pos=f"{(x1 + x2) / 2} {(y1 + y2) / 2} .008",
+                    size=f"{(x2 - x1) / 2} {(y2 - y1) / 2} .004",
+                    rgba="0.05 0.65 0.75 0.35",
+                    contype="0",
+                    conaffinity="0",
                 )
                 # Seven-segment number gives the viewer a stable area-to-ID legend.
                 digit_segments = ("bc", "abged", "abgcd", "fgbc", "afgcd", "afgecd", "abc", "abcdefg")
                 w = min(0.08, (x2 - x1) / 6, (y2 - y1) / 10)
                 segments = {
-                    "a": (0, 2*w, w, .13*w), "g": (0, 0, w, .13*w), "d": (0, -2*w, w, .13*w),
-                    "f": (-w, w, .13*w, w), "b": (w, w, .13*w, w),
-                    "e": (-w, -w, .13*w, w), "c": (w, -w, .13*w, w),
+                    "a": (0, 2 * w, w, 0.13 * w),
+                    "g": (0, 0, w, 0.13 * w),
+                    "d": (0, -2 * w, w, 0.13 * w),
+                    "f": (-w, w, 0.13 * w, w),
+                    "b": (w, w, 0.13 * w, w),
+                    "e": (-w, -w, 0.13 * w, w),
+                    "c": (w, -w, 0.13 * w, w),
                 }
                 for segment in digit_segments[index]:
                     dx, dy, hx, hy = segments[segment]
                     ET.SubElement(
-                        scene.find("worldbody"), "geom", type="box", group="4",
-                        pos=f"{(x1+x2)/2+dx} {(y1+y2)/2+dy} .016", size=f"{hx} {hy} .003",
-                        rgba="0.05 0.08 0.08 1", contype="0", conaffinity="0",
+                        scene.find("worldbody"),
+                        "geom",
+                        type="box",
+                        group="4",
+                        pos=f"{(x1 + x2) / 2 + dx} {(y1 + y2) / 2 + dy} .016",
+                        size=f"{hx} {hy} .003",
+                        rgba="0.05 0.08 0.08 1",
+                        contype="0",
+                        conaffinity="0",
                     )
         self.model = mujoco.MjModel.from_xml_string(ET.tostring(scene, encoding="unicode"))
         self.data = mujoco.MjData(self.model)
@@ -183,6 +245,8 @@ class MuJoCoGo2Sink:
         self.history = np.zeros((5, 45), dtype=np.float32)
         self.integral = np.zeros(3)
         mujoco.mj_resetDataKeyframe(self.model, self.data, self.model.key("home").id)
+        if custom_map is not None:
+            self.data.qpos[:2] = custom_map["start"]
         self.data.qpos[2] = 0.35
         self.data.qpos[self.qpos] = self.home
         self.data.ctrl[:] = 0
