@@ -1,3 +1,4 @@
+import math
 import sys
 import unittest
 from pathlib import Path
@@ -9,10 +10,25 @@ from pai_motion.field_areas import distance_to_area, validate_areas  # noqa: E40
 from pai_motion.field_revision import validate_field_revision  # noqa: E402
 from pai_motion.motion import InvalidPlan  # noqa: E402
 from pai_motion.search import ObservedMap, execute_search, sample_search  # noqa: E402
-from tests.test_constraint_execution import MovingFixture  # noqa: E402
+from tests.test_correction import SensorFixture  # noqa: E402
 from tests.test_dialogue import messages  # noqa: E402
 
 AREAS = [{"id": "area1", "bounds": [2.5, 1.0, 3.0, 1.5]}, {"id": "area2", "bounds": [2.5, -1.5, 3.0, -1.0]}]
+
+
+class MovingFixture(SensorFixture):
+    def observe(self):
+        x = 0.0 if self.time < 1 or self.time >= 9 else 1.0 if self.time < 2 else 2.0
+        return {**super().observe(), "position": [x, 0.0, 0.35]}
+
+    def sense(self):
+        result = self.observe()
+        rays = [[i * math.tau / 180, 1.8, False, None] for i in range(180)]
+        if 1 <= self.time < 2 or self.time >= 8:
+            rays[0], rays[1] = [0.0, 1.7, True, "green"], [0.03, 1.7, True, "green"]
+        if self.time >= 10:
+            rays[50], rays[51] = [1.7, 1.0, True, "blue"], [1.73, 1.0, True, "blue"]
+        return {**result, "scan": rays}
 
 
 class AreaTests(unittest.TestCase):
@@ -32,11 +48,11 @@ class AreaTests(unittest.TestCase):
     def test_area_filters_grid_and_clearance(self):
         grid = ObservedMap()
         grid.free = {(x, y) for x in range(-20, 51) for y in range(-30, 31)}
-        safe = grid.traversable([("rect", AREAS[0]["bounds"])])
+        safe = grid.traversable([AREAS[0]["bounds"]])
         self.assertNotIn(grid.cell((2.7, 1.2)), safe)
         self.assertIn(grid.cell((2.7, -1.2)), safe)
         with self.assertRaisesRegex(RuntimeError, "inside"):
-            grid.routes((2.7, 1.2), [("rect", AREAS[0]["bounds"])])
+            grid.routes((2.7, 1.2), [AREAS[0]["bounds"]])
 
     def test_revision_validation(self):
         context = {"field_areas": AREAS}

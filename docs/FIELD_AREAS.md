@@ -41,3 +41,7 @@ seed 305で実Codex CLI（要求モデル gpt-6-luna、xhigh）とMuJoCoを1回�
 禁止有効中の0.1秒間隔の物理トレースではエリア2との最短距離は約1.154mだった。
 この試行はエリアの近くでの迂回や、未知の指示・配置への汎化を実証するものではない。
 実行ログと録画は `outputs/field-area-dev-2/` と `outputs/field-area-dev-2.mp4` に保存しており、Git管理対象外。
+
+円制約の削除後、同じ開発ケースを実Codex CLIとMuJoCoで再実行し、
+禁止状態 `[area2]` → `[area2]` → `[]`、青の発見と99.2秒での帰還を確認した。
+帰還誤差は約0.111m。ログは `outputs/field-after-circle-removal/` に保存している。
