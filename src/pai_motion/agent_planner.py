@@ -12,8 +12,13 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def validate_agent_revision(value, *, context, prompt):
-    if not isinstance(value, dict) or set(value) != {"intent", "status", "question", "steps", "cancelled", "changes"}:
+    required = {"intent", "status", "question", "steps", "cancelled", "changes"}
+    if not isinstance(value, dict) or not required <= set(value) or set(value) - required - {"reply"}:
         raise InvalidPlan("Agent revision requires task and area changes")
+    if "reply" in value and (
+        not isinstance(value["reply"], str) or len(value["reply"]) > 300 or "\n" in value["reply"]
+    ):
+        raise InvalidPlan("Invalid dialogue reply")
     task = {key: value[key] for key in ("intent", "status", "question", "steps", "cancelled")}
     areas = {key: value[key] for key in ("status", "question", "changes")}
     correction = validate_correction(task, context=context, prompt=prompt)
@@ -21,7 +26,7 @@ def validate_agent_revision(value, *, context, prompt):
     return correction
 
 
-def codex_agent_revision(prompt, plan, context, timeout=30):
+def codex_agent_revision(prompt, plan, context, timeout=30, *, dialogue=False):
     from pai_motion.planner import _codex_json
 
     instructions = (
@@ -38,7 +43,18 @@ def codex_agent_revision(prompt, plan, context, timeout=30):
         f"Original plan: {json.dumps(asdict(plan), ensure_ascii=False)}. "
         f"Observed context: {json.dumps(context, ensure_ascii=False)}. Current message: {prompt!r}"
     )
-    return _codex_json(instructions, ROOT / "schema/agent-revision.schema.json", timeout)
+    if dialogue:
+        instructions += (
+            " Also provide reply: a concise Japanese response to the user, including answers to ordinary questions. "
+            "Do not claim actions were executed. For conversation without a task change retain all steps "
+            "and permissions. "
+            "If a clarification question is needed, leave reply empty; the question will be shown separately. "
+            "You are a simulated robot using Codex CLI, range/color sensing and simulator ground-truth odometry. "
+            "You can search blue or green, return, reobserve known sightings and control named area permissions."
+            " You cannot inspect a named area as a task, use a camera, or control a physical robot."
+        )
+    schema = "agent-dialogue.schema.json" if dialogue else "agent-revision.schema.json"
+    return _codex_json(instructions, ROOT / "schema" / schema, timeout)
 
 
 def codex_frontier_choice(context, candidates, timeout=30):

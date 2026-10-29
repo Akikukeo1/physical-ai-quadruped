@@ -26,6 +26,9 @@ class InteractiveTests(unittest.TestCase):
         self.assertTrue(ready)
         self.assertEqual(text, "計画を更新: 緑を探索 → 青を探索 → 帰還")
         self.assertFalse(describe_line("FRONTIER: frontier-1; 周囲を調べる")[1])
+        self.assertEqual(describe_line("REPLY: 会話できます。"), ("ロボット: 会話できます。", False))
+        self.assertTrue(describe_line("INPUT READY: 指示待ち")[1])
+        self.assertTrue(describe_line("UNCHANGED: tasks=[]")[1])
 
 
 if __name__ == "__main__":

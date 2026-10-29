@@ -6,6 +6,7 @@ import math
 import sys
 from dataclasses import asdict
 from datetime import UTC, datetime
+from functools import partial
 from pathlib import Path
 
 from pai_motion.agent_planner import codex_agent_revision, codex_frontier_choice
@@ -52,6 +53,7 @@ def main() -> int:
     correction_input.add_argument("--correction-script", type=Path, help="JSON list of timed correction messages")
     parser.add_argument("--field-areas", type=Path, help="JSON file of named rectangles drawn on the field")
     parser.add_argument("--agent", action="store_true", help="Experimental LLM task and frontier decisions")
+    parser.add_argument("--interactive-dialogue", action="store_true", help="Wait for a search task and answer chat")
     parser.add_argument("--correct-at", type=float, help="Seconds after search start to inject --correction")
     parser.add_argument(
         "--replanner",
@@ -84,6 +86,8 @@ def main() -> int:
         parser.error("--missing-target requires --task search")
     if args.agent and (not search or args.planner != "codex"):
         parser.error("--agent requires --task search --planner codex")
+    if args.interactive_dialogue and (not args.agent or args.correction_file is None):
+        parser.error("--interactive-dialogue requires --agent and --correction-file")
     if args.field_areas and (not search or args.planner != "codex"):
         parser.error("--field-areas requires --task search --planner codex")
     if args.field_areas and not (
@@ -133,7 +137,13 @@ def main() -> int:
             data["field_areas"] = field_areas
             print("FIELD AREAS: " + ", ".join(f"{i + 1}={a['id']}" for i, a in enumerate(field_areas)), flush=True)
         if search:
-            plan = codex_search(args.prompt) if args.planner == "codex" else sample_search()
+            search_prompt = args.prompt
+            if args.interactive_dialogue:
+                from pai_motion.initial_dialogue import wait_for_search
+
+                data["initial_dialogue"] = []
+                search_prompt = wait_for_search(args.prompt, args.correction_file, history=data["initial_dialogue"])
+            plan = codex_search(search_prompt) if args.planner == "codex" else sample_search()
             if args.correct_at is not None and args.correct_at >= plan.seconds - 2:
                 raise ValueError("--correct-at must precede the original task deadline")
             data["search_plan"] = asdict(plan)
@@ -205,7 +215,7 @@ def main() -> int:
                 nonlocal initial_agent_request
                 if initial_agent_request:
                     initial_agent_request = False
-                    return {"id": "agent-initial", "message": args.prompt}
+                    return {"id": "agent-initial", "message": search_prompt}
                 if scheduled and state["time"] - search_started >= scheduled[0]["at"] - 1e-9:
                     event = scheduled.pop(0)
                     return {"id": f"scheduled-{len(scheduled)}", "message": event["message"]}
@@ -237,7 +247,7 @@ def main() -> int:
                 decisions=data["decisions"],
                 get_correction=get_correction if correction_enabled else None,
                 correction_planner=(
-                    codex_agent_revision
+                    partial(codex_agent_revision, dialogue=args.interactive_dialogue)
                     if args.agent
                     else codex_field_revision
                     if args.field_areas

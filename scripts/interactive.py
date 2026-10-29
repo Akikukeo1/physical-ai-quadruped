@@ -34,13 +34,20 @@ def write_instruction(path: Path, message: str) -> None:
 
 def describe_line(line: str) -> tuple[str | None, bool]:
     line = line.strip()
+    if line.startswith("REPLY: "):
+        return "ロボット: " + line.removeprefix("REPLY: "), False
+    if line.startswith("INPUT READY: "):
+        return line.removeprefix("INPUT READY: "), True
+    if line.startswith("DIALOGUE INPUT: "):
+        return "受信: " + line.removeprefix("DIALOGUE INPUT: "), False
     if line.startswith("CORRECTION: "):
         return "受信: " + line.removeprefix("CORRECTION: ").removesuffix("; holding position"), False
     if line.startswith("QUESTION: "):
         return "ロボットからの確認: " + line.removeprefix("QUESTION: "), True
-    if line.startswith("UPDATED: tasks="):
+    if line.startswith(("UPDATED: tasks=", "UNCHANGED: tasks=")):
         try:
-            tasks = ast.literal_eval(line.removeprefix("UPDATED: tasks="))
+            unchanged = line.startswith("UNCHANGED:")
+            tasks = ast.literal_eval(line.split("tasks=", 1)[1])
             names = {
                 "search:blue": "青を探索",
                 "search:green": "緑を探索",
@@ -48,7 +55,8 @@ def describe_line(line: str) -> tuple[str | None, bool]:
                 "reobserve:green": "緑を再確認",
                 "return_home:None": "帰還",
             }
-            return "計画を更新: " + " → ".join(names.get(task, str(task)) for task in tasks), True
+            label = "現在の計画: " if unchanged else "計画を更新: "
+            return label + " → ".join(names.get(task, str(task)) for task in tasks), True
         except (SyntaxError, ValueError, TypeError):
             return "計画を更新しました。", True
     if line.startswith("FRONTIER: "):
@@ -79,10 +87,10 @@ class InteractiveApp:
         outer = ttk.Frame(root, padding=14)
         outer.pack(fill="both", expand=True)
         ttk.Label(outer, text="四脚ロボットと会話して探索", font=("Yu Gothic UI", 16, "bold")).pack(anchor="w")
-        ttk.Label(outer, text="開始すると別ウィンドウでMuJoCoが開きます。2つの画面を並べて操作できます。").pack(
+        ttk.Label(outer, text="会話を始めます。探索を指示すると、別ウィンドウでMuJoCoが開きます。").pack(
             anchor="w", pady=(4, 12)
         )
-        ttk.Label(outer, text="最初の指示（青・緑の探索と帰還）").pack(anchor="w")
+        ttk.Label(outer, text="最初のメッセージ（会話、または青・緑の探索と帰還）").pack(anchor="w")
         self.initial = ttk.Entry(outer)
         self.initial.insert(0, DEFAULT_PROMPT)
         self.initial.pack(fill="x", pady=(3, 8))
@@ -97,7 +105,7 @@ class InteractiveApp:
         ttk.Label(outer, textvariable=self.status).pack(anchor="w", pady=(0, 5))
         self.log = scrolledtext.ScrolledText(outer, height=15, wrap="word", state="disabled", font=("Yu Gothic UI", 10))
         self.log.pack(fill="both", expand=True)
-        ttk.Label(outer, text="探索中の指示・確認への回答").pack(anchor="w", pady=(10, 3))
+        ttk.Label(outer, text="メッセージ・探索中の指示・確認への回答").pack(anchor="w", pady=(10, 3))
         send = ttk.Frame(outer)
         send.pack(fill="x")
         self.message = ttk.Entry(send)
@@ -149,7 +157,8 @@ class InteractiveApp:
                 'set -e; root=$(wslpath -a "$1"); area=$(wslpath -a "$2"); out=$(wslpath -a "$3"); '
                 'cd "$root"; printf "%s\\n" "$$" > "$out/process.pid"; '
                 "exec bash scripts/demo.sh --task search --planner codex --seed 305 --agent "
-                '--field-areas "$area" --correction-file "$out/correction.txt" --prompt "$4" --out-dir "$out"',
+                '--interactive-dialogue --field-areas "$area" --correction-file "$out/correction.txt" '
+                '--prompt "$4" --out-dir "$out"',
                 "robot-session",
                 str(ROOT),
                 str(areas),

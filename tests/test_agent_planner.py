@@ -1,7 +1,9 @@
 import sys
 import threading
 import unittest
+from contextlib import redirect_stdout
 from copy import deepcopy
+from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 
@@ -41,6 +43,11 @@ class AgentTests(unittest.TestCase):
         }
         revision = validate_agent_revision(value, context=context, prompt=message)
         self.assertEqual(revision.steps[0]["action"], "reobserve")
+        self.assertEqual(
+            validate_agent_revision({**value, "reply": "了解です"}, context=context, prompt=message), revision
+        )
+        with self.assertRaises(InvalidPlan):
+            validate_agent_revision({**value, "reply": "bad\nreply"}, context=context, prompt=message)
         for invalid in (
             {**value, "steps": value["steps"][:-1]},
             {**value, "changes": [{"id": "unknown", "permission": "avoid", "instruction": message}]},
@@ -56,6 +63,67 @@ class AgentTests(unittest.TestCase):
         )
         with self.assertRaises(InvalidPlan):
             validate_frontier_choice({"id": "frontier-2", "reason": "探索"}, candidates)
+
+    def test_conversation_reply_keeps_tasks(self):
+        sink, revisions = MovingFixture(), []
+
+        def planner(prompt, plan, context):
+            return {
+                "intent": "会話",
+                "status": "accept",
+                "question": "",
+                "reply": "会話できます。",
+                "steps": deepcopy(context["pending"]),
+                "cancelled": [],
+                "changes": [],
+            }
+
+        output = StringIO()
+        with patch("pai_motion.search.time.sleep"), redirect_stdout(output):
+            execute_search(
+                sample_search(),
+                sink,
+                observations=[],
+                decisions=[],
+                corrections=revisions,
+                get_correction=messages([(2, "会話できますか？")]),
+                correction_planner=planner,
+                agent_revision=True,
+            )
+        self.assertIn("REPLY: 会話できます。", output.getvalue())
+        self.assertIn("UNCHANGED: tasks=['search:blue', 'return_home:None']", output.getvalue())
+        self.assertEqual(revisions[0]["status"], "accepted")
+
+    def test_unchanged_initial_reply_starts_frontier_exploration(self):
+        sink, revisions, decisions = MovingFixture(), [], []
+
+        def planner(prompt, plan, context):
+            return {
+                "intent": "探索を続ける",
+                "status": "accept",
+                "question": "",
+                "reply": "了解です。",
+                "steps": deepcopy(context["pending"]),
+                "cancelled": [],
+                "changes": [],
+            }
+
+        def frontier(context, candidates):
+            return {"id": candidates[0]["id"], "reason": "探索"}
+
+        with patch("pai_motion.search.time.sleep"):
+            execute_search(
+                sample_search(),
+                sink,
+                observations=[],
+                decisions=decisions,
+                corrections=revisions,
+                get_correction=messages([(0, "青を探して")]),
+                correction_planner=planner,
+                agent_revision=True,
+                frontier_planner=frontier,
+            )
+        self.assertTrue(any(item["phase"] == "frontier_selected" for item in decisions))
 
     def test_same_correction_changes_tasks_and_area(self):
         class Fixture(MovingFixture):

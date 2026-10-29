@@ -400,6 +400,10 @@ def execute_search(
                         correction = validate_correction(
                             asdict(raw), context=revision["context"], prompt=revision["message"]
                         )
+                    reply = raw.get("reply", "") if agent_revision else ""
+                    if reply and correction.status != "clarify":
+                        dialogue.append({"role": "assistant", "text": reply})
+                        print(f"REPLY: {reply}", flush=True)
                     if correction.status == "clarify":
                         revision.update(
                             status="clarification",
@@ -417,6 +421,7 @@ def execute_search(
                         for step in tasks
                         if step["id"] in removed
                     )
+                    changed = tasks != correction.steps or (agent_revision and blocked_fields != updated_fields)
                     tasks = deepcopy(correction.steps)
                     if field_areas is not None or agent_revision:
                         blocked_fields = updated_fields
@@ -439,11 +444,13 @@ def execute_search(
                     )
                     pending = None
                     awaiting_answer = False
-                    goal = None
-                    active_id = None
+                    if changed or not agent_revision or "reply" not in raw:
+                        goal = None
+                        active_id = None
                     next_scan = stopped["time"]
+                    prefix = "UNCHANGED" if agent_revision and "reply" in raw and not changed else "UPDATED"
                     print(
-                        f"UPDATED: tasks={[step['action'] + ':' + str(step['target']) for step in tasks]}", flush=True
+                        f"{prefix}: tasks={[step['action'] + ':' + str(step['target']) for step in tasks]}", flush=True
                     )
                 else:
                     # Keep physics running while the model thinks, including in fast headless runs.
@@ -462,9 +469,8 @@ def execute_search(
                 else:
                     sink.run_velocity(Velocity(0.0, 0.0, 0.0), 0.2)
                     stopped = sink.observe()
-                    if (
-                        stopped["time"] - frontier_sim_started > 3.0
-                        and (math.hypot(*stopped["body_velocity"][:2]) >= 0.03 or abs(stopped["yaw_rate"]) >= 0.05)
+                    if stopped["time"] - frontier_sim_started > 3.0 and (
+                        math.hypot(*stopped["body_velocity"][:2]) >= 0.03 or abs(stopped["yaw_rate"]) >= 0.05
                     ):
                         raise RuntimeError("Robot did not settle during frontier selection")
                     if (
