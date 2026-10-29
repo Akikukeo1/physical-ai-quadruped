@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from dataclasses import asdict, dataclass, replace
 
+from pai_motion.agent_planner import validate_agent_revision, validate_frontier_choice
 from pai_motion.correction import SearchCorrection, initial_tasks, validate_correction
 from pai_motion.executor import Velocity
 from pai_motion.field_areas import distance_to_area, validate_areas
@@ -84,9 +85,7 @@ class ObservedMap:
         # The margin accounts for grid rounding and tracking error around each rectangle.
         if restricted:
             safe = {
-                cell
-                for cell in safe
-                if all(distance_to_area(self.point(cell), area) > 0.15 for area in restricted)
+                cell for cell in safe if all(distance_to_area(self.point(cell), area) > 0.15 for area in restricted)
             }
         # Unknown space also blocks the footprint, so exploration never plans through unseen areas.
         return {c for c in safe if all((c[0] + dx, c[1] + dy) in self.free for dx, dy in FOOTPRINT)}
@@ -124,7 +123,7 @@ class ObservedMap:
                     heapq.heappush(queue, (distance, nxt))
         return costs, previous
 
-    def frontier(self, costs, visited=()):
+    def frontiers(self, costs, visited=()):
         candidates = []
         observed = self.free | self.occupied
         for cell, distance in costs.items():
@@ -146,8 +145,12 @@ class ObservedMap:
                     ):
                         gain += 1
             if gain >= 1:
-                candidates.append((gain / (distance + 1.0), cell))
-        return max(candidates)[1] if candidates else None
+                candidates.append((gain / (distance + 1.0), cell, gain))
+        return sorted(candidates, reverse=True)
+
+    def frontier(self, costs, visited=()):
+        candidates = self.frontiers(costs, visited)
+        return candidates[0][1] if candidates else None
 
     def lookahead(self, position, goal, previous):
         path = [goal]
@@ -180,6 +183,8 @@ def execute_search(
     correction_planner=None,
     corrections: list | None = None,
     field_areas: list | None = None,
+    agent_revision: bool = False,
+    frontier_planner=None,
 ) -> dict:
     plan = validate_search(asdict(plan))
     if (get_correction is None) != (correction_planner is None):
@@ -204,7 +209,10 @@ def execute_search(
     field_areas = validate_areas(deepcopy(field_areas)) if field_areas is not None else None
     blocked_fields = set()
     active_id, active_since = None, started
-    worker = pending = revision = None
+    worker = pending = revision = frontier_pending = None
+    frontier_candidates, frontier_cells = [], {}
+    frontier_started = 0.0
+    frontier_sim_started = 0.0
     seen_messages = set()
     dialogue = []
     awaiting_answer = False
@@ -307,8 +315,10 @@ def execute_search(
                             },
                         }
                     )
-                    if field_areas is not None:
+                    if field_areas is not None or agent_revision:
                         context.update(field_areas=deepcopy(field_areas), blocked_areas=sorted(blocked_fields))
+                        if field_areas is None:
+                            context["field_areas"] = []
                     revision = {
                         "message": message,
                         "status": "planning",
@@ -325,6 +335,12 @@ def execute_search(
                     corrections.append(revision)
                     if worker is None:
                         worker = ThreadPoolExecutor(max_workers=1)
+                    if frontier_pending is not None:
+                        frontier_pending.cancel()
+                        frontier_pending = None
+                        decisions.append(
+                            {"phase": "frontier_cancelled", "reason": "user correction", "time": state["time"]}
+                        )
                     pending = worker.submit(correction_planner, message, plan, deepcopy(context))
                     print(f"CORRECTION: {message}; holding position", flush=True)
             if pending is not None:
@@ -339,8 +355,17 @@ def execute_search(
                         raise RuntimeError("Robot did not settle during correction")
                 if pending.done() and "settled" in revision:
                     raw = pending.result()
-                    if field_areas is not None:
-                        proposal = validate_field_revision(raw, context=revision["context"], prompt=revision["message"])
+                    if field_areas is not None or agent_revision:
+                        if agent_revision:
+                            revision["agent_proposal"] = deepcopy(raw)
+                            correction = validate_agent_revision(
+                                raw, context=revision["context"], prompt=revision["message"]
+                            )
+                            proposal = {key: raw[key] for key in ("status", "question", "changes")}
+                        else:
+                            proposal = validate_field_revision(
+                                raw, context=revision["context"], prompt=revision["message"]
+                            )
                         updated_fields = set(blocked_fields)
                         for change in proposal["changes"]:
                             if change["permission"] == "avoid":
@@ -349,18 +374,25 @@ def execute_search(
                                 updated_fields.discard(change["id"])
                         reason = proposal["question"]
                         if proposal["status"] == "accept":
-                            proposed_areas = [a["bounds"] for a in field_areas if a["id"] in updated_fields]
+                            proposed_areas = [a["bounds"] for a in field_areas or [] if a["id"] in updated_fields]
                             try:
                                 reachable, _ = grid.routes(tuple(stopped["position"][:2]), proposed_areas)
                                 if grid.cell(home) not in reachable:
                                     reason = "制限すると現在の地図では帰還経路を確保できません。制限を変更しますか？"
+                                elif agent_revision and any(
+                                    step["action"] == "reobserve"
+                                    and grid.cell(evidence_records[step["observation_id"]]["position"]) not in reachable
+                                    for step in correction.steps
+                                ):
+                                    reason = "観測した地点への経路を現在の地図で確認できません。制限を変更しますか？"
                             except RuntimeError:
                                 reason = (
                                     "現在地が制限範囲内か、制限後の安全な経路を確認できません。制限を変更しますか？"
                                 )
-                        correction = SearchCorrection(
-                            "エリア通行条件の変更", "clarify" if reason else "accept", deepcopy(tasks), [], reason
-                        )
+                        if not agent_revision or reason:
+                            correction = SearchCorrection(
+                                "訂正の確認", "clarify" if reason else "accept", deepcopy(tasks), [], reason
+                            )
                         revision["field_proposal"] = deepcopy(proposal)
                         if reason and proposal["status"] == "accept":
                             revision["clarification_source"] = "feasibility_check"
@@ -386,9 +418,10 @@ def execute_search(
                         if step["id"] in removed
                     )
                     tasks = deepcopy(correction.steps)
-                    if field_areas is not None:
+                    if field_areas is not None or agent_revision:
                         blocked_fields = updated_fields
-                        sink.set_field_permissions(blocked_fields)
+                        if field_areas is not None:
+                            sink.set_field_permissions(blocked_fields)
                         revision["blocked_areas"] = sorted(blocked_fields)
                     searches = [step for step in tasks if step["action"] == "search"]
                     plan = replace(
@@ -416,6 +449,54 @@ def execute_search(
                     # Keep physics running while the model thinks, including in fast headless runs.
                     time.sleep(max(0.0, 0.2 - (time.monotonic() - tick)))
                 continue
+            if frontier_pending is not None:
+                tick = time.monotonic()
+                reserve = costs[home_cell] / 0.12 + 25.0
+                if elapsed + reserve >= plan.seconds:
+                    frontier_pending.cancel()
+                    frontier_pending = None
+                    outcome, goal = "not_found", home_cell
+                    decisions.append(
+                        {"phase": "return", "reason": "frontier decision return reserve", "time": state["time"]}
+                    )
+                else:
+                    sink.run_velocity(Velocity(0.0, 0.0, 0.0), 0.2)
+                    stopped = sink.observe()
+                    if (
+                        stopped["time"] - frontier_sim_started > 3.0
+                        and (math.hypot(*stopped["body_velocity"][:2]) >= 0.03 or abs(stopped["yaw_rate"]) >= 0.05)
+                    ):
+                        raise RuntimeError("Robot did not settle during frontier selection")
+                    if (
+                        frontier_pending.done()
+                        and math.hypot(*stopped["body_velocity"][:2]) < 0.03
+                        and abs(stopped["yaw_rate"]) < 0.05
+                    ):
+                        raw_choice = frontier_pending.result()
+                        decisions.append(
+                            {
+                                "phase": "frontier_response",
+                                "time": stopped["time"],
+                                "response": deepcopy(raw_choice),
+                                "planning_wall_seconds": time.monotonic() - frontier_started,
+                            }
+                        )
+                        choice = validate_frontier_choice(raw_choice, frontier_candidates)
+                        goal = frontier_cells[choice["id"]]
+                        decisions.append(
+                            {
+                                "phase": "frontier_selected",
+                                "time": stopped["time"],
+                                "choice": choice,
+                                "candidates": frontier_candidates,
+                            }
+                        )
+                        print(f"FRONTIER: {choice['id']}; {choice['reason']}", flush=True)
+                        frontier_pending = None
+                        next_scan = stopped["time"]
+                    else:
+                        time.sleep(max(0.0, 0.2 - (time.monotonic() - tick)))
+                    continue
             if awaiting_answer:
                 tick = time.monotonic()
                 reserve = costs[home_cell] / 0.12 + 25.0
@@ -484,9 +565,101 @@ def execute_search(
                     if math.dist(position, reference["position"]) < 0.04 and state["time"] > active_since + 1e-9:
                         raise RuntimeError("Target could not be reobserved from its remembered sensing position")
                 elif outcome is None and (goal not in costs or math.dist(position, grid.point(goal)) < 0.25):
+                    previous_goal = grid.point(goal) if goal is not None else None
+                    frontier_trigger = (
+                        "initial_or_task_changed"
+                        if goal is None
+                        else "no_longer_reachable"
+                        if goal not in costs
+                        else "frontier_reached"
+                    )
                     if goal is not None:
                         visited.append(goal)
-                    goal = grid.frontier(costs, visited)
+                    if frontier_planner is not None:
+                        ranked = grid.frontiers(costs, visited)
+                        frontier_candidates, frontier_cells = [], {}
+                        for _score, cell, gain in ranked:
+                            if any(math.dist(grid.point(cell), c["position"]) < 0.5 for c in frontier_candidates):
+                                continue
+                            ident = f"frontier-{len(frontier_candidates) + 1}"
+                            frontier_candidates.append(
+                                {
+                                    "id": ident,
+                                    "position": grid.point(cell),
+                                    "path_distance": round(costs[cell], 2),
+                                    "gain": gain,
+                                }
+                            )
+                            frontier_cells[ident] = cell
+                            if len(frontier_candidates) == 4:
+                                break
+                        if frontier_candidates:
+                            if worker is None:
+                                worker = ThreadPoolExecutor(max_workers=1)
+                            frontier_context = {
+                                "pending": deepcopy(tasks),
+                                "completed": deepcopy(completed),
+                                "observations": deepcopy(
+                                    list(
+                                        {
+                                            r["id"]: r
+                                            for r in [
+                                                *first_seen.values(),
+                                                *last_seen.values(),
+                                                *(
+                                                    evidence_records[s["observation_id"]]
+                                                    for s in tasks
+                                                    if s["action"] == "reobserve"
+                                                ),
+                                            ]
+                                        }.values()
+                                    )
+                                ),
+                                "latest_scan": {
+                                    "time": observations[-1]["time"],
+                                    "range_limit": SENSOR_RANGE,
+                                    "visible_colors": [
+                                        color
+                                        for color in ("blue", "green")
+                                        if sum(ray[3] == color for ray in observations[-1]["scan"]) >= 2
+                                    ],
+                                },
+                                "map_summary": {
+                                    "resolution": RESOLUTION,
+                                    "free_cells": len(grid.free),
+                                    "occupied_cells": len(grid.occupied),
+                                },
+                                "position": list(position),
+                                "home": list(home),
+                                "remaining_seconds": plan.seconds - elapsed,
+                                "field_areas": deepcopy(field_areas or []),
+                                "blocked_areas": sorted(blocked_fields),
+                                "dialogue": deepcopy(dialogue),
+                                "visited_frontiers": [grid.point(cell) for cell in visited],
+                                "previous_choices": [
+                                    deepcopy(item["choice"])
+                                    for item in decisions[-30:]
+                                    if item["phase"] == "frontier_selected"
+                                ][-8:],
+                                "trigger": {"reason": frontier_trigger, "previous_goal": previous_goal},
+                            }
+                            frontier_pending = worker.submit(
+                                frontier_planner, frontier_context, deepcopy(frontier_candidates)
+                            )
+                            frontier_started = time.monotonic()
+                            frontier_sim_started = state["time"]
+                            decisions.append(
+                                {
+                                    "phase": "frontier_requested",
+                                    "time": state["time"],
+                                    "candidates": deepcopy(frontier_candidates),
+                                    "context": deepcopy(frontier_context),
+                                }
+                            )
+                            continue
+                        goal = None
+                    else:
+                        goal = grid.frontier(costs, visited)
                     if goal is None:
                         outcome, goal = "not_found", home_cell
                     decisions.append(

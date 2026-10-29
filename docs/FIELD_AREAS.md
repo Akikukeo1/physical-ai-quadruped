@@ -15,8 +15,9 @@ MUJOCO_GL=egl bash scripts/demo.sh --task search --planner codex --seed 305 --he
 ```
 
 実行中に指示を出すには `--correction-script` を `--correction-file outputs/correction.txt` に替え、
-READMEのライブ入力手順を使う。エリアを指定する場合、Codexの応答は通行条件の変更だけを扱い、
+READMEのライブ入力手順を使う。通常のエリアモードではCodexの応答は通行条件の変更だけを扱い、
 探索対象やタスク順の変更、必須通過は扱わない。不明なエリアなどは確認するようモデルに指示する。
+タスク訂正とエリア変更を統合した実験モードは [AGENT_SEARCH.md](AGENT_SEARCH.md) を参照。
 実行開始時は全エリアが通行可能で、指定されなかったエリアの条件は維持する。
 「通っていい」は通行の許可であり、必ず通ることを意味しない。
 Codexが通行条件を解釈し、既存の観測地図と探索アルゴリズムが実際の経路を選ぶ。

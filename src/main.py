@@ -8,6 +8,7 @@ from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
 
+from pai_motion.agent_planner import codex_agent_revision, codex_frontier_choice
 from pai_motion.correction import sample_correction
 from pai_motion.executor import DryRunSink, execute_plan
 from pai_motion.field_areas import validate_areas
@@ -50,6 +51,7 @@ def main() -> int:
     )
     correction_input.add_argument("--correction-script", type=Path, help="JSON list of timed correction messages")
     parser.add_argument("--field-areas", type=Path, help="JSON file of named rectangles drawn on the field")
+    parser.add_argument("--agent", action="store_true", help="Experimental LLM task and frontier decisions")
     parser.add_argument("--correct-at", type=float, help="Seconds after search start to inject --correction")
     parser.add_argument(
         "--replanner",
@@ -80,9 +82,13 @@ def main() -> int:
         parser.error("navigation/search requires --executor mujoco; it uses measured physics state")
     if args.missing_target and not search:
         parser.error("--missing-target requires --task search")
+    if args.agent and (not search or args.planner != "codex"):
+        parser.error("--agent requires --task search --planner codex")
     if args.field_areas and (not search or args.planner != "codex"):
         parser.error("--field-areas requires --task search --planner codex")
-    if args.field_areas and not (args.correction_file or args.correction_script or args.correction is not None):
+    if args.field_areas and not (
+        args.agent or args.correction_file or args.correction_script or args.correction is not None
+    ):
         parser.error("--field-areas requires a correction input")
     if (
         args.correction_file or args.correction_script or args.correction is not None or args.correct_at is not None
@@ -131,6 +137,8 @@ def main() -> int:
             if args.correct_at is not None and args.correct_at >= plan.seconds - 2:
                 raise ValueError("--correct-at must precede the original task deadline")
             data["search_plan"] = asdict(plan)
+            if args.agent:
+                data["agent"] = True
             data["scene"] = {"seed": args.seed, "missing_blue": args.missing_target}
             data["correction_input"] = {
                 "file": str(args.correction_file) if args.correction_file else None,
@@ -191,8 +199,13 @@ def main() -> int:
             sink = DryRunSink()
         if search:
             search_started = sink.observe()["time"]
+            initial_agent_request = args.agent
 
             def get_correction(state):
+                nonlocal initial_agent_request
+                if initial_agent_request:
+                    initial_agent_request = False
+                    return {"id": "agent-initial", "message": args.prompt}
                 if scheduled and state["time"] - search_started >= scheduled[0]["at"] - 1e-9:
                     event = scheduled.pop(0)
                     return {"id": f"scheduled-{len(scheduled)}", "message": event["message"]}
@@ -208,7 +221,10 @@ def main() -> int:
                 return None
 
             correction_enabled = (
-                args.correction_file is not None or args.correction is not None or args.correction_script is not None
+                args.agent
+                or args.correction_file is not None
+                or args.correction is not None
+                or args.correction_script is not None
             )
             if args.correction_file:
                 print(
@@ -221,7 +237,9 @@ def main() -> int:
                 decisions=data["decisions"],
                 get_correction=get_correction if correction_enabled else None,
                 correction_planner=(
-                    codex_field_revision
+                    codex_agent_revision
+                    if args.agent
+                    else codex_field_revision
                     if args.field_areas
                     else codex_correction
                     if args.planner == "codex"
@@ -231,6 +249,8 @@ def main() -> int:
                 else None,
                 corrections=data["corrections"],
                 field_areas=field_areas,
+                agent_revision=args.agent,
+                frontier_planner=codex_frontier_choice if args.agent else None,
             )
         elif navigation:
 
