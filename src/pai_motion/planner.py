@@ -17,6 +17,11 @@ SCHEMA = ROOT / "schema" / "motion-plan.schema.json"
 CODEX_MODEL = "gpt-6-luna"
 CODEX_REASONING_EFFORT = "xhigh"
 
+
+class CodexTimeoutError(RuntimeError):
+    """Codex did not respond within the configured wall-clock timeout."""
+
+
 DEMO_PLAN = {
     "intent": "右方向を動きで示す",
     "actions": [
@@ -197,7 +202,7 @@ def _codex_json(instructions: str, schema: Path, timeout: int) -> object:
                 timeout=timeout,
             )
         except subprocess.TimeoutExpired as exc:
-            raise RuntimeError(f"Codex timed out after {timeout} seconds") from exc
+            raise CodexTimeoutError(f"Codex timed out after {timeout} seconds") from exc
         except OSError as exc:
             raise RuntimeError(f"Cannot start Codex CLI: {exc}") from exc
         if proc.returncode != 0:

@@ -15,6 +15,7 @@ from pai_motion.executor import Velocity
 from pai_motion.field_areas import distance_to_area, validate_areas
 from pai_motion.field_revision import validate_field_revision
 from pai_motion.motion import InvalidPlan
+from pai_motion.planner import CodexTimeoutError
 
 RESOLUTION = 0.1
 SENSOR_RANGE = 1.8
@@ -360,8 +361,37 @@ def execute_search(
                         revision["settled"] = stopped
                     elif stopped["time"] - revision["received"]["time"] > 3.0:
                         raise RuntimeError("Robot did not settle during correction")
+                reserve = costs[home_cell] / 0.12 + 25.0
+                if "settled" in revision and not pending.done() and stopped["time"] - started + reserve >= plan.seconds:
+                    pending.cancel()
+                    revision.update(
+                        status="return_reserve",
+                        error="Correction not applied before the return reserve",
+                        planning_wall_seconds=time.monotonic() - revision["wall_started"],
+                    )
+                    pending, awaiting_answer = None, False
+                    outcome, goal, next_scan = "planner_return_reserve", home_cell, stopped["time"]
+                    decisions.append(
+                        {"phase": "return", "reason": "correction decision return reserve", "time": stopped["time"]}
+                    )
+                    print("PLANNER RETURN: 応答を待つ余裕がなくなったため、指示を適用せず帰還します。", flush=True)
+                    continue
                 if pending.done() and "settled" in revision:
-                    raw = pending.result()
+                    try:
+                        raw = pending.result()
+                    except CodexTimeoutError as exc:
+                        revision.update(
+                            status="timed_out",
+                            error=str(exc),
+                            planning_wall_seconds=time.monotonic() - revision["wall_started"],
+                        )
+                        pending, awaiting_answer = None, False
+                        outcome, goal, next_scan = "planner_timeout", home_cell, stopped["time"]
+                        decisions.append(
+                            {"phase": "return", "reason": "correction planner timeout", "time": stopped["time"]}
+                        )
+                        print("PLANNER RETURN: 指示の解釈がタイムアウトしたため、適用せず帰還します。", flush=True)
+                        continue
                     if field_areas is not None or agent_revision:
                         if agent_revision:
                             revision["agent_proposal"] = deepcopy(raw)
@@ -488,7 +518,21 @@ def execute_search(
                         and math.hypot(*stopped["body_velocity"][:2]) < 0.03
                         and abs(stopped["yaw_rate"]) < 0.05
                     ):
-                        raw_choice = frontier_pending.result()
+                        try:
+                            raw_choice = frontier_pending.result()
+                        except CodexTimeoutError as exc:
+                            decisions.append(
+                                {
+                                    "phase": "return",
+                                    "reason": "frontier planner timeout",
+                                    "time": stopped["time"],
+                                    "error": str(exc),
+                                }
+                            )
+                            frontier_pending = None
+                            outcome, goal, next_scan = "planner_timeout", home_cell, stopped["time"]
+                            print("PLANNER RETURN: 探索先の判断がタイムアウトしたため帰還します。", flush=True)
+                            continue
                         decisions.append(
                             {
                                 "phase": "frontier_response",

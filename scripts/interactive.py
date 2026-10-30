@@ -40,6 +40,8 @@ def describe_line(line: str) -> tuple[str | None, bool]:
         return line.removeprefix("INPUT READY: "), True
     if line.startswith("DIALOGUE INPUT: "):
         return "受信: " + line.removeprefix("DIALOGUE INPUT: "), False
+    if line.startswith("PLANNER RETURN: "):
+        return "ロボット: " + line.removeprefix("PLANNER RETURN: "), False
     if line.startswith("CORRECTION: "):
         return "受信: " + line.removeprefix("CORRECTION: ").removesuffix("; holding position"), False
     if line.startswith("QUESTION: "):
@@ -282,6 +284,8 @@ class InteractiveApp:
                         outcome = result.get("outcome", data.get("status"))
                         if outcome == "point_unreached":
                             outcome = "ポイントに到達できず帰還（探索または時間の余裕が尽きました）"
+                        elif outcome in ("planner_timeout", "planner_return_reserve"):
+                            outcome = "AIの応答を待てなかったため帰還（未完了のタスクがあります）"
                         self.append(f"結果: {outcome} ／ ログ: {files[-1]}")
                     except (OSError, ValueError):
                         self.append("終了ログを読み取れませんでした。")

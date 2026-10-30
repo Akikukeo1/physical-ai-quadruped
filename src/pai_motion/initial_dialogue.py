@@ -1,13 +1,14 @@
 """Wait for an explicit search task before starting the simulator."""
 
 import json
+import math
 import time
 from pathlib import Path
 
 from pai_motion.planner import ROOT, _codex_json
 
 
-def interpret_initial(message, history, timeout=60, *, points=None):
+def interpret_initial(message, history, timeout=60, *, points=None, start=None):
     instructions = (
         "You are a simulated robot assistant using Codex CLI. Answer the user in Japanese. "
         "You can search for blue or green targets, return home, reobserve sightings and allow or avoid named areas. "
@@ -26,6 +27,17 @@ def interpret_initial(message, history, timeout=60, *, points=None):
             "Treat that as a valid task and place the full request in search_request. "
             f"Available point IDs and coordinates: {json.dumps(points, ensure_ascii=False)}."
         )
+        if start is not None:
+            distances = [{"id": p["id"], "distance_m": math.dist(start, p["position"])} for p in points]
+            minimum = min(entry["distance_m"] for entry in distances)
+            closest = [entry["id"] for entry in distances if math.isclose(entry["distance_m"], minimum, abs_tol=1e-9)]
+            instructions += (
+                f" Initial robot position: {json.dumps(start)}. Straight-line distances: {json.dumps(distances)}. "
+                f"Nearest point IDs by straight-line distance: {json.dumps(closest)}. "
+                "If the user asks for the nearest point, use the minimum straight-line distance, include its ID in "
+                "search_request and explain that obstacles and actual route distance are unknown. "
+                "If multiple points are equally nearest, ask which one to use."
+            )
     value = _codex_json(instructions, ROOT / "schema/initial-dialogue.schema.json", timeout)
     if not isinstance(value, dict) or set(value) != {"reply", "search_request"}:
         raise ValueError("Invalid initial dialogue response")

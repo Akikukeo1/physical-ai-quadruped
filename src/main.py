@@ -160,7 +160,11 @@ def main() -> int:
                     args.prompt,
                     args.correction_file,
                     history=data["initial_dialogue"],
-                    interpret=partial(interpret_initial, points=custom_map["points"] if custom_map else None),
+                    interpret=partial(
+                        interpret_initial,
+                        points=custom_map["points"] if custom_map else None,
+                        start=custom_map["start"] if custom_map else None,
+                    ),
                 )
             plan = codex_search(search_prompt) if args.planner == "codex" else sample_search()
             if args.correct_at is not None and args.correct_at >= plan.seconds - 2:
