@@ -1,3 +1,4 @@
+import math
 import os
 import sys
 import unittest
@@ -7,10 +8,23 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from pai_motion.investigation_world import warehouse_scene  # noqa: E402
-from pai_motion.warehouse_demo import add_equipment, align_events  # noqa: E402
+from pai_motion.warehouse_demo import add_equipment, align_events, configure_fpv  # noqa: E402
 
 
 class WarehouseDemoTests(unittest.TestCase):
+    def test_fpv_reuses_horizontal_150_degree_fov_and_tracks_position_and_yaw(self):
+        from types import SimpleNamespace
+
+        camera = SimpleNamespace(lookat=[0, 0, 0])
+        vertical = configure_fpv(camera, {"position": [2, 3, 0.36], "yaw": math.pi / 2})
+        horizontal = math.degrees(2 * math.atan(math.tan(math.radians(vertical / 2)) * 1.5))
+        self.assertAlmostEqual(horizontal, 150)
+        self.assertAlmostEqual(camera.lookat[0], 2)
+        self.assertAlmostEqual(camera.lookat[1], 3.95)
+        self.assertEqual(camera.lookat[2], 0.31)
+        self.assertAlmostEqual(camera.azimuth, 90)
+        self.assertEqual((camera.distance, camera.elevation), (0.9, -24))
+
     def test_recording_audit_rejects_dropped_or_mistimed_frames(self):
         from scripts.verify_demo_recording import check_frame_index
 

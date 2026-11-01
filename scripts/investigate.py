@@ -26,7 +26,7 @@ def main():
     parser.add_argument("--headless", action="store_true")
     parser.add_argument("--demo", action="store_true", help="Show distinguishable 3D warehouse equipment")
     parser.add_argument(
-        "--record-dir", type=Path, help="Save synchronized overview/follow videos and timestamp indices"
+        "--record-dir", type=Path, help="Save synchronized overview/follow/FPV videos and timestamp indices"
     )
     parser.add_argument("--out-dir", type=Path, default=ROOT / "outputs" / "investigation")
     parser.add_argument(

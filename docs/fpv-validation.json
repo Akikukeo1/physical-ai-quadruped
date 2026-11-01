@@ -1,0 +1,312 @@
+{
+  "verified_at_utc": "2026-11-01T20:45:04.523343+00:00",
+  "classification": "development visual regression, not held-out evaluation",
+  "directory": "outputs/warehouse-demo-fpv/20261101T203642126438Z",
+  "origin": "outputs/mission-cinematic/fpv150_line_replay.py; docs/CINEMATIC_MISSION.md; docs/WAREHOUSE_MISSION.md",
+  "recording": {
+    "fps": 25,
+    "width": 720,
+    "height": 560,
+    "frames": 2860,
+    "streams": [
+      "overview.mp4",
+      "follow.mp4",
+      "fpv.mp4"
+    ],
+    "cameras": {
+      "overview": {
+        "lookat": [
+          1.7,
+          0,
+          0.35
+        ],
+        "distance": 8.4,
+        "azimuth": -35,
+        "elevation": -58
+      },
+      "follow": {
+        "lookat": "robot x,y; z=0.48",
+        "distance": 1.9,
+        "azimuth": -35,
+        "elevation": -28
+      },
+      "fpv": {
+        "lookat": "robot x,y + 0.95m forward; z=0.31",
+        "distance": 0.9,
+        "elevation": -24,
+        "azimuth": "robot yaw degrees",
+        "horizontal_fov": 150,
+        "vertical_fov": 136.20726413554237,
+        "type": "stabilized virtual observer, not perception"
+      }
+    },
+    "execution_log": "execution.json",
+    "frame_index": "frames.json",
+    "event_timeline": "timeline.json",
+    "sim_time_first_frame": 0.04000000000000002,
+    "sim_time_last_frame": 114.39999999991478,
+    "max_event_alignment_error": 0.0,
+    "limits": "native unedited simulation; kinematic probe, analytic sensing; visuals are not colliders"
+  },
+  "videos": [
+    {
+      "file": "overview.mp4",
+      "frames_decoded": 2860,
+      "duration": 114.4,
+      "sha256": "2d961ce367362df946815f756eb19d9f66768d63c32a816e44e1cacb97c42001",
+      "bytes": 1790897
+    },
+    {
+      "file": "follow.mp4",
+      "frames_decoded": 2860,
+      "duration": 114.4,
+      "sha256": "879bda880a8c9c36ce3bfd468c66e4deff7d17e8fa0bf6bf2a6a54135d9c6e09",
+      "bytes": 6242409
+    },
+    {
+      "file": "fpv.mp4",
+      "frames_decoded": 2860,
+      "duration": 114.4,
+      "sha256": "696594e9ee883f807685804f49afbc51cdf8ce3878502d7dc038caccd345aa5e",
+      "bytes": 6876005
+    }
+  ],
+  "checks": "full decode of all streams, 25fps, identical counts, 40ms simulation frame steps, event alignment <=20ms, displayed observations and hypotheses agree with logs, mission audit",
+  "execution_sha256": "8d36cccbd5e44723a4f5d4e4fa7d7f512d6f9700b03dcdf663a6ca558ba8c6f2",
+  "mission": {
+    "status": "success",
+    "elapsed": 113.39999999991478,
+    "home_error": 0.12675020008698593,
+    "evaluation": {
+      "truth": "airflow_fault",
+      "correct_cause": true,
+      "evidence_sufficient": true
+    },
+    "min_clearance": 0.1349493922491412,
+    "observations": [
+      {
+        "equipment": "supply",
+        "readings": {
+          "output_voltage_v": 230,
+          "breaker": "on"
+        },
+        "time": 34.799999999996565,
+        "position": [
+          3.427778870479341,
+          -1.4415110869386554
+        ],
+        "interface": "simulated_local_inspection",
+        "id": "inspection-1"
+      },
+      {
+        "equipment": "cooler",
+        "readings": {
+          "input_voltage_v": 230,
+          "cooling_requested": true,
+          "compressor_running": true
+        },
+        "time": 69.20000000002013,
+        "position": [
+          1.0293429881390943,
+          0.09939685327362736
+        ],
+        "interface": "simulated_local_inspection",
+        "id": "inspection-2"
+      },
+      {
+        "equipment": "cooler",
+        "item": "air_temperature",
+        "valid": true,
+        "value": -8.99,
+        "unit": "degC",
+        "geometry": {
+          "distance": 0.29429170968136786,
+          "alignment_cosine": 0.999991113693268,
+          "correct_sampling_zone": true,
+          "line_of_sight": true
+        },
+        "reason": "analytic local vent field; not thermofluid simulation",
+        "pose": {
+          "tip": [
+            1.3301456060133605,
+            -0.11740075142865965,
+            0.5281889237254898
+          ],
+          "direction": [
+            0.9180834514182644,
+            0.39637587620772496,
+            0.002990149241455083
+          ],
+          "mount": [
+            1.1281672467013424,
+            -0.20460344419435914,
+            0.5275310908923696
+          ],
+          "angle": 0.43504579144630645,
+          "joint_speed": 0.0,
+          "target": 0.43504579144630645,
+          "implementation": "kinematic_no_robot_payload"
+        },
+        "time": 81.39999999999169,
+        "position": [
+          1.0286901155478014,
+          -0.20169610005036925
+        ],
+        "interface": "geometric_probe_field",
+        "id": "inspection-3"
+      },
+      {
+        "equipment": "cooler",
+        "item": "airflow",
+        "valid": true,
+        "value": 0.044,
+        "unit": "m/s",
+        "geometry": {
+          "distance": 0.2321407424791464,
+          "alignment_cosine": 0.9999365313158617,
+          "correct_sampling_zone": true,
+          "line_of_sight": true
+        },
+        "reason": "analytic local vent field; not thermofluid simulation",
+        "pose": {
+          "tip": [
+            1.3883554811140075,
+            0.09537163320265363,
+            0.5304165627739029
+          ],
+          "direction": [
+            0.912717895221195,
+            -0.4083914476388597,
+            -0.012746342158684783
+          ],
+          "mount": [
+            1.1875575441653448,
+            0.18521775168320276,
+            0.5332207580488135
+          ],
+          "angle": -0.45578656139110046,
+          "joint_speed": 0.0,
+          "target": -0.45578656139110046,
+          "implementation": "kinematic_no_robot_payload"
+        },
+        "time": 96.39999999995673,
+        "position": [
+          1.0868141832775193,
+          0.18522391469381777
+        ],
+        "interface": "geometric_probe_field",
+        "id": "inspection-4"
+      }
+    ],
+    "report": {
+      "action": "report",
+      "equipment": null,
+      "hypotheses": [
+        {
+          "cause": "power_loss",
+          "status": "ruled_out",
+          "evidence_ids": [
+            "inspection-1",
+            "inspection-2"
+          ]
+        },
+        {
+          "cause": "cooler_fault",
+          "status": "possible",
+          "evidence_ids": [
+            "inspection-2",
+            "inspection-3",
+            "inspection-4"
+          ]
+        },
+        {
+          "cause": "door_open",
+          "status": "possible",
+          "evidence_ids": []
+        },
+        {
+          "cause": "airflow_fault",
+          "status": "supported",
+          "evidence_ids": [
+            "inspection-1",
+            "inspection-2",
+            "inspection-3",
+            "inspection-4"
+          ]
+        }
+      ],
+      "reason": "正常給電下で吹出空気は氷点下、風速は極小です。送風不足が最もよく観測に合います。",
+      "expected_information": "",
+      "conclusion": "airflow_fault",
+      "evidence_ids": [
+        "inspection-1",
+        "inspection-2",
+        "inspection-3",
+        "inspection-4"
+      ],
+      "report": "診断：送風不足を支持。電源盤は230V・遮断器ON（inspection-1）、冷却機入力も230V（inspection-2）。吹出空気は-8.99°C（inspection-3）ですが、風速は0.044m/s（inspection-4）で、資料の送風不足目安0.2m/s未満に該当します。扉の状態は未確認で、冷却系の複合故障や過去の一時異常も評価できていません。",
+      "uncertainties": "扉開放は未確認です。局所測定からファン故障と風路閉塞は区別できず、複合故障や過去の一時異常も除外できません。",
+      "knowledge_ids": [
+        "MAN-POWER",
+        "MAN-AIRFLOW",
+        "MAN-TEMPERATURE",
+        "MAN-DOOR",
+        "MAN-LIMITS"
+      ],
+      "measurement": null
+    }
+  },
+  "tests": {
+    "command": "PAI_SIM_TEST=1 .venv-wsl/bin/python -m unittest tests.test_warehouse_demo -v",
+    "count": 5,
+    "skipped": 0,
+    "result": "passed",
+    "ruff": "passed",
+    "diff_check": "passed with cr-at-eol"
+  },
+  "inspected_images": [
+    "qa/fpv-00000.png",
+    "qa/fpv-00869.png",
+    "qa/fpv-02034.png",
+    "qa/fpv-02409.png",
+    "qa/overview-00000.png"
+  ],
+  "source_sha256_at_start": {
+    "src/pai_motion/__init__.py": "1e734be59743ab4b4788e8c224b97546a33c0dfa051b74015242a5a8e0d8e931",
+    "src/pai_motion/agent_planner.py": "b857e2c6b46f0899c9fd7de8234c9b71f8dbc519e3cd658084ba1483daa69cac",
+    "src/pai_motion/assets.py": "d37498a34e1c7555efb1aaf7679ca94f94e13a04fac16f5272ac5ad7bfd254ee",
+    "src/pai_motion/correction.py": "07440e7d4f31f0d78ead820e3ba86273b37e7704a173a142d4ca4a8549a23a86",
+    "src/pai_motion/custom_map.py": "aa38210b5c71da2e70926d3e857289dc05257434769652bbdfdd803059d78e42",
+    "src/pai_motion/executor.py": "e26b8ba8a2c14f0f0b2afca81c676f7be9521678c54f1ac0a943217eb2fe7d17",
+    "src/pai_motion/field_areas.py": "1e436707cb8c9b20bbfcb434f9009fb78b8777b5788f394dbd4d09aab033c1ad",
+    "src/pai_motion/field_revision.py": "7b9299885765be79bd4cebe31c2a94fdcd261a5738b46231b66f601ba0e1aa77",
+    "src/pai_motion/initial_dialogue.py": "b0a9554a6aa5c9307f39a75d74995f65798c9ac996d3caeb4841ebf033d650be",
+    "src/pai_motion/investigation.py": "bd2ed43a6fa0c63a435e874a356ac4672b3f321f237856164c339c90ba51cec0",
+    "src/pai_motion/investigation_world.py": "1955d1bf37e481f421658e4e42c08af468b6721a3aaaab2e12fdecc87f7170b0",
+    "src/pai_motion/motion.py": "a9a07958fb9694c7fc68cc06848f3570d47df278151e5da2a87de465ff9d6ba9",
+    "src/pai_motion/navigation.py": "4d8ae17d3b9b3e5ad8923de615fad091f078d8633ce072f7db27c64a86543425",
+    "src/pai_motion/planner.py": "6fffaa470965b0c7b8273a40446d5bcb4b0e331a5ed77b73288905bc48e3f957",
+    "src/pai_motion/search.py": "350256bde1232a830bc479638706983b420f640200d737439429fc5ac855856a",
+    "src/pai_motion/search_world.py": "efef1446aa809a8251aaaa259b8a22b5b75002f9dc064cf0134d98f05767ff30",
+    "src/pai_motion/sensor_probe.py": "eeadadb5327da14100e226bda8d5cb42047732da93db69f9eca512dc6350cf42",
+    "src/pai_motion/sim_adapter.py": "db5a1ee6e8a4fbb419dcfe086edcfee9e49fa51409c46ad41a1a8197e0ed00eb",
+    "src/pai_motion/warehouse_demo.py": "1569ab49d8b02f2fe9956d5cfe421b5c4d1f30fec7351c7770d661a557dd8a16",
+    "schema/investigation-decision.schema.json": "157dc4174f9c4843c75d25f57be82f5e93899b211787c2f73cf3662d0c204b9a",
+    "docs/warehouse-manual.json": "2ee44c75bb85d43ac555fa68bb7db24a6a7c529a559164b5cbc05c002eae3587",
+    "schema/investigation-probe-decision.schema.json": "f8a781d34582bfc03c7c517e3d8c1087258de4a9a718ccad14541e2b3cbf5186",
+    "docs/warehouse-probe-manual.json": "79a3370e56e05bdd59522625f5013f7e1c290e3b913fb88ba671e02b269edaff",
+    "pyproject.toml": "53f9784ce16e1babe9bc544b8415a732a99233556d2fa55e03ea28d8717b3073",
+    "uv.lock": "a6b32f288eef40fa32a353f22c6cce7d7fd1e388721e58be2c522a90f1f0cc73",
+    "assets/go2-assets.json": "514b9c396fe9be115ba39bf7bc726599a08b24c1cdc575db28b54c68cd486a33",
+    "scripts/investigate.py": "b51d18c43c6ca5703adf587b47a0d0b915424e87e374dadcbdec3e69b8cb391a"
+  },
+  "nonfunctional_changes_after_start": {
+    "scripts/investigate.py": "record-dir help text updated to mention FPV; recording/physics/planner source files unchanged"
+  },
+  "limits": [
+    "Stabilized virtual observer, not a real optical sensor or perception input",
+    "No route overlays or cinematic editing imported",
+    "Earlier recordings and evaluation records preserved",
+    "No new held-out evaluation"
+  ]
+}

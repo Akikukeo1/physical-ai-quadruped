@@ -120,8 +120,16 @@ def align_events(log, frames):
     return sorted(events, key=lambda e: e["sim_time"])
 
 
+def configure_fpv(camera, pose):
+    """Reuse the stabilized 150-degree observer from mission-cinematic/fpv150_line_replay.py."""
+    yaw = pose["yaw"]
+    camera.lookat[:] = [pose["position"][0] + 0.95 * math.cos(yaw), pose["position"][1] + 0.95 * math.sin(yaw), 0.31]
+    camera.distance, camera.elevation, camera.azimuth = 0.9, -24, math.degrees(yaw)
+    return math.degrees(2 * math.atan(math.tan(math.radians(150 / 2)) / (720 / 480)))
+
+
 class WarehouseRecorder:
-    """Two synchronized cameras, 25 fps, one frame per 20 real physics steps."""
+    """Three synchronized cameras, 25 fps, one frame per 20 real physics steps."""
 
     def __init__(self, sink, directory):
         import imageio.v2 as imageio
@@ -133,7 +141,7 @@ class WarehouseRecorder:
         self.renderer = sink.mj.Renderer(sink.model, height=480, width=720)
         self.writers = {}
         try:
-            for name in ("overview", "follow"):
+            for name in ("overview", "follow", "fpv"):
                 self.writers[name] = imageio.get_writer(
                     self.directory / f"{name}.mp4", fps=25, codec="libx264", macro_block_size=16
                 )
@@ -169,9 +177,16 @@ class WarehouseRecorder:
             if name == "follow":
                 camera.lookat[:] = [*sink.data.qpos[:2], 0.48]
                 camera.distance, camera.azimuth, camera.elevation = 1.9, -35, -28
-            self.renderer.update_scene(sink.data, camera=camera, scene_option=sink.visual_options)
+            original_fovy = sink.model.vis.global_.fovy
+            try:
+                if name == "fpv":
+                    sink.model.vis.global_.fovy = configure_fpv(camera, sink.observe())
+                self.renderer.update_scene(sink.data, camera=camera, scene_option=sink.visual_options)
+                rendered = self.renderer.render()
+            finally:
+                sink.model.vis.global_.fovy = original_fovy
             picture = Image.new("RGB", (720, 560), (12, 18, 23))
-            picture.paste(Image.fromarray(self.renderer.render()), (0, 80))
+            picture.paste(Image.fromarray(rendered), (0, 80))
             draw = ImageDraw.Draw(picture)
             draw.rectangle((0, 0, 719, 76), fill=(12, 18, 23))
             for i, line in enumerate(lines):
@@ -208,10 +223,19 @@ class WarehouseRecorder:
             "width": 720,
             "height": 560,
             "frames": len(self.frames),
-            "streams": ["overview.mp4", "follow.mp4"],
+            "streams": ["overview.mp4", "follow.mp4", "fpv.mp4"],
             "cameras": {
                 "overview": {"lookat": [1.7, 0, 0.35], "distance": 8.4, "azimuth": -35, "elevation": -58},
                 "follow": {"lookat": "robot x,y; z=0.48", "distance": 1.9, "azimuth": -35, "elevation": -28},
+                "fpv": {
+                    "lookat": "robot x,y + 0.95m forward; z=0.31",
+                    "distance": 0.9,
+                    "elevation": -24,
+                    "azimuth": "robot yaw degrees",
+                    "horizontal_fov": 150,
+                    "vertical_fov": math.degrees(2 * math.atan(math.tan(math.radians(75)) / 1.5)),
+                    "type": "stabilized virtual observer, not perception",
+                },
             },
             "execution_log": "execution.json",
             "frame_index": "frames.json",

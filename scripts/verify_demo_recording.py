@@ -1,4 +1,4 @@
-"""Decode both native recordings and audit frame/event synchronization and the actual mission."""
+"""Decode all native recordings and audit frame/event synchronization and the actual mission."""
 
 import argparse
 import hashlib
@@ -95,7 +95,7 @@ def audit(directory):
         "qa_images": images,
         "hud_changes": hud_changes,
         "execution_sha256": hashlib.sha256((directory / "execution.json").read_bytes()).hexdigest(),
-        "checks": "full decode of both streams, 25fps, identical counts, 40ms simulation frame steps, "
+        "checks": "full decode of all streams, 25fps, identical counts, 40ms simulation frame steps, "
         "event alignment <=20ms, displayed observations and hypotheses agree with logs, mission audit",
     }
     (directory / "qa.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
