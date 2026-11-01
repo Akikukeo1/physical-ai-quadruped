@@ -54,6 +54,11 @@ class AreaTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "inside"):
             grid.routes((2.7, 1.2), [AREAS[0]["bounds"]])
 
+    def test_path_records_route_in_travel_order(self):
+        grid = ObservedMap()
+        previous = {(0, 0): None, (1, 0): (0, 0), (1, 1): (1, 0)}
+        self.assertEqual(grid.path((1, 1), previous), [(0, 0), (0.1, 0), (0.1, 0.1)])
+
     def test_revision_validation(self):
         context = {"field_areas": AREAS}
         prompt = "エリア1は通っていいが、エリア2は避けて"
@@ -111,6 +116,8 @@ class AreaTests(unittest.TestCase):
             )
         self.assertEqual(sink.field_states, [{"area2"}, {"area2"}, set()])
         self.assertEqual([r["status"] for r in revisions], ["accepted"] * 3)
+        self.assertTrue(revisions[0]["old_route"])
+        self.assertTrue(revisions[0]["new_route"])
         self.assertEqual(result["plan"]["seconds"], 180)
         self.assertEqual(result["tasks"]["completed"][-1]["step"]["id"], "home")
 

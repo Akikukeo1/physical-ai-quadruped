@@ -173,6 +173,13 @@ class ObservedMap:
             target = point
         return target
 
+    def path(self, goal, previous):
+        path = []
+        while goal is not None:
+            path.append(self.point(goal))
+            goal = previous[goal]
+        return list(reversed(path))
+
 
 def execute_search(
     plan: SearchPlan,
@@ -338,6 +345,7 @@ def execute_search(
                         "known_colors_before": sorted(detections),
                         "wall_started": time.monotonic(),
                         "old_goal": grid.point(goal) if goal is not None else None,
+                        "old_route": grid.path(goal, previous) if goal in previous else None,
                         "context": context,
                     }
                     corrections.append(revision)
@@ -755,6 +763,9 @@ def execute_search(
                 break
             if goal not in previous:
                 raise RuntimeError("Exploration goal left the observed safe map")
+            if scanned and revision is not None and revision["status"] == "accepted" and "new_route" not in revision:
+                revision["new_route"] = grid.path(goal, previous)
+                revision["new_route_time"] = state["time"]
             target = (
                 home
                 if outcome and math.dist(position, home) < 0.35 and not areas
