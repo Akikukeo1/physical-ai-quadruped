@@ -1,0 +1,858 @@
+{
+  "results": [
+    {
+      "scene": "A",
+      "seed": null,
+      "conclusion": "power_loss",
+      "inspection_order": [
+        "cooler",
+        "supply"
+      ],
+      "elapsed": 88.39999999997305,
+      "home_error": 0.1294531412740661,
+      "min_clearance": 0.13420440365711223,
+      "decisions": [
+        {
+          "action": "inspect",
+          "equipment": "cooler",
+          "reason": "冷却機の入力電圧、冷却要求、圧縮機運転、吹出温度を確認し、残る仮説を分けます。",
+          "knowledge_ids": [
+            "MAN-POWER",
+            "MAN-COOLER",
+            "MAN-DOOR"
+          ],
+          "evidence_ids": [],
+          "expected_information": "入力0Vなら電源盤も確認し、両方0Vなら電源供給異常を支持します。正常電圧で要求あり・圧縮機停止・吹出温風なら、電源盤の正常も確認して冷却機故障を評価します。圧縮機運転中で冷気が出ていれば、次に扉センサーを確認します。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": []
+            }
+          ]
+        },
+        {
+          "action": "inspect",
+          "equipment": "supply",
+          "reason": "冷却機の入力は0Vです。電源盤の出力を確認し、供給異常と冷却機側の原因を切り分けます。",
+          "knowledge_ids": [
+            "MAN-POWER",
+            "MAN-COOLER"
+          ],
+          "evidence_ids": [
+            "inspection-1"
+          ],
+          "expected_information": "電源盤も0Vなら、冷却機入力0Vと合わせて電源供給異常を支持します。正常230Vなら、供給異常以外を検討し、冷却機の状態を評価します。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "possible",
+              "evidence_ids": [
+                "inspection-1"
+              ]
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": []
+            }
+          ]
+        },
+        {
+          "action": "report",
+          "equipment": null,
+          "reason": "冷却機入力と電源盤出力がともに0Vで、遮断器もトリップしているため、電源供給異常が支持されます。",
+          "knowledge_ids": [
+            "MAN-POWER",
+            "MAN-LIMITS"
+          ],
+          "evidence_ids": [
+            "inspection-1",
+            "inspection-2"
+          ],
+          "expected_information": "冷却機の停止と倉庫温度上昇は電源供給異常と整合します。遮断器がトリップした電気的原因は、この観測だけでは特定できません。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "supported",
+              "evidence_ids": [
+                "inspection-1",
+                "inspection-2"
+              ]
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": []
+            }
+          ]
+        }
+      ],
+      "report": {
+        "action": "report",
+        "equipment": null,
+        "hypotheses": [
+          {
+            "cause": "power_loss",
+            "status": "supported",
+            "evidence_ids": [
+              "inspection-1",
+              "inspection-2"
+            ]
+          },
+          {
+            "cause": "cooler_fault",
+            "status": "possible",
+            "evidence_ids": []
+          },
+          {
+            "cause": "door_open",
+            "status": "possible",
+            "evidence_ids": []
+          }
+        ],
+        "reason": "冷却機入力と電源盤出力がともに0Vで、遮断器もトリップしているため、電源供給異常が支持されます。",
+        "expected_information": "冷却機の停止と倉庫温度上昇は電源供給異常と整合します。遮断器がトリップした電気的原因は、この観測だけでは特定できません。",
+        "conclusion": "power_loss",
+        "evidence_ids": [
+          "inspection-1",
+          "inspection-2"
+        ],
+        "report": "報告：温度上昇の原因として、冷却機への電源供給異常が支持されます。冷却機入力0V（inspection-1）と電源盤出力0V・遮断器トリップ（inspection-2）を確認しました。遮断器トリップの根本原因は未特定です。冷却機自体の故障や扉開放は未点検のため、複合要因や過去の状態を含めて否定できません。",
+        "uncertainties": "冷却機の健全性と扉の状態・連続開放時間は未確認です。複合故障や過去の状態も未評価です。",
+        "knowledge_ids": [
+          "MAN-POWER",
+          "MAN-LIMITS"
+        ]
+      },
+      "observations": [
+        {
+          "equipment": "cooler",
+          "readings": {
+            "input_voltage_v": 0,
+            "cooling_requested": true,
+            "compressor_running": false,
+            "supply_air_c": 8
+          },
+          "time": 15.400000000001812,
+          "position": [
+            0.8885316073289499,
+            -0.006873923231673997
+          ],
+          "interface": "simulated_local_inspection",
+          "id": "inspection-1"
+        },
+        {
+          "equipment": "supply",
+          "readings": {
+            "output_voltage_v": 0,
+            "breaker": "tripped"
+          },
+          "time": 55.80000000002223,
+          "position": [
+            3.4056140984064065,
+            -1.4105951788296027
+          ],
+          "interface": "simulated_local_inspection",
+          "id": "inspection-2"
+        }
+      ],
+      "evaluation": {
+        "truth": "power_loss",
+        "correct_cause": true,
+        "evidence_sufficient": true
+      },
+      "checks": "context isolation, full observed history, manual/observation references, proximity, settled reading, stationary inference, bounded controls, safe trace, report-before-return, deadline, home tolerance, evidence sufficiency",
+      "log": "outputs/investigation-a-final/investigation-A-20261101T173316163152Z.json",
+      "log_sha256": "9056c6c0dc7656253a510e59623c4d020416c1c55a3f5d0189c9e736f1eab775",
+      "source_matches_freeze": true
+    },
+    {
+      "scene": "A",
+      "seed": null,
+      "conclusion": "door_open",
+      "inspection_order": [
+        "cooler",
+        "door"
+      ],
+      "elapsed": 92.19999999996419,
+      "home_error": 0.1202532023569663,
+      "min_clearance": 0.1615740417309049,
+      "decisions": [
+        {
+          "action": "inspect",
+          "equipment": "cooler",
+          "reason": "冷却機の受電・運転・吹出温度を確認すると、冷却機側の異常と正常な冷却運転を区別でき、電源異常の追加確認が必要かも判断できます。",
+          "knowledge_ids": [
+            "MAN-POWER",
+            "MAN-COOLER",
+            "MAN-DOOR"
+          ],
+          "evidence_ids": [],
+          "expected_information": "入力0Vなら電源盤の出力と照合して電源異常を評価します。入力230Vで冷却要求あり、圧縮機停止かつ吹出空気が暖かければ冷却機故障を支持します。圧縮機運転中で吹出空気が氷点下なら、扉センサーで開放時間を確認します。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": []
+            }
+          ]
+        },
+        {
+          "action": "inspect",
+          "equipment": "door",
+          "reason": "冷却機は受電し、運転中で、吹出空気も氷点下です。扉の開放時間を調べると、残る原因候補を最もよく区別できます。",
+          "knowledge_ids": [
+            "MAN-POWER",
+            "MAN-COOLER",
+            "MAN-DOOR",
+            "MAN-LIMITS"
+          ],
+          "evidence_ids": [
+            "inspection-1"
+          ],
+          "expected_information": "現在閉鎖中、または連続開放600秒未満なら扉開放の根拠にはなりませんが、過去の短時間開放は否定できません。冷却運転中に600秒以上の開放が確認されれば、扉からの熱流入を支持します。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "possible",
+              "evidence_ids": [
+                "inspection-1"
+              ]
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "possible",
+              "evidence_ids": [
+                "inspection-1"
+              ]
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": []
+            }
+          ]
+        },
+        {
+          "action": "report",
+          "equipment": null,
+          "reason": "冷却機は運転し、吹出空気は-12°Cでした。扉が900秒連続で開いており、マニュアルの診断条件に合致します。",
+          "knowledge_ids": [
+            "MAN-DOOR",
+            "MAN-LIMITS"
+          ],
+          "evidence_ids": [
+            "inspection-1",
+            "inspection-2"
+          ],
+          "expected_information": "十分な証拠が得られたため、追加点検は行いません。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "possible",
+              "evidence_ids": [
+                "inspection-1"
+              ]
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "possible",
+              "evidence_ids": [
+                "inspection-1"
+              ]
+            },
+            {
+              "cause": "door_open",
+              "status": "supported",
+              "evidence_ids": [
+                "inspection-1",
+                "inspection-2"
+              ]
+            }
+          ]
+        }
+      ],
+      "report": {
+        "action": "report",
+        "equipment": null,
+        "hypotheses": [
+          {
+            "cause": "power_loss",
+            "status": "possible",
+            "evidence_ids": [
+              "inspection-1"
+            ]
+          },
+          {
+            "cause": "cooler_fault",
+            "status": "possible",
+            "evidence_ids": [
+              "inspection-1"
+            ]
+          },
+          {
+            "cause": "door_open",
+            "status": "supported",
+            "evidence_ids": [
+              "inspection-1",
+              "inspection-2"
+            ]
+          }
+        ],
+        "reason": "冷却機は運転し、吹出空気は-12°Cでした。扉が900秒連続で開いており、マニュアルの診断条件に合致します。",
+        "expected_information": "十分な証拠が得られたため、追加点検は行いません。",
+        "conclusion": "door_open",
+        "evidence_ids": [
+          "inspection-1",
+          "inspection-2"
+        ],
+        "report": "温度上昇の原因として、扉の長時間開放が支持されます。点検時、冷却機は運転中で吹出空気は-12°C、扉は900秒連続で開いていました（inspection-1、inspection-2）。電源盤出力や過去の断続的な異常、複合故障は未評価です。",
+        "uncertainties": "電源盤出力と冷却機の長期的な冷却能力は未確認です。過去の状態や複合故障も評価していません。",
+        "knowledge_ids": [
+          "MAN-DOOR",
+          "MAN-LIMITS"
+        ]
+      },
+      "observations": [
+        {
+          "equipment": "cooler",
+          "readings": {
+            "input_voltage_v": 230,
+            "cooling_requested": true,
+            "compressor_running": true,
+            "supply_air_c": -12
+          },
+          "time": 17.400000000001235,
+          "position": [
+            0.890421596965357,
+            -0.0038355300173937086
+          ],
+          "interface": "simulated_local_inspection",
+          "id": "inspection-1"
+        },
+        {
+          "equipment": "door",
+          "readings": {
+            "closed": false,
+            "open_seconds": 900
+          },
+          "time": 56.000000000022474,
+          "position": [
+            3.3109533442151715,
+            1.4644610950482586
+          ],
+          "interface": "simulated_local_inspection",
+          "id": "inspection-2"
+        }
+      ],
+      "evaluation": {
+        "truth": "door_open",
+        "correct_cause": true,
+        "evidence_sufficient": true
+      },
+      "checks": "context isolation, full observed history, manual/observation references, proximity, settled reading, stationary inference, bounded controls, safe trace, report-before-return, deadline, home tolerance, evidence sufficiency",
+      "log": "outputs/investigation-a-door-final/investigation-A-20261101T173848703095Z.json",
+      "log_sha256": "a60376e06d89c697929bd53462c9b11792af76d70142614ca87c7d47bab07194",
+      "source_matches_freeze": true
+    },
+    {
+      "scene": "A",
+      "seed": null,
+      "conclusion": "cooler_fault",
+      "inspection_order": [
+        "supply",
+        "cooler"
+      ],
+      "elapsed": 100.39999999994508,
+      "home_error": 0.11370505668789678,
+      "min_clearance": 0.1325346654601946,
+      "decisions": [
+        {
+          "action": "inspect",
+          "equipment": "supply",
+          "reason": "電源盤の出力と遮断器を確認し、供給異常の仮説を他の候補と区別します。",
+          "knowledge_ids": [
+            "MAN-POWER",
+            "MAN-LIMITS"
+          ],
+          "evidence_ids": [],
+          "expected_information": "出力0Vや遮断器トリップなら供給異常を支持します。正常230Vなら電源盤側の異常は弱まりますが、冷却機入力の確認が必要です。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": []
+            }
+          ]
+        },
+        {
+          "action": "inspect",
+          "equipment": "cooler",
+          "reason": "電源盤は正常出力です。冷却機の入力電圧、要求、圧縮機、吹出温度を確認し、供給異常と冷却機故障を区別します。",
+          "knowledge_ids": [
+            "MAN-POWER",
+            "MAN-COOLER",
+            "MAN-LIMITS"
+          ],
+          "evidence_ids": [
+            "inspection-1"
+          ],
+          "expected_information": "入力0Vなら供給経路の異常を支持します。入力230Vで冷却要求があるのに圧縮機停止かつ吹出空気が暖かければ、冷却機故障を支持します。運転中で吹出空気が氷点下なら、扉センサーの確認が有効です。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "possible",
+              "evidence_ids": [
+                "inspection-1"
+              ]
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": []
+            }
+          ]
+        },
+        {
+          "action": "report",
+          "equipment": null,
+          "reason": "電源盤と冷却機入力はいずれも230Vで、冷却要求中にもかかわらず圧縮機が停止し、吹出温度は8°Cです。冷却機側の故障を支持します。",
+          "knowledge_ids": [
+            "MAN-POWER",
+            "MAN-COOLER",
+            "MAN-LIMITS"
+          ],
+          "evidence_ids": [
+            "inspection-1",
+            "inspection-2"
+          ],
+          "expected_information": "電源盤と冷却機の電圧が正常で、要求中の停止と暖気供給が確認されたため、追加点検なしで冷却機故障を支持する証拠が得られました。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "ruled_out",
+              "evidence_ids": [
+                "inspection-1",
+                "inspection-2"
+              ]
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "supported",
+              "evidence_ids": [
+                "inspection-1",
+                "inspection-2"
+              ]
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": []
+            }
+          ]
+        }
+      ],
+      "report": {
+        "action": "report",
+        "equipment": null,
+        "hypotheses": [
+          {
+            "cause": "power_loss",
+            "status": "ruled_out",
+            "evidence_ids": [
+              "inspection-1",
+              "inspection-2"
+            ]
+          },
+          {
+            "cause": "cooler_fault",
+            "status": "supported",
+            "evidence_ids": [
+              "inspection-1",
+              "inspection-2"
+            ]
+          },
+          {
+            "cause": "door_open",
+            "status": "possible",
+            "evidence_ids": []
+          }
+        ],
+        "reason": "電源盤と冷却機入力はいずれも230Vで、冷却要求中にもかかわらず圧縮機が停止し、吹出温度は8°Cです。冷却機側の故障を支持します。",
+        "expected_information": "電源盤と冷却機の電圧が正常で、要求中の停止と暖気供給が確認されたため、追加点検なしで冷却機故障を支持する証拠が得られました。",
+        "conclusion": "cooler_fault",
+        "evidence_ids": [
+          "inspection-1",
+          "inspection-2"
+        ],
+        "report": "調査結果：冷却機側の故障が有力です。電源盤出力は230V、遮断器はオンで、冷却機入力も230Vでした。冷却要求中に圧縮機は停止し、吹出温度は8°Cでした（inspection-1、inspection-2）。扉センサーは未点検のため、扉開放や複合故障、過去の状態は未評価です。",
+        "uncertainties": "電源供給異常は観測された正常電圧から支持されません。扉は未点検で、過去の開放や複合故障は除外できません。",
+        "knowledge_ids": [
+          "MAN-POWER",
+          "MAN-COOLER",
+          "MAN-LIMITS"
+        ]
+      },
+      "observations": [
+        {
+          "equipment": "supply",
+          "readings": {
+            "output_voltage_v": 230,
+            "breaker": "on"
+          },
+          "time": 42.80000000000634,
+          "position": [
+            3.3860010747273352,
+            -1.4062627518458979
+          ],
+          "interface": "simulated_local_inspection",
+          "id": "inspection-1"
+        },
+        {
+          "equipment": "cooler",
+          "readings": {
+            "input_voltage_v": 230,
+            "cooling_requested": true,
+            "compressor_running": false,
+            "supply_air_c": 8
+          },
+          "time": 82.19999999998983,
+          "position": [
+            1.0255820312440371,
+            0.09943313395616832
+          ],
+          "interface": "simulated_local_inspection",
+          "id": "inspection-2"
+        }
+      ],
+      "evaluation": {
+        "truth": "cooler_fault",
+        "correct_cause": true,
+        "evidence_sufficient": true
+      },
+      "checks": "context isolation, full observed history, manual/observation references, proximity, settled reading, stationary inference, bounded controls, safe trace, report-before-return, deadline, home tolerance, evidence sufficiency",
+      "log": "outputs/investigation-a-cooler/investigation-A-20261101T173451806113Z.json",
+      "log_sha256": "57cef13e33c60d9f227f7f6a020b44011907112eae7e93b63c74535abf31e778",
+      "source_matches_freeze": true
+    },
+    {
+      "scene": "B",
+      "seed": 1102,
+      "conclusion": "door_open",
+      "inspection_order": [
+        "cooler",
+        "door"
+      ],
+      "elapsed": 92.59999999996326,
+      "home_error": 0.12301373906308459,
+      "min_clearance": 0.12737540471044068,
+      "decisions": [
+        {
+          "action": "inspect",
+          "equipment": "cooler",
+          "reason": "冷却機の受電、冷却要求、圧縮機、吹出温度を確認し、電源異常と冷却機故障を切り分けます。",
+          "knowledge_ids": [
+            "MAN-POWER",
+            "MAN-COOLER",
+            "MAN-LIMITS"
+          ],
+          "evidence_ids": [],
+          "expected_information": "入力0Vなら電源盤の出力も確認します。230Vで冷却要求があるのに圧縮機停止・吹出空気が暖かければ冷却機故障を支持します。圧縮機運転・冷気供給なら扉を調べます。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": []
+            }
+          ]
+        },
+        {
+          "action": "inspect",
+          "equipment": "door",
+          "reason": "冷却機は230Vで運転し、-12°Cの空気を供給しています。扉の開放時間を確認します。",
+          "knowledge_ids": [
+            "MAN-DOOR",
+            "MAN-COOLER",
+            "MAN-LIMITS"
+          ],
+          "evidence_ids": [
+            "inspection-1"
+          ],
+          "expected_information": "600秒以上の連続開放なら、冷却運転中の熱流入として扉開放を支持します。閉鎖中または開放時間が短ければ扉原因は弱まり、過去の電源異常などを再検討します。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "possible",
+              "evidence_ids": [
+                "inspection-1"
+              ]
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "ruled_out",
+              "evidence_ids": [
+                "inspection-1"
+              ]
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": [
+                "inspection-1"
+              ]
+            }
+          ]
+        },
+        {
+          "action": "report",
+          "equipment": null,
+          "reason": "冷却機は230Vで運転し、-12°Cの空気を供給中ですが、扉は900秒連続で開いています。冷却中の熱流入として扉開放が温度上昇を説明します。",
+          "knowledge_ids": [
+            "MAN-POWER",
+            "MAN-COOLER",
+            "MAN-DOOR",
+            "MAN-LIMITS"
+          ],
+          "evidence_ids": [
+            "inspection-1",
+            "inspection-2"
+          ],
+          "expected_information": "現時点の原因を支持する証拠が揃いました。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "ruled_out",
+              "evidence_ids": [
+                "inspection-1"
+              ]
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "ruled_out",
+              "evidence_ids": [
+                "inspection-1"
+              ]
+            },
+            {
+              "cause": "door_open",
+              "status": "supported",
+              "evidence_ids": [
+                "inspection-1",
+                "inspection-2"
+              ]
+            }
+          ]
+        }
+      ],
+      "report": {
+        "action": "report",
+        "equipment": null,
+        "hypotheses": [
+          {
+            "cause": "power_loss",
+            "status": "ruled_out",
+            "evidence_ids": [
+              "inspection-1"
+            ]
+          },
+          {
+            "cause": "cooler_fault",
+            "status": "ruled_out",
+            "evidence_ids": [
+              "inspection-1"
+            ]
+          },
+          {
+            "cause": "door_open",
+            "status": "supported",
+            "evidence_ids": [
+              "inspection-1",
+              "inspection-2"
+            ]
+          }
+        ],
+        "reason": "冷却機は230Vで運転し、-12°Cの空気を供給中ですが、扉は900秒連続で開いています。冷却中の熱流入として扉開放が温度上昇を説明します。",
+        "expected_information": "現時点の原因を支持する証拠が揃いました。",
+        "conclusion": "door_open",
+        "evidence_ids": [
+          "inspection-1",
+          "inspection-2"
+        ],
+        "report": "温度上昇の原因として、扉の長時間開放が支持されます。冷却機は230Vで運転し、-12°Cの空気を供給していました（inspection-1）。扉は開放状態で、連続開放時間は900秒でした（inspection-2）。電源盤の出力は未確認です。過去の断続的な電源異常や複合故障は評価していません。",
+        "uncertainties": "電源盤の出力と過去の状態は未確認です。扉開放と他の要因が併存する可能性も残ります。",
+        "knowledge_ids": [
+          "MAN-POWER",
+          "MAN-COOLER",
+          "MAN-DOOR",
+          "MAN-LIMITS"
+        ]
+      },
+      "observations": [
+        {
+          "equipment": "cooler",
+          "readings": {
+            "input_voltage_v": 230,
+            "cooling_requested": true,
+            "compressor_running": true,
+            "supply_air_c": -12
+          },
+          "time": 34.799999999996565,
+          "position": [
+            2.930937780398967,
+            0.08604117316415155
+          ],
+          "interface": "simulated_local_inspection",
+          "id": "inspection-1"
+        },
+        {
+          "equipment": "door",
+          "readings": {
+            "closed": false,
+            "open_seconds": 900
+          },
+          "time": 56.20000000002272,
+          "position": [
+            3.341038246730833,
+            1.4888377800750403
+          ],
+          "interface": "simulated_local_inspection",
+          "id": "inspection-2"
+        }
+      ],
+      "evaluation": {
+        "truth": "door_open",
+        "correct_cause": true,
+        "evidence_sufficient": true
+      },
+      "checks": "context isolation, full observed history, manual/observation references, proximity, settled reading, stationary inference, bounded controls, safe trace, report-before-return, deadline, home tolerance, evidence sufficiency",
+      "log": "outputs/investigation-b-heldout/investigation-B-20261101T173629981168Z.json",
+      "log_sha256": "f8ad99747ec14fc92fac936f12d0d370d66b1895d15e0467e20d7b0b08955dfa",
+      "source_matches_freeze": true
+    }
+  ],
+  "verified_at_utc": "2026-11-01T17:40:14.279445+00:00",
+  "environment": {
+    "os": "Ubuntu 24.04 / WSL2",
+    "python": "3.12.12",
+    "mujoco": "3.3.7",
+    "onnxruntime": "1.23.2",
+    "codex_cli": "0.157.0",
+    "requested_model": "gpt-6-luna",
+    "requested_reasoning_effort": "xhigh",
+    "server_model_identity_independently_verified": false
+  },
+  "tests": {
+    "command": "PAI_SIM_TEST=1 .venv-wsl/bin/python -m unittest discover -s tests -q",
+    "count": 105,
+    "skipped": 0,
+    "result": "passed",
+    "new_unit_tests": 8,
+    "targeted_ruff": "passed",
+    "git_diff_check": "passed",
+    "audit_corruption_checks_rejected": [
+      "future_observation",
+      "manual_as_observation",
+      "distant_inspection",
+      "moving_inference",
+      "unsafe_contact"
+    ]
+  },
+  "freeze": {
+    "manifest": "docs/investigation-evaluation.json",
+    "unchanged_files": 25,
+    "all_four_success_logs_match": true,
+    "freeze_precedes_first_B_seconds": 8.531275
+  },
+  "failure_checks": [
+    {
+      "log": "outputs/investigation-a-budget/investigation-A-20261101T173806709828Z.json",
+      "log_sha256": "f290972ca11f448e83403d2addcd39894f496c4b440affd04ff42914c7c37d8f",
+      "status": "incomplete",
+      "errors": [
+        "return_reserve"
+      ],
+      "elapsed": 37.800000000001454,
+      "returned": true,
+      "within_deadline": true,
+      "home_error": 0.11768332465702794,
+      "conclusion": "inconclusive",
+      "phase": "final short-budget test"
+    },
+    {
+      "log": "outputs/investigation-a-dev/investigation-A-20261101T172739436789Z.json",
+      "log_sha256": "0dd68ba14dea283a73082aaf035eace8b161ba76dd367a07a84b5eecc7cd74ce",
+      "status": "incomplete",
+      "errors": [
+        "planner: Inspection needs an information goal, no final report"
+      ],
+      "elapsed": 12.400000000001144,
+      "returned": true,
+      "within_deadline": true,
+      "home_error": 0.013076506411497178,
+      "conclusion": "inconclusive",
+      "phase": "early development before manual extraction"
+    }
+  ],
+  "limits": [
+    "All A runs are development trials",
+    "One B run is not evidence of general success rate",
+    "No fixed-order baseline comparison",
+    "Simulated local readings; no camera recognition, thermal physics or real hardware"
+  ]
+}

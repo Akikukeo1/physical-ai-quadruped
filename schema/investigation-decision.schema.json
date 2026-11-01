@@ -1,0 +1,123 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "action",
+    "equipment",
+    "hypotheses",
+    "reason",
+    "expected_information",
+    "conclusion",
+    "evidence_ids",
+    "report",
+    "uncertainties",
+    "knowledge_ids"
+  ],
+  "properties": {
+    "action": {
+      "type": "string",
+      "enum": [
+        "inspect",
+        "report"
+      ]
+    },
+    "equipment": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "supply",
+        "cooler",
+        "door",
+        null
+      ]
+    },
+    "hypotheses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "cause",
+          "status",
+          "evidence_ids"
+        ],
+        "properties": {
+          "cause": {
+            "type": "string",
+            "enum": [
+              "power_loss",
+              "cooler_fault",
+              "door_open"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "possible",
+              "supported",
+              "ruled_out"
+            ]
+          },
+          "evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 3
+          }
+        }
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "reason": {
+      "type": "string",
+      "maxLength": 1800
+    },
+    "expected_information": {
+      "type": "string",
+      "maxLength": 1800
+    },
+    "conclusion": {
+      "type": "string",
+      "enum": [
+        "power_loss",
+        "cooler_fault",
+        "door_open",
+        "pending",
+        "inconclusive"
+      ]
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 3
+    },
+    "report": {
+      "type": "string",
+      "maxLength": 1800
+    },
+    "uncertainties": {
+      "type": "string",
+      "maxLength": 1800
+    },
+    "knowledge_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "MAN-POWER",
+          "MAN-COOLER",
+          "MAN-DOOR",
+          "MAN-LIMITS"
+        ]
+      },
+      "minItems": 1,
+      "maxItems": 4
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "frozen_at_utc": "2026-11-01T17:36:21.449893+00:00",
+  "development": "Map A and its fault variants only",
+  "holdout": {
+    "scene": "B",
+    "seed": 1102,
+    "trials": 1,
+    "seconds": 360,
+    "planner": "gpt-6-luna",
+    "reasoning_effort": "xhigh"
+  },
+  "procedure": "Generate and run B only after this freeze. No tuning on B; any source change invalidates the original held-out claim. Single run does not establish generalization.",
+  "success_criteria": [
+    "real Codex decisions and MuJoCo locomotion",
+    "correct cause with sufficient locally acquired evidence",
+    "report before return",
+    "return error <= 0.15m within original deadline",
+    "no obstacle contact or physics safety failure"
+  ],
+  "source_sha256": {
+    "src/pai_motion/__init__.py": "1e734be59743ab4b4788e8c224b97546a33c0dfa051b74015242a5a8e0d8e931",
+    "src/pai_motion/agent_planner.py": "b857e2c6b46f0899c9fd7de8234c9b71f8dbc519e3cd658084ba1483daa69cac",
+    "src/pai_motion/assets.py": "d37498a34e1c7555efb1aaf7679ca94f94e13a04fac16f5272ac5ad7bfd254ee",
+    "src/pai_motion/correction.py": "07440e7d4f31f0d78ead820e3ba86273b37e7704a173a142d4ca4a8549a23a86",
+    "src/pai_motion/custom_map.py": "aa38210b5c71da2e70926d3e857289dc05257434769652bbdfdd803059d78e42",
+    "src/pai_motion/executor.py": "e26b8ba8a2c14f0f0b2afca81c676f7be9521678c54f1ac0a943217eb2fe7d17",
+    "src/pai_motion/field_areas.py": "1e436707cb8c9b20bbfcb434f9009fb78b8777b5788f394dbd4d09aab033c1ad",
+    "src/pai_motion/field_revision.py": "7b9299885765be79bd4cebe31c2a94fdcd261a5738b46231b66f601ba0e1aa77",
+    "src/pai_motion/initial_dialogue.py": "b0a9554a6aa5c9307f39a75d74995f65798c9ac996d3caeb4841ebf033d650be",
+    "src/pai_motion/investigation.py": "6e7eeae2d1f3a42a67647a5218f31710b5e2e03db9b1b6a74104950bc80d49de",
+    "src/pai_motion/investigation_world.py": "19e1fb8ad3234a2c3c6c02d56e66854fe2751c0e26025352d85b342f428f6a55",
+    "src/pai_motion/motion.py": "a9a07958fb9694c7fc68cc06848f3570d47df278151e5da2a87de465ff9d6ba9",
+    "src/pai_motion/navigation.py": "4d8ae17d3b9b3e5ad8923de615fad091f078d8633ce072f7db27c64a86543425",
+    "src/pai_motion/planner.py": "6fffaa470965b0c7b8273a40446d5bcb4b0e331a5ed77b73288905bc48e3f957",
+    "src/pai_motion/search.py": "350256bde1232a830bc479638706983b420f640200d737439429fc5ac855856a",
+    "src/pai_motion/search_world.py": "efef1446aa809a8251aaaa259b8a22b5b75002f9dc064cf0134d98f05767ff30",
+    "src/pai_motion/sim_adapter.py": "7d4e1eb58838cc119694d8f3157fe7cbc75aae773439079ed6f7e3d29abd2ff9",
+    "scripts/investigate.py": "93b9c8f651a7b39f9315d6f8b735d013cde823753dbf3200c4ba30840dc3e171",
+    "scripts/verify_investigation.py": "9502ef6f16952d0c711566424f0eb616021d8eae415915384309347fe09074f4",
+    "schema/investigation-decision.schema.json": "157dc4174f9c4843c75d25f57be82f5e93899b211787c2f73cf3662d0c204b9a",
+    "docs/warehouse-manual.json": "2ee44c75bb85d43ac555fa68bb7db24a6a7c529a559164b5cbc05c002eae3587",
+    "tests/test_investigation.py": "7eef0dd980c66293810e1d8e659abec0a15763fbe85c05b8ced9b5b614f1a76c",
+    "pyproject.toml": "53f9784ce16e1babe9bc544b8415a732a99233556d2fa55e03ea28d8717b3073",
+    "uv.lock": "a6b32f288eef40fa32a353f22c6cce7d7fd1e388721e58be2c522a90f1f0cc73",
+    "assets/go2-assets.json": "514b9c396fe9be115ba39bf7bc726599a08b24c1cdc575db28b54c68cd486a33"
+  }
+}

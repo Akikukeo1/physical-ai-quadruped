@@ -12,7 +12,8 @@
 | 観測量・速度補償の実装 | [syswonder のネイティブ制御器](https://github.com/syswonder/robot-unitree-go2-mujoco/blob/d6e54647541fb7b048db5d9817457ee11d0e2cf9/sim/native/controller.py) の必要部分を `sim_adapter.py` に移植 | Apache-2.0 (`syswonder-Apache-2.0`) |
 
 syswonderの[NOTICE](https://github.com/syswonder/robot-unitree-go2-mujoco/blob/d6e54647541fb7b048db5d9817457ee11d0e2cf9/NOTICE)では、既存MITコードと新規Apache-2.0コードが区別されています。
-このプロジェクトではROS、Robonix、地図、追加センサー、named action、実機通信は使いません。
+制御器の移植ではROS、Robonix、named action、実機通信は使いません。
+上位層の地図、距離センサー、模擬設備点検は本プロジェクト側で追加しています。
 移植した処理は起動時に方策を読み込み、速度指令からトルクだけを出力する構成に縮小しています。
 
 ONNXのSHA-256は `1d9e76089401a011f38d6e81708f7334618e9faaad078999a1f6d94b07381f1d`。
