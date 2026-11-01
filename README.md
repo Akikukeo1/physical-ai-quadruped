@@ -7,10 +7,15 @@
 Codexが合成の設備マニュアルと現場の点検履歴を参照し、仮説・次の点検先・証拠付き報告を更新します。
 移動は既存の距離センサー、観測地図、経路計画、MuJoCo Go2と歩行方策を使います。
 設備の状態は近傍で停止したときだけ取得する模擬インターフェースで、画像認識や実機計測ではありません。
+温度・風速を個別に選び、機体の位置・向きと可動プローブの先端幾何を合わせる
+[運動学的プローブによる計測](docs/PROBE_MEASUREMENTS.md)も追加しました。
+`--probe` 使用時は機体への質量・慣性を追加せず、温度・風速の取得に距離・方向・静止・遮蔽条件を要求します。
 
 ```bash
 # 準備済みのWSL環境、リポジトリルートで実行
 .venv-wsl/bin/python scripts/investigate.py --scene A --headless
+# 運動学的プローブで温度・風速を測り、送風不足を調査
+.venv-wsl/bin/python scripts/investigate.py --scene A --probe --development-fault airflow_fault --headless
 ```
 
 **Phase 1 は Ubuntu 24.04 / WSL2 で実行確認済みです。**

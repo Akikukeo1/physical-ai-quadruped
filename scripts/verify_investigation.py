@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from pai_motion.investigation import validate_decision  # noqa: E402
-from pai_motion.investigation_world import INSPECTION_RADIUS, InspectionWorld  # noqa: E402
+from pai_motion.investigation_world import INSPECTION_RADIUS, InspectionWorld, ProbeInspectionWorld  # noqa: E402
 
 
 def verify(log):
@@ -20,12 +20,13 @@ def verify(log):
     assert not log["errors"]
     assert log["reported_at"] <= log["return_started"]
     geometry = log["evaluation_world"]["geometry"]
-    world = InspectionWorld(geometry, log["evaluation_world"]["cause"])
+    probe = log.get("probe_enabled", False)
+    world = (ProbeInspectionWorld if probe else InspectionWorld)(geometry, log["evaluation_world"]["cause"])
     observations = log["observations"]
     expected_decisions = []
     for entry in log["decisions"]:
         context = entry["context"]
-        assert set(context) == {
+        expected_fields = {
             "task",
             "symptom",
             "inventory",
@@ -36,6 +37,9 @@ def verify(log):
             "remaining_seconds",
             "home_obligation",
         }
+        if probe:
+            expected_fields.add("probe")
+        assert set(context) == expected_fields
         assert context["inventory"] == world.inventory(), "Inventory must contain locations, not equipment states"
         assert context["observations"] == [o for o in observations if o["time"] <= entry["started"]]
         assert context["previous_decisions"] == expected_decisions
@@ -47,12 +51,35 @@ def verify(log):
         assert all(e["vx"] == e["vy"] == e["yaw"] == 0 for e in waiting)
     for observation in observations:
         point = next(p for p in geometry["points"] if p["id"] == observation["equipment"])
-        assert math.dist(point["position"], observation["position"]) <= INSPECTION_RADIUS
+        if "item" not in observation:
+            assert math.dist(point["position"], observation["position"]) <= INSPECTION_RADIUS
         state = min(log["trace"], key=lambda s: abs(s["time"] - observation["time"]))
         assert abs(state["time"] - observation["time"]) < 0.051
         assert math.dist(state["position"][:2], observation["position"]) < 0.01
         assert math.hypot(*state["body_velocity"][:2]) <= 0.05 and abs(state["yaw_rate"]) <= 0.08
-        assert world.inspect(observation["equipment"], state)["readings"] == observation["readings"]
+        if "item" in observation:
+            from types import SimpleNamespace
+
+            assert observation["valid"] and observation["value"] is not None
+            assert math.dist(state["probe"]["tip"], observation["pose"]["tip"]) < 0.01
+            fixture = SimpleNamespace(
+                observe=lambda state=state: state,
+                probe_pose=lambda observation=observation: observation["pose"],
+                probe_line_clear=lambda source, observation=observation: observation["geometry"]["line_of_sight"],
+            )
+            recalculated = world.measure(observation["item"], fixture)
+            assert recalculated["valid"] and recalculated["value"] == observation["value"]
+        else:
+            assert world.inspect(observation["equipment"], state)["readings"] == observation["readings"]
+    if probe:
+        for event in log["events"]:
+            if any(abs(event[key]) > 1e-6 for key in ("vx", "vy", "yaw")):
+                assert abs(event["start"]["probe"]["angle"]) <= 0.05
+                assert abs(event["end"]["probe"]["angle"]) <= 0.05
+        for action in log["actions"]:
+            if "measurement" in action:
+                assert action["started"] <= action["sampled_at"] <= action["finished"]
+                assert abs(action["deployed"]["angle"]) > 0.2 and abs(action["stowed"]["angle"]) < 0.02
     assert all(
         not s["obstacle_contact"] and s["finite"] and s["upright"] >= 0.65 and s["obstacle_clearance"] >= 0.05
         for s in log["trace"]
@@ -67,6 +94,7 @@ def verify(log):
         "scene": log["scene"],
         "seed": log["seed"],
         "conclusion": log["report"]["conclusion"],
+        "probe_enabled": probe,
         "inspection_order": [o["equipment"] for o in observations],
         "elapsed": log["elapsed"],
         "home_error": log["home_error"],

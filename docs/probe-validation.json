@@ -1,0 +1,1595 @@
+{
+  "results": [
+    {
+      "scene": "A",
+      "seed": null,
+      "conclusion": "airflow_fault",
+      "probe_enabled": true,
+      "inspection_order": [
+        "supply",
+        "cooler",
+        "cooler",
+        "cooler"
+      ],
+      "elapsed": 140.79999999994897,
+      "home_error": 0.09971743556994017,
+      "min_clearance": 0.12842354770621206,
+      "decisions": [
+        {
+          "action": "inspect",
+          "equipment": "supply",
+          "reason": "電源盤の出力と遮断器を確認し、供給異常を切り分けます。",
+          "knowledge_ids": [
+            "MAN-POWER"
+          ],
+          "evidence_ids": [],
+          "measurement": null,
+          "expected_information": "0Vなら供給異常を支持します。230Vなら盤側の供給異常は弱まりますが、冷却機入力の確認が必要です。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "airflow_fault",
+              "status": "possible",
+              "evidence_ids": []
+            }
+          ]
+        },
+        {
+          "action": "inspect",
+          "equipment": "cooler",
+          "reason": "電源盤は230Vですが、冷却機側の受電を確認して供給異常を切り分けます。",
+          "knowledge_ids": [
+            "MAN-POWER",
+            "MAN-COOLER"
+          ],
+          "evidence_ids": [
+            "inspection-1"
+          ],
+          "measurement": null,
+          "expected_information": "冷却機入力が0Vなら機器までの供給異常を支持し、230Vなら弱まります。圧縮機表示は冷却性能や送風の判定には使えません。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "possible",
+              "evidence_ids": [
+                "inspection-1"
+              ]
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "airflow_fault",
+              "status": "possible",
+              "evidence_ids": []
+            }
+          ]
+        },
+        {
+          "action": "measure",
+          "equipment": "cooler",
+          "reason": "盤と冷却機の受電は230Vで、供給異常は弱まりました。次に吹出口の温度を測り、冷却成立の有無を確認します。",
+          "knowledge_ids": [
+            "MAN-POWER",
+            "MAN-TEMPERATURE",
+            "MAN-COOLER",
+            "MAN-AIRFLOW"
+          ],
+          "evidence_ids": [
+            "inspection-1",
+            "inspection-2"
+          ],
+          "measurement": "air_temperature",
+          "expected_information": "氷点下なら冷却は成立しており、送風不足または扉開放を次に切り分けます。倉庫温度に近い約8°Cなら冷却不成立を示し、続く風速測定で冷却系故障と送風不足を区別します。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "ruled_out",
+              "evidence_ids": [
+                "inspection-1",
+                "inspection-2"
+              ]
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "possible",
+              "evidence_ids": [
+                "inspection-2"
+              ]
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "airflow_fault",
+              "status": "possible",
+              "evidence_ids": []
+            }
+          ]
+        },
+        {
+          "action": "measure",
+          "equipment": "cooler",
+          "reason": "受電は正常で吹出空気は氷点下です。残る送風不足と扉開放を絞るため、次に風速を測ります。",
+          "knowledge_ids": [
+            "MAN-POWER",
+            "MAN-TEMPERATURE",
+            "MAN-AIRFLOW",
+            "MAN-DOOR"
+          ],
+          "evidence_ids": [
+            "inspection-1",
+            "inspection-2",
+            "inspection-3"
+          ],
+          "measurement": "airflow",
+          "expected_information": "風速が0.2m/s未満なら送風不足を支持します。概ね1〜2m/sなら送風は正常で、扉の開閉と開放時間を確認します。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "ruled_out",
+              "evidence_ids": [
+                "inspection-1",
+                "inspection-2"
+              ]
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "ruled_out",
+              "evidence_ids": [
+                "inspection-2",
+                "inspection-3"
+              ]
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": [
+                "inspection-3"
+              ]
+            },
+            {
+              "cause": "airflow_fault",
+              "status": "possible",
+              "evidence_ids": [
+                "inspection-3"
+              ]
+            }
+          ]
+        },
+        {
+          "action": "report",
+          "equipment": null,
+          "reason": "正常給電下で吹出空気は氷点下、風速は0.043m/sでした。送風不足を支持します。",
+          "knowledge_ids": [
+            "MAN-POWER",
+            "MAN-COOLER",
+            "MAN-TEMPERATURE",
+            "MAN-AIRFLOW",
+            "MAN-LIMITS"
+          ],
+          "evidence_ids": [
+            "inspection-1",
+            "inspection-2",
+            "inspection-3",
+            "inspection-4"
+          ],
+          "measurement": null,
+          "expected_information": "",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "ruled_out",
+              "evidence_ids": [
+                "inspection-1",
+                "inspection-2"
+              ]
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "ruled_out",
+              "evidence_ids": [
+                "inspection-2",
+                "inspection-3"
+              ]
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "airflow_fault",
+              "status": "supported",
+              "evidence_ids": [
+                "inspection-2",
+                "inspection-3",
+                "inspection-4"
+              ]
+            }
+          ]
+        }
+      ],
+      "report": {
+        "action": "report",
+        "equipment": null,
+        "hypotheses": [
+          {
+            "cause": "power_loss",
+            "status": "ruled_out",
+            "evidence_ids": [
+              "inspection-1",
+              "inspection-2"
+            ]
+          },
+          {
+            "cause": "cooler_fault",
+            "status": "ruled_out",
+            "evidence_ids": [
+              "inspection-2",
+              "inspection-3"
+            ]
+          },
+          {
+            "cause": "door_open",
+            "status": "possible",
+            "evidence_ids": []
+          },
+          {
+            "cause": "airflow_fault",
+            "status": "supported",
+            "evidence_ids": [
+              "inspection-2",
+              "inspection-3",
+              "inspection-4"
+            ]
+          }
+        ],
+        "reason": "正常給電下で吹出空気は氷点下、風速は0.043m/sでした。送風不足を支持します。",
+        "expected_information": "",
+        "conclusion": "airflow_fault",
+        "evidence_ids": [
+          "inspection-1",
+          "inspection-2",
+          "inspection-3",
+          "inspection-4"
+        ],
+        "report": "倉庫温度上昇の主因は送風不足と判断します。電源盤と冷却機入力は230Vで、吹出温度は-8.79°C、風速は0.043m/sでした。扉の状態は未確認のため、扉開放や複合原因は除外できません。",
+        "uncertainties": "扉の開閉状態と開放時間は未確認です。ファン故障か風路閉塞かの特定、複合故障、過去の一時異常も未評価です。",
+        "knowledge_ids": [
+          "MAN-POWER",
+          "MAN-COOLER",
+          "MAN-TEMPERATURE",
+          "MAN-AIRFLOW",
+          "MAN-LIMITS"
+        ],
+        "measurement": null
+      },
+      "observations": [
+        {
+          "equipment": "supply",
+          "readings": {
+            "output_voltage_v": 230,
+            "breaker": "on"
+          },
+          "time": 40.200000000003165,
+          "position": [
+            3.371829072070164,
+            -1.4026978815695443
+          ],
+          "interface": "simulated_local_inspection",
+          "id": "inspection-1"
+        },
+        {
+          "equipment": "cooler",
+          "readings": {
+            "input_voltage_v": 230,
+            "cooling_requested": true,
+            "compressor_running": true
+          },
+          "time": 79.99999999999496,
+          "position": [
+            1.0265473598958716,
+            0.09889840156350563
+          ],
+          "interface": "simulated_local_inspection",
+          "id": "inspection-2"
+        },
+        {
+          "equipment": "cooler",
+          "item": "air_temperature",
+          "valid": true,
+          "value": -8.79,
+          "unit": "degC",
+          "geometry": {
+            "distance": 0.3195955855086451,
+            "alignment_cosine": 0.9999268142912574,
+            "correct_sampling_zone": true,
+            "line_of_sight": true
+          },
+          "reason": "analytic local vent field; not thermofluid simulation",
+          "pose": {
+            "tip": [
+              1.3032002890752887,
+              -0.11844893106232,
+              0.5254042844066226
+            ],
+            "direction": [
+              0.9274426812951502,
+              0.37395474223468245,
+              0.002814901819411227
+            ],
+            "mount": [
+              1.0991628991903557,
+              -0.20071897435395014,
+              0.5247850060063521
+            ],
+            "angle": 0.41556137369261137,
+            "joint_speed": 0.0,
+            "target": 0.41556137369261137,
+            "implementation": "kinematic_no_robot_payload"
+          },
+          "time": 99.99999999994834,
+          "position": [
+            0.9994091370259343,
+            -0.19669249974957
+          ],
+          "interface": "geometric_probe_field",
+          "id": "inspection-3"
+        },
+        {
+          "equipment": "cooler",
+          "item": "airflow",
+          "valid": true,
+          "value": 0.043,
+          "unit": "m/s",
+          "geometry": {
+            "distance": 0.26813800164484164,
+            "alignment_cosine": 0.9998169931969356,
+            "correct_sampling_zone": true,
+            "line_of_sight": true
+          },
+          "reason": "analytic local vent field; not thermofluid simulation",
+          "pose": {
+            "tip": [
+              1.359246708271462,
+              0.11785829839663241,
+              0.5367276999794088
+            ],
+            "direction": [
+              0.8987275566915498,
+              -0.438466277444024,
+              -0.006008526243591879
+            ],
+            "mount": [
+              1.1615266457993212,
+              0.21432087943431768,
+              0.538049575752999
+            ],
+            "angle": -0.4898885604635166,
+            "joint_speed": 0.0,
+            "target": -0.4898885604635166,
+            "implementation": "kinematic_no_robot_payload"
+          },
+          "time": 119.1999999999036,
+          "position": [
+            1.062080135175557,
+            0.2140622682306001
+          ],
+          "interface": "geometric_probe_field",
+          "id": "inspection-4"
+        }
+      ],
+      "evaluation": {
+        "truth": "airflow_fault",
+        "correct_cause": true,
+        "evidence_sufficient": true
+      },
+      "checks": "context isolation, full observed history, manual/observation references, proximity, settled reading, stationary inference, bounded controls, safe trace, report-before-return, deadline, home tolerance, evidence sufficiency",
+      "log": "outputs/probe-airflow-final/investigation-A-20261101T185251895065Z.json",
+      "log_sha256": "1daba4667987ea88adb8b138a4e1a44a935c34eca19e72054baf0ddbaba2510c",
+      "source_matches_current": true,
+      "wall_planning_seconds": 42.56324982998194
+    },
+    {
+      "scene": "A",
+      "seed": null,
+      "conclusion": "cooler_fault",
+      "probe_enabled": true,
+      "inspection_order": [
+        "supply",
+        "cooler",
+        "cooler",
+        "cooler",
+        "door"
+      ],
+      "elapsed": 184.6000000001581,
+      "home_error": 0.12687905071638997,
+      "min_clearance": 0.1324759205357648,
+      "decisions": [
+        {
+          "action": "inspect",
+          "equipment": "supply",
+          "reason": "電源盤の出力を確認し、供給異常の仮説を他の原因から切り分けます。",
+          "knowledge_ids": [
+            "MAN-POWER"
+          ],
+          "evidence_ids": [],
+          "measurement": null,
+          "expected_information": "0Vなら供給異常を支持します。230Vなら電源盤側の供給異常は弱まり、冷却機などの点検が必要です。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "airflow_fault",
+              "status": "possible",
+              "evidence_ids": []
+            }
+          ]
+        },
+        {
+          "action": "inspect",
+          "equipment": "cooler",
+          "reason": "電源盤は230Vで遮断器もONです。冷却機の入力電圧を確認し、供給異常を切り分けます。",
+          "knowledge_ids": [
+            "MAN-POWER",
+            "MAN-COOLER"
+          ],
+          "evidence_ids": [
+            "inspection-1"
+          ],
+          "measurement": null,
+          "expected_information": "冷却機入力が0Vなら局所的な供給異常を支持し、230Vならpower_lossは弱まります。圧縮機表示も得られますが、それだけでは冷却性能や送風を判定できません。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "possible",
+              "evidence_ids": [
+                "inspection-1"
+              ]
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "airflow_fault",
+              "status": "possible",
+              "evidence_ids": []
+            }
+          ]
+        },
+        {
+          "action": "measure",
+          "equipment": "cooler",
+          "reason": "電源盤と冷却機入力は230Vです。吹出口の温度を測り、冷却が成立しているか確認します。",
+          "knowledge_ids": [
+            "MAN-POWER",
+            "MAN-COOLER",
+            "MAN-TEMPERATURE"
+          ],
+          "evidence_ids": [
+            "inspection-1",
+            "inspection-2"
+          ],
+          "measurement": "air_temperature",
+          "expected_information": "氷点下なら冷却は成立している可能性があり、送風量の確認が必要です。倉庫温度に近い約8°Cなら冷却不成立を示唆しますが、冷却系故障の判断には送風量も測定します。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "ruled_out",
+              "evidence_ids": [
+                "inspection-1",
+                "inspection-2"
+              ]
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "possible",
+              "evidence_ids": [
+                "inspection-2"
+              ]
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "airflow_fault",
+              "status": "possible",
+              "evidence_ids": []
+            }
+          ]
+        },
+        {
+          "action": "measure",
+          "equipment": "cooler",
+          "reason": "電源盤と冷却機入力は230Vで、吹出口温度は8°Cでした。風速を測り、冷却系故障と送風不足を切り分けます。",
+          "knowledge_ids": [
+            "MAN-COOLER",
+            "MAN-AIRFLOW",
+            "MAN-TEMPERATURE"
+          ],
+          "evidence_ids": [
+            "inspection-1",
+            "inspection-2",
+            "inspection-3"
+          ],
+          "measurement": "airflow",
+          "expected_information": "風速が概ね1〜2m/sなら、暖かい吹出空気と合わせて冷却系故障を支持します。0.2m/s未満なら送風不足の可能性がありますが、吹出空気が暖かいため単独原因とは確定できません。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "ruled_out",
+              "evidence_ids": [
+                "inspection-1",
+                "inspection-2"
+              ]
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "possible",
+              "evidence_ids": [
+                "inspection-2",
+                "inspection-3"
+              ]
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "airflow_fault",
+              "status": "possible",
+              "evidence_ids": []
+            }
+          ]
+        },
+        {
+          "action": "inspect",
+          "equipment": "door",
+          "reason": "冷却機には正常電圧があり、吹出温度8°Cと正常範囲の風速1.753m/sから冷却系故障が支持されます。未確認の扉状態を調べ、長時間開放の寄与を切り分けます。",
+          "knowledge_ids": [
+            "MAN-POWER",
+            "MAN-COOLER",
+            "MAN-AIRFLOW",
+            "MAN-DOOR"
+          ],
+          "evidence_ids": [
+            "inspection-1",
+            "inspection-2",
+            "inspection-3",
+            "inspection-4"
+          ],
+          "measurement": null,
+          "expected_information": "600秒以上の開放なら扉開放を支持します。閉鎖中または開放時間が短ければ、その原因は弱まります。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "ruled_out",
+              "evidence_ids": [
+                "inspection-1",
+                "inspection-2"
+              ]
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "supported",
+              "evidence_ids": [
+                "inspection-2",
+                "inspection-3",
+                "inspection-4"
+              ]
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "airflow_fault",
+              "status": "ruled_out",
+              "evidence_ids": [
+                "inspection-4"
+              ]
+            }
+          ]
+        },
+        {
+          "action": "report",
+          "equipment": null,
+          "reason": "正常給電、暖かい吹出空気、正常風速を確認しました。扉は閉鎖中です。",
+          "knowledge_ids": [
+            "MAN-POWER",
+            "MAN-COOLER",
+            "MAN-AIRFLOW",
+            "MAN-TEMPERATURE",
+            "MAN-DOOR",
+            "MAN-LIMITS"
+          ],
+          "evidence_ids": [
+            "inspection-1",
+            "inspection-2",
+            "inspection-3",
+            "inspection-4",
+            "inspection-5"
+          ],
+          "measurement": null,
+          "expected_information": "必要な点検結果が揃ったため、診断を報告してから帰還します。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "ruled_out",
+              "evidence_ids": [
+                "inspection-1",
+                "inspection-2"
+              ]
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "supported",
+              "evidence_ids": [
+                "inspection-2",
+                "inspection-3",
+                "inspection-4"
+              ]
+            },
+            {
+              "cause": "door_open",
+              "status": "ruled_out",
+              "evidence_ids": [
+                "inspection-5"
+              ]
+            },
+            {
+              "cause": "airflow_fault",
+              "status": "ruled_out",
+              "evidence_ids": [
+                "inspection-4"
+              ]
+            }
+          ]
+        }
+      ],
+      "report": {
+        "action": "report",
+        "equipment": null,
+        "hypotheses": [
+          {
+            "cause": "power_loss",
+            "status": "ruled_out",
+            "evidence_ids": [
+              "inspection-1",
+              "inspection-2"
+            ]
+          },
+          {
+            "cause": "cooler_fault",
+            "status": "supported",
+            "evidence_ids": [
+              "inspection-2",
+              "inspection-3",
+              "inspection-4"
+            ]
+          },
+          {
+            "cause": "door_open",
+            "status": "ruled_out",
+            "evidence_ids": [
+              "inspection-5"
+            ]
+          },
+          {
+            "cause": "airflow_fault",
+            "status": "ruled_out",
+            "evidence_ids": [
+              "inspection-4"
+            ]
+          }
+        ],
+        "reason": "正常給電、暖かい吹出空気、正常風速を確認しました。扉は閉鎖中です。",
+        "expected_information": "必要な点検結果が揃ったため、診断を報告してから帰還します。",
+        "conclusion": "cooler_fault",
+        "evidence_ids": [
+          "inspection-1",
+          "inspection-2",
+          "inspection-3",
+          "inspection-4",
+          "inspection-5"
+        ],
+        "report": "診断: 冷却系故障が最も支持されます。電源盤と冷却機入力は230V、吹出空気は8°C、風速は1.753m/sでした。扉センサーは閉鎖、開放時間0秒を示しています。これらは送風不足や現在の長時間扉開放より冷却不成立に整合します。",
+        "uncertainties": "扉の過去の開放、複合故障、過去の一時異常は評価していません。冷却系内部の故障箇所も特定できていません。",
+        "knowledge_ids": [
+          "MAN-POWER",
+          "MAN-COOLER",
+          "MAN-AIRFLOW",
+          "MAN-TEMPERATURE",
+          "MAN-DOOR",
+          "MAN-LIMITS"
+        ],
+        "measurement": null
+      },
+      "observations": [
+        {
+          "equipment": "supply",
+          "readings": {
+            "output_voltage_v": 230,
+            "breaker": "on"
+          },
+          "time": 40.200000000003165,
+          "position": [
+            3.376406739418189,
+            -1.4104672606722581
+          ],
+          "interface": "simulated_local_inspection",
+          "id": "inspection-1"
+        },
+        {
+          "equipment": "cooler",
+          "readings": {
+            "input_voltage_v": 230,
+            "cooling_requested": true,
+            "compressor_running": true
+          },
+          "time": 80.59999999999356,
+          "position": [
+            1.0240586485828156,
+            0.09075490200047612
+          ],
+          "interface": "simulated_local_inspection",
+          "id": "inspection-2"
+        },
+        {
+          "equipment": "cooler",
+          "item": "air_temperature",
+          "valid": true,
+          "value": 8.0,
+          "unit": "degC",
+          "geometry": {
+            "distance": 0.32704106337576944,
+            "alignment_cosine": 0.999156272457935,
+            "correct_sampling_zone": true,
+            "line_of_sight": true
+          },
+          "reason": "analytic local vent field; not thermofluid simulation",
+          "pose": {
+            "tip": [
+              1.2954857572185272,
+              -0.11897975561065868,
+              0.5215886486217632
+            ],
+            "direction": [
+              0.9299686955013338,
+              0.36732469087942554,
+              -0.015191999798641581
+            ],
+            "mount": [
+              1.0908926442082338,
+              -0.1997911876041323,
+              0.5249308885774644
+            ],
+            "angle": 0.405713667519668,
+            "joint_speed": 0.0,
+            "target": 0.405713667519668,
+            "implementation": "kinematic_no_robot_payload"
+          },
+          "time": 98.5999999999516,
+          "position": [
+            0.9875515485391245,
+            -0.19524284100413286
+          ],
+          "interface": "geometric_probe_field",
+          "id": "inspection-3"
+        },
+        {
+          "equipment": "cooler",
+          "item": "airflow",
+          "valid": true,
+          "value": 1.753,
+          "unit": "m/s",
+          "geometry": {
+            "distance": 0.24597695451550666,
+            "alignment_cosine": 0.9997114396929014,
+            "correct_sampling_zone": true,
+            "line_of_sight": true
+          },
+          "reason": "analytic local vent field; not thermofluid simulation",
+          "pose": {
+            "tip": [
+              1.3767234662845134,
+              0.10294463755585297,
+              0.5373927831846218
+            ],
+            "direction": [
+              0.9075362949072794,
+              -0.4199297337718558,
+              -0.006073888397445775
+            ],
+            "mount": [
+              1.177065481404912,
+              0.19532917898566124,
+              0.5387290386320599
+            ],
+            "angle": -0.4740451583252912,
+            "joint_speed": 0.0,
+            "target": -0.4740451583252912,
+            "implementation": "kinematic_no_robot_payload"
+          },
+          "time": 124.19999999989194,
+          "position": [
+            1.0769154902552571,
+            0.1932219062187118
+          ],
+          "interface": "geometric_probe_field",
+          "id": "inspection-4"
+        },
+        {
+          "equipment": "door",
+          "readings": {
+            "closed": true,
+            "open_seconds": 0
+          },
+          "time": 153.80000000000626,
+          "position": [
+            3.317083312083483,
+            1.4419660980603295
+          ],
+          "interface": "simulated_local_inspection",
+          "id": "inspection-5"
+        }
+      ],
+      "evaluation": {
+        "truth": "cooler_fault",
+        "correct_cause": true,
+        "evidence_sufficient": true
+      },
+      "checks": "context isolation, full observed history, manual/observation references, proximity, settled reading, stationary inference, bounded controls, safe trace, report-before-return, deadline, home tolerance, evidence sufficiency",
+      "log": "outputs/probe-cooling-final/investigation-A-20261101T185009254826Z.json",
+      "log_sha256": "685da57d3198835d4113be0ea7f59b407a90e3403ff30a9720da5cfab39291f2",
+      "source_matches_current": true,
+      "wall_planning_seconds": 57.60777094299556
+    },
+    {
+      "scene": "A",
+      "seed": null,
+      "conclusion": "door_open",
+      "probe_enabled": true,
+      "inspection_order": [
+        "cooler",
+        "cooler",
+        "cooler",
+        "door"
+      ],
+      "elapsed": 124.79999999988821,
+      "home_error": 0.11902382528099907,
+      "min_clearance": 0.13977436342014876,
+      "decisions": [
+        {
+          "action": "inspect",
+          "equipment": "cooler",
+          "reason": "冷却機の入力電圧を確認し、供給異常の切り分けと次の確認項目を選びます。",
+          "knowledge_ids": [
+            "MAN-POWER",
+            "MAN-COOLER"
+          ],
+          "evidence_ids": [],
+          "measurement": null,
+          "expected_information": "入力0Vなら電源盤も点検し、両方0Vなら供給異常を支持します。入力230Vなら電源異常は弱まります。圧縮機表示だけでは冷却・送風の状態は判定できません。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "airflow_fault",
+              "status": "possible",
+              "evidence_ids": []
+            }
+          ]
+        },
+        {
+          "action": "measure",
+          "equipment": "cooler",
+          "reason": "冷却機入力は230Vで圧縮機も運転中です。まず吹出口温度を測り、冷却不成立と冷気が作られている場合を切り分けます。",
+          "knowledge_ids": [
+            "MAN-COOLER",
+            "MAN-TEMPERATURE",
+            "MAN-LIMITS"
+          ],
+          "evidence_ids": [
+            "inspection-1"
+          ],
+          "measurement": "air_temperature",
+          "expected_information": "吹出口が倉庫温度に近い約8°Cなら冷却系故障を支持します。氷点下なら冷却は確認できるため、次に風速を測って送風不足を調べます。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "ruled_out",
+              "evidence_ids": [
+                "inspection-1"
+              ]
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "possible",
+              "evidence_ids": [
+                "inspection-1"
+              ]
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "airflow_fault",
+              "status": "possible",
+              "evidence_ids": []
+            }
+          ]
+        },
+        {
+          "action": "measure",
+          "equipment": "cooler",
+          "reason": "入力230Vで吹出空気は氷点下です。次に風速を測り、送風不足と他の原因を切り分けます。",
+          "knowledge_ids": [
+            "MAN-AIRFLOW",
+            "MAN-DOOR",
+            "MAN-LIMITS"
+          ],
+          "evidence_ids": [
+            "inspection-1",
+            "inspection-2"
+          ],
+          "measurement": "airflow",
+          "expected_information": "風速0.2m/s未満なら送風不足を支持します。1〜2m/sなら送風は概ね正常で、扉の開放状態と継続時間を確認します。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "ruled_out",
+              "evidence_ids": [
+                "inspection-1"
+              ]
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "possible",
+              "evidence_ids": [
+                "inspection-1",
+                "inspection-2"
+              ]
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "airflow_fault",
+              "status": "possible",
+              "evidence_ids": [
+                "inspection-2"
+              ]
+            }
+          ]
+        },
+        {
+          "action": "inspect",
+          "equipment": "door",
+          "reason": "冷却機には正常電圧があり、吹出口は氷点下、風速も正常範囲です。残る扉開放を確認します。",
+          "knowledge_ids": [
+            "MAN-DOOR",
+            "MAN-LIMITS"
+          ],
+          "evidence_ids": [
+            "inspection-1",
+            "inspection-2",
+            "inspection-3"
+          ],
+          "measurement": null,
+          "expected_information": "開放が600秒以上続いていれば熱流入を支持します。扉が閉じている、または開放時間が短ければ、この原因は確認できず、過去の一時異常や複合故障も含めて結論は限定されます。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "ruled_out",
+              "evidence_ids": [
+                "inspection-1"
+              ]
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "ruled_out",
+              "evidence_ids": [
+                "inspection-1",
+                "inspection-2",
+                "inspection-3"
+              ]
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "airflow_fault",
+              "status": "ruled_out",
+              "evidence_ids": [
+                "inspection-2",
+                "inspection-3"
+              ]
+            }
+          ]
+        },
+        {
+          "action": "report",
+          "equipment": null,
+          "reason": "冷却機の入力は230Vで、吹出空気は氷点下、風速は正常範囲でした。扉は開放状態が900秒続いており、熱流入の条件に合致します。",
+          "knowledge_ids": [
+            "MAN-POWER",
+            "MAN-COOLER",
+            "MAN-AIRFLOW",
+            "MAN-TEMPERATURE",
+            "MAN-DOOR",
+            "MAN-LIMITS"
+          ],
+          "evidence_ids": [
+            "inspection-1",
+            "inspection-2",
+            "inspection-3",
+            "inspection-4"
+          ],
+          "measurement": null,
+          "expected_information": "調査結果を報告し、帰還します。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "possible",
+              "evidence_ids": [
+                "inspection-1"
+              ]
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "ruled_out",
+              "evidence_ids": [
+                "inspection-1",
+                "inspection-2"
+              ]
+            },
+            {
+              "cause": "door_open",
+              "status": "supported",
+              "evidence_ids": [
+                "inspection-4"
+              ]
+            },
+            {
+              "cause": "airflow_fault",
+              "status": "ruled_out",
+              "evidence_ids": [
+                "inspection-1",
+                "inspection-3"
+              ]
+            }
+          ]
+        }
+      ],
+      "report": {
+        "action": "report",
+        "equipment": null,
+        "hypotheses": [
+          {
+            "cause": "power_loss",
+            "status": "possible",
+            "evidence_ids": [
+              "inspection-1"
+            ]
+          },
+          {
+            "cause": "cooler_fault",
+            "status": "ruled_out",
+            "evidence_ids": [
+              "inspection-1",
+              "inspection-2"
+            ]
+          },
+          {
+            "cause": "door_open",
+            "status": "supported",
+            "evidence_ids": [
+              "inspection-4"
+            ]
+          },
+          {
+            "cause": "airflow_fault",
+            "status": "ruled_out",
+            "evidence_ids": [
+              "inspection-1",
+              "inspection-3"
+            ]
+          }
+        ],
+        "reason": "冷却機の入力は230Vで、吹出空気は氷点下、風速は正常範囲でした。扉は開放状態が900秒続いており、熱流入の条件に合致します。",
+        "expected_information": "調査結果を報告し、帰還します。",
+        "conclusion": "door_open",
+        "evidence_ids": [
+          "inspection-1",
+          "inspection-2",
+          "inspection-3",
+          "inspection-4"
+        ],
+        "report": "診断は扉の長時間開放です。扉が開いたまま900秒で、熱流入を支持します。冷却機の入力電圧、吹出温度、風速は確認時に正常でした。",
+        "uncertainties": "電源異常は確認時には見られませんが、過去の一時的な電源異常や複合故障は未評価です。",
+        "knowledge_ids": [
+          "MAN-POWER",
+          "MAN-COOLER",
+          "MAN-AIRFLOW",
+          "MAN-TEMPERATURE",
+          "MAN-DOOR",
+          "MAN-LIMITS"
+        ],
+        "measurement": null
+      },
+      "observations": [
+        {
+          "equipment": "cooler",
+          "readings": {
+            "input_voltage_v": 230,
+            "cooling_requested": true,
+            "compressor_running": true
+          },
+          "time": 15.200000000001745,
+          "position": [
+            0.8856112136822781,
+            -0.00891493943773679
+          ],
+          "interface": "simulated_local_inspection",
+          "id": "inspection-1"
+        },
+        {
+          "equipment": "cooler",
+          "item": "air_temperature",
+          "valid": true,
+          "value": -8.489,
+          "unit": "degC",
+          "geometry": {
+            "distance": 0.31992998686179114,
+            "alignment_cosine": 0.9994226830948127,
+            "correct_sampling_zone": true,
+            "line_of_sight": true
+          },
+          "reason": "analytic local vent field; not thermofluid simulation",
+          "pose": {
+            "tip": [
+              1.3121030323745848,
+              -0.13937028806183135,
+              0.5368158147743735
+            ],
+            "direction": [
+              0.8999319673564719,
+              0.43584607000686604,
+              0.012675069604570304
+            ],
+            "mount": [
+              1.114117999556161,
+              -0.23525642346334188,
+              0.534027299461368
+            ],
+            "angle": 0.49204396449971355,
+            "joint_speed": 0.0,
+            "target": 0.49204396449971355,
+            "implementation": "kinematic_no_robot_payload"
+          },
+          "time": 35.79999999999779,
+          "position": [
+            1.0167541706860217,
+            -0.23145358628161858
+          ],
+          "interface": "geometric_probe_field",
+          "id": "inspection-2"
+        },
+        {
+          "equipment": "cooler",
+          "item": "airflow",
+          "valid": true,
+          "value": 1.786,
+          "unit": "m/s",
+          "geometry": {
+            "distance": 0.21327867309665216,
+            "alignment_cosine": 0.9998732387033098,
+            "correct_sampling_zone": true,
+            "line_of_sight": true
+          },
+          "reason": "analytic local vent field; not thermofluid simulation",
+          "pose": {
+            "tip": [
+              1.4094976695616057,
+              0.09578063133188934,
+              0.5347670910494888
+            ],
+            "direction": [
+              0.8982300441376219,
+              -0.4393939051708462,
+              -0.010760293083306418
+            ],
+            "mount": [
+              1.211887059851329,
+              0.1924472904694755,
+              0.5371343555278162
+            ],
+            "angle": -0.49436945640997704,
+            "joint_speed": 0.0,
+            "target": -0.49436945640997704,
+            "implementation": "kinematic_no_robot_payload"
+          },
+          "time": 58.60000000002565,
+          "position": [
+            1.1113245008027504,
+            0.19136428229868993
+          ],
+          "interface": "geometric_probe_field",
+          "id": "inspection-3"
+        },
+        {
+          "equipment": "door",
+          "readings": {
+            "closed": false,
+            "open_seconds": 900
+          },
+          "time": 89.39999999997305,
+          "position": [
+            3.291849389927495,
+            1.462265739736728
+          ],
+          "interface": "simulated_local_inspection",
+          "id": "inspection-4"
+        }
+      ],
+      "evaluation": {
+        "truth": "door_open",
+        "correct_cause": true,
+        "evidence_sufficient": true
+      },
+      "checks": "context isolation, full observed history, manual/observation references, proximity, settled reading, stationary inference, bounded controls, safe trace, report-before-return, deadline, home tolerance, evidence sufficiency",
+      "log": "outputs/probe-door-final/investigation-A-20261101T185454973235Z.json",
+      "log_sha256": "ae093547fa6aa6ff36f5e8209c9df0c577569091eaf7c78258111b3f13a2ca97",
+      "source_matches_current": true,
+      "wall_planning_seconds": 52.70359912796994
+    },
+    {
+      "scene": "A",
+      "seed": null,
+      "conclusion": "power_loss",
+      "probe_enabled": false,
+      "inspection_order": [
+        "cooler",
+        "supply"
+      ],
+      "elapsed": 94.5999999999586,
+      "home_error": 0.12914383150861314,
+      "min_clearance": 0.1543958074831842,
+      "decisions": [
+        {
+          "action": "inspect",
+          "equipment": "cooler",
+          "reason": "受電電圧、冷却要求、圧縮機運転、吹出温度を確認すると、電源異常・冷却機故障・扉開放の仮説を分岐できます。",
+          "knowledge_ids": [
+            "MAN-POWER",
+            "MAN-COOLER",
+            "MAN-DOOR"
+          ],
+          "evidence_ids": [],
+          "measurement": null,
+          "expected_information": "入力0Vなら電源盤も点検し、出力0Vとの組合せで供給異常を評価します。入力230Vで冷却要求中に圧縮機停止かつ吹出空気が暖かければ冷却機故障を支持します。運転中で氷点下の空気なら扉センサーを次に確認します。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "possible",
+              "evidence_ids": []
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": []
+            }
+          ]
+        },
+        {
+          "action": "inspect",
+          "equipment": "supply",
+          "reason": "冷却機の入力は0Vですが、電源盤の出力が未確認です。供給異常と冷却機側の問題を区別するため、電源盤を点検します。",
+          "knowledge_ids": [
+            "MAN-POWER",
+            "MAN-COOLER",
+            "MAN-LIMITS"
+          ],
+          "evidence_ids": [
+            "inspection-1"
+          ],
+          "measurement": null,
+          "expected_information": "出力0Vまたは遮断器トリップなら供給異常を支持します。出力230Vなら、入力0Vとの食い違いから盤以降の給電経路を疑います。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "possible",
+              "evidence_ids": [
+                "inspection-1"
+              ]
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "possible",
+              "evidence_ids": [
+                "inspection-1"
+              ]
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": []
+            }
+          ]
+        },
+        {
+          "action": "report",
+          "equipment": null,
+          "reason": "冷却機入力0Vと電源盤出力0V・遮断器トリップが2地点で確認され、供給異常を支持します。",
+          "knowledge_ids": [
+            "MAN-POWER",
+            "MAN-COOLER",
+            "MAN-DOOR",
+            "MAN-LIMITS"
+          ],
+          "evidence_ids": [
+            "inspection-1",
+            "inspection-2"
+          ],
+          "measurement": null,
+          "expected_information": "追加点検なら扉センサーで長時間開放の有無を確認できますが、供給異常の診断根拠は得られています。",
+          "hypotheses": [
+            {
+              "cause": "power_loss",
+              "status": "supported",
+              "evidence_ids": [
+                "inspection-1",
+                "inspection-2"
+              ]
+            },
+            {
+              "cause": "cooler_fault",
+              "status": "possible",
+              "evidence_ids": [
+                "inspection-1"
+              ]
+            },
+            {
+              "cause": "door_open",
+              "status": "possible",
+              "evidence_ids": []
+            }
+          ]
+        }
+      ],
+      "report": {
+        "action": "report",
+        "equipment": null,
+        "hypotheses": [
+          {
+            "cause": "power_loss",
+            "status": "supported",
+            "evidence_ids": [
+              "inspection-1",
+              "inspection-2"
+            ]
+          },
+          {
+            "cause": "cooler_fault",
+            "status": "possible",
+            "evidence_ids": [
+              "inspection-1"
+            ]
+          },
+          {
+            "cause": "door_open",
+            "status": "possible",
+            "evidence_ids": []
+          }
+        ],
+        "reason": "冷却機入力0Vと電源盤出力0V・遮断器トリップが2地点で確認され、供給異常を支持します。",
+        "expected_information": "追加点検なら扉センサーで長時間開放の有無を確認できますが、供給異常の診断根拠は得られています。",
+        "conclusion": "power_loss",
+        "evidence_ids": [
+          "inspection-1",
+          "inspection-2"
+        ],
+        "report": "原因は電源供給異常と判断します。冷却機入力と専用電源盤出力がともに0Vで、遮断器もトリップしていました。冷却機自体の故障や扉の長時間開放は未確認のため、併発の可能性は残ります。",
+        "uncertainties": "無電圧のため冷却機自体の健全性は判定できず、扉センサーも未点検です。複合故障や過去の状態は未評価です。",
+        "knowledge_ids": [
+          "MAN-POWER",
+          "MAN-COOLER",
+          "MAN-DOOR",
+          "MAN-LIMITS"
+        ]
+      },
+      "observations": [
+        {
+          "equipment": "cooler",
+          "readings": {
+            "input_voltage_v": 0,
+            "cooling_requested": true,
+            "compressor_running": false,
+            "supply_air_c": 8
+          },
+          "time": 17.600000000001124,
+          "position": [
+            0.8828112714486341,
+            -0.010535169837714617
+          ],
+          "interface": "simulated_local_inspection",
+          "id": "inspection-1"
+        },
+        {
+          "equipment": "supply",
+          "readings": {
+            "output_voltage_v": 0,
+            "breaker": "tripped"
+          },
+          "time": 55.600000000021986,
+          "position": [
+            3.338764575390297,
+            -1.4569022744509956
+          ],
+          "interface": "simulated_local_inspection",
+          "id": "inspection-2"
+        }
+      ],
+      "evaluation": {
+        "truth": "power_loss",
+        "correct_cause": true,
+        "evidence_sufficient": true
+      },
+      "checks": "context isolation, full observed history, manual/observation references, proximity, settled reading, stationary inference, bounded controls, safe trace, report-before-return, deadline, home tolerance, evidence sufficiency",
+      "log": "outputs/probe-legacy-regression/investigation-A-20261101T185251895151Z.json",
+      "log_sha256": "f624ccdee4248244af99c07ad5d58b87b077a6361e6e76a002e3a3fa94788fa5",
+      "source_matches_current": true,
+      "wall_planning_seconds": 35.56140328198671
+    }
+  ],
+  "verified_at_utc": "2026-11-01T18:57:39.039691+00:00",
+  "classification": "development, not held-out evaluation",
+  "tests": {
+    "command": "PAI_SIM_TEST=1 .venv-wsl/bin/python -m unittest discover -s tests -q",
+    "count": 111,
+    "skipped": 0,
+    "result": "passed",
+    "added": 6,
+    "leg_model_dimensions": [
+      19,
+      18,
+      12
+    ],
+    "robot_body_masses_and_inertias": "array equal for all original robot bodies",
+    "matched_locomotion": "forward, backward, left/right turns and stop; qpos atol 1e-10, rtol 0 vs unmodified model",
+    "unfixed_walk_measure_stow_return": "passed",
+    "negative_measurement_checks": [
+      "distance",
+      "direction",
+      "height",
+      "wrong measurement access region",
+      "occlusion",
+      "moving probe",
+      "stowed probe",
+      "far robot",
+      "unsupported item",
+      "invalid evidence"
+    ],
+    "ruff": "passed",
+    "git_diff_check": "passed with cr-at-eol for Windows JSON files"
+  },
+  "visual_qa": {
+    "log": "outputs/probe-geometry/state.json",
+    "log_sha256": "13786a836a6a40dfca62aea96d30ec1512f6f248b313d161f8014a7647118287",
+    "model": {
+      "nq": 19,
+      "nv": 18,
+      "nu": 12,
+      "robot_mass": 15.206408000000003,
+      "implementation": "kinematic_no_robot_payload"
+    },
+    "images": [
+      "outputs/probe-geometry/air_temperature-stowed.png",
+      "outputs/probe-geometry/air_temperature-deployed.png",
+      "outputs/probe-geometry/airflow-stowed.png",
+      "outputs/probe-geometry/airflow-deployed.png"
+    ],
+    "inspected_images": [
+      "air_temperature-deployed.png",
+      "airflow-deployed.png"
+    ],
+    "returned": true,
+    "home_error": 0.11793414329635546
+  },
+  "failure_checks": [
+    {
+      "log": "outputs/probe-airflow-dev/investigation-A-20261101T184645415844Z.json",
+      "log_sha256": "6c23f8557b9082ba4f0c09b87b97c17cbf12924467cf8c064685f076da8e8780",
+      "status": "incomplete",
+      "errors": [
+        "planner: Cite supplied manual section IDs separately from observation evidence"
+      ],
+      "returned": true,
+      "home_error": 0.11720275509372559,
+      "within_deadline": true,
+      "note": "Duplicate manual IDs were rejected; missing new manual IDs in the schema and uniqueness instructions were corrected."
+    }
+  ],
+  "old_evaluation_records": "Original investigation-evaluation.json, investigation-validation.json, manual and schema unchanged; previous B results not reused.",
+  "limits": [
+    "Kinematic probe, no payload or contact forces",
+    "Analytic field, no CFD or calibrated real instrument",
+    "Known static service geometry and oracle odometry",
+    "One attempt per measurement item",
+    "Infrared surface temperature not implemented: no additional diagnostic distinction in this scenario",
+    "No new held-out evaluation or fixed-order baseline"
+  ]
+}

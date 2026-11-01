@@ -30,6 +30,7 @@ class MuJoCoGo2Sink:
         missing_target: bool = False,
         field_areas: list | None = None,
         custom_map: dict | None = None,
+        probe: bool = False,
     ) -> None:
         if dynamic_obstacle and not navigation:
             raise ValueError("dynamic_obstacle requires navigation")
@@ -48,6 +49,9 @@ class MuJoCoGo2Sink:
         self.visual_options.geomgroup[5] = 1
         self.ticks = 0
         self.stopped = False
+        self.probe_enabled = probe
+        self.probe_target = 0.0
+        self.probe_angle = self.probe_speed = 0.0
         self.navigation = navigation
         self.dynamic_obstacle = dynamic_obstacle
         self.search = search_seed is not None
@@ -59,6 +63,10 @@ class MuJoCoGo2Sink:
         scene = ET.parse(assets / "go2.xml").getroot()
         scene.find("compiler").set("meshdir", (assets / "assets").as_posix())
         scene.find("option").set("timestep", "0.002")
+        if probe:
+            from pai_motion.sensor_probe import add_probe
+
+            add_probe(scene, custom_map)
         additions = ET.fromstring("""<mujoco>
           <visual><global offwidth="720" offheight="480"/></visual>
           <asset><texture name="grid" type="2d" builtin="checker" width="512" height="512"
@@ -235,6 +243,8 @@ class MuJoCoGo2Sink:
         ):
             raise ValueError("Go2 model does not match the released policy joint/torque contract")
         self.base = self.model.body("base_link").id
+        if probe:
+            self.probe_mocap = self.model.body_mocapid[self.model.body("probe_visual").id]
         self.obstacle_ids = [self.model.geom("task_obstacle").id] if navigation else []
         self.obstacle_ids.extend(self.model.geom(name).id for name in search_names)
         if dynamic_obstacle:
@@ -316,6 +326,8 @@ class MuJoCoGo2Sink:
             "contacts": int(self.data.ncon),
             "finite": bool(np.isfinite(self.data.qpos).all() and np.isfinite(self.data.qvel).all()),
         }
+        if self.probe_enabled:
+            state["probe"] = self.probe_pose()
         if self.navigation or self.search:
             from pai_motion.navigation import ROBOT_RADIUS
 
@@ -427,6 +439,8 @@ class MuJoCoGo2Sink:
             torques -= 0.5 * self.data.qvel[self.dofs]
             bounds = self.model.actuator_ctrlrange[self.actuators]
             self.data.ctrl[self.actuators] = np.clip(torques, bounds[:, 0], bounds[:, 1])
+            if self.probe_enabled:
+                self._update_probe()
             mj.mj_step(self.model, self.data)
             self.ticks += 1
             state = self._state()
@@ -459,10 +473,77 @@ class MuJoCoGo2Sink:
             raise ValueError("Velocity segment exceeds Go2 limits (.3 m/s, .2 m/s, .6 rad/s, .2–2 s)")
         if self.stopped:
             raise RuntimeError("Go2 sink has already stopped")
+        if self.probe_enabled and self.np.any(self.np.abs(values) > 1e-6):
+            if abs(self.probe_pose()["angle"]) > 0.05 or abs(self.probe_target) > 0.01:
+                raise ValueError("Stow probe before locomotion")
         event = {"vx": cmd.vx, "vy": cmd.vy, "yaw": cmd.yaw, "duration": seconds, "start": self._state()}
         self.events.append(event)
         self._advance(values, seconds)
         event["end"] = self._state()
+
+    def probe_pose(self):
+        """Exact kinematic transform from current free-base pose; no joint or payload forces."""
+        if not self.probe_enabled:
+            raise ValueError("Probe is not installed")
+        from pai_motion.sensor_probe import LENGTH
+
+        rotation = self.np.empty(9)
+        self.mj.mju_quat2Mat(rotation, self.data.qpos[3:7])
+        rotation = rotation.reshape(3, 3)
+        local = self.np.array([math.cos(self.probe_angle), math.sin(self.probe_angle), 0.0])
+        direction = rotation @ local
+        mount = self.data.qpos[:3] + rotation @ self.np.array([0.1, 0.0, 0.17])
+        return {
+            "tip": (mount + LENGTH * direction).tolist(),
+            "direction": direction.tolist(),
+            "mount": mount.tolist(),
+            "angle": self.probe_angle,
+            "joint_speed": self.probe_speed,
+            "target": self.probe_target,
+            "implementation": "kinematic_no_robot_payload",
+        }
+
+    def _update_probe(self):
+        change = max(-0.0012, min(0.0012, self.probe_target - self.probe_angle))
+        self.probe_angle += change
+        self.probe_speed = change / 0.002
+        pose = self.probe_pose()
+        self.data.mocap_pos[self.probe_mocap] = pose["mount"]
+        base_rotation = self.np.empty(9)
+        self.mj.mju_quat2Mat(base_rotation, self.data.qpos[3:7])
+        c, s = math.cos(self.probe_angle), math.sin(self.probe_angle)
+        rotation = base_rotation.reshape(3, 3) @ self.np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
+        self.mj.mju_mat2Quat(self.data.mocap_quat[self.probe_mocap], rotation.reshape(9))
+
+    def move_probe(self, angle):
+        from pai_motion.sensor_probe import LIMIT
+
+        if not self.probe_enabled or not math.isfinite(angle) or abs(angle) > LIMIT:
+            raise ValueError("Invalid probe target")
+        state = self.observe()
+        if math.hypot(*state["body_velocity"][:2]) > 0.05 or abs(state["yaw_rate"]) > 0.08:
+            raise ValueError("Probe motion requires a stationary robot")
+        for _ in range(20):
+            self.probe_target = angle
+            self.run_velocity(Velocity(0, 0, 0), 0.2)
+            pose = self.probe_pose()
+            if abs(pose["angle"] - angle) < 0.015 and abs(pose["joint_speed"]) < 0.04:
+                return pose
+        raise RuntimeError("Kinematic probe did not settle")
+
+    def probe_line_clear(self, source):
+        """Ray against sensed environment geometry, independent of equipment identity."""
+        pose = self.probe_pose()
+        direction = self.np.array(source) - self.np.array(pose["tip"])
+        distance = float(self.np.linalg.norm(direction))
+        if distance < 1e-9:
+            return False
+        group = self.np.array([0, 0, 0, 0, 0, 1], dtype=self.np.uint8)
+        geom = self.np.zeros(1, dtype=self.np.int32)
+        hit = self.mj.mj_ray(
+            self.model, self.data, self.np.array(pose["tip"]), direction / distance, group, 1, -1, geom
+        )
+        return hit < 0 or hit >= distance - 0.01
 
     def stop(self) -> None:
         if self.stopped:

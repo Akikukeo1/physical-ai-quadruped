@@ -15,8 +15,9 @@ CAUSES = ("power_loss", "cooler_fault", "door_open")
 ZERO = Velocity(0.0, 0.0, 0.0)
 
 
-def load_knowledge():
-    return json.loads((ROOT / "docs/warehouse-manual.json").read_text(encoding="utf-8"))
+def load_knowledge(probe=False):
+    name = "warehouse-probe-manual.json" if probe else "warehouse-manual.json"
+    return json.loads((ROOT / "docs" / name).read_text(encoding="utf-8"))
 
 
 def validate_decision(value, context):
@@ -32,6 +33,10 @@ def validate_decision(value, context):
         "uncertainties",
         "knowledge_ids",
     }
+    probe = context.get("probe", False)
+    causes = (*CAUSES, "airflow_fault") if probe else CAUSES
+    if probe:
+        fields.add("measurement")
     if not isinstance(value, dict) or set(value) != fields:
         raise InvalidPlan("Investigation decision has unexpected fields")
     for key in ("reason", "expected_information", "report", "uncertainties"):
@@ -39,7 +44,7 @@ def validate_decision(value, context):
             raise InvalidPlan(f"Invalid text: {key}")
     if not value["reason"].strip() or not value["uncertainties"].strip():
         raise InvalidPlan("Decision needs a reason and explicit uncertainty")
-    available = {o["id"] for o in context["observations"]}
+    available = {o["id"] for o in context["observations"] if o.get("valid", True)}
 
     def evidence(ids):
         if (
@@ -62,13 +67,13 @@ def validate_decision(value, context):
     ):
         raise InvalidPlan("Cite supplied manual section IDs separately from observation evidence")
     hypotheses = value["hypotheses"]
-    if not isinstance(hypotheses, list) or len(hypotheses) != len(CAUSES):
-        raise InvalidPlan("Track all three hypotheses")
+    if not isinstance(hypotheses, list) or len(hypotheses) != len(causes):
+        raise InvalidPlan("Track all supported hypotheses")
     seen = set()
     for hypothesis in hypotheses:
         if not isinstance(hypothesis, dict) or set(hypothesis) != {"cause", "status", "evidence_ids"}:
             raise InvalidPlan("Invalid hypothesis")
-        if hypothesis["cause"] not in CAUSES or hypothesis["cause"] in seen:
+        if hypothesis["cause"] not in causes or hypothesis["cause"] in seen:
             raise InvalidPlan("Invalid/duplicate cause")
         seen.add(hypothesis["cause"])
         if hypothesis["status"] not in ("possible", "supported", "ruled_out"):
@@ -77,20 +82,38 @@ def validate_decision(value, context):
         if hypothesis["status"] != "possible" and not hypothesis["evidence_ids"]:
             raise InvalidPlan("Changed hypotheses require evidence")
     if value["action"] == "inspect":
+        if probe and value["measurement"] is not None:
+            raise InvalidPlan("Inspection cannot request a measurement")
         known = {p["id"] for p in context["inventory"]}
-        inspected = {o["equipment"] for o in context["observations"]}
+        inspected = {o["equipment"] for o in context["observations"] if "item" not in o}
         unavailable = set(context["unavailable"])
         if value["equipment"] not in known - inspected - unavailable:
             raise InvalidPlan("Inspect a supplied, uninspected, available equipment ID")
         if not value["expected_information"].strip() or value["conclusion"] != "pending" or value["report"]:
             raise InvalidPlan("Inspection needs an information goal, no final report")
+    elif probe and value["action"] == "measure":
+        from pai_motion.sensor_probe import ITEMS
+
+        item = value["measurement"]
+        if value["equipment"] != "cooler" or item not in ITEMS:
+            raise InvalidPlan("Measure only supplied cooler air quantities")
+        if any(o.get("item") == item for o in context["observations"]):
+            raise InvalidPlan("Measurement already attempted")
+        if value["conclusion"] != "pending" or value["report"] or not value["expected_information"].strip():
+            raise InvalidPlan("Measurement needs an information goal, no final diagnosis")
     elif value["action"] == "report":
-        if value["equipment"] is not None or value["conclusion"] not in (*CAUSES, "inconclusive"):
+        if probe and value["measurement"] is not None:
+            raise InvalidPlan("Report cannot request a measurement")
+        if value["equipment"] is not None or value["conclusion"] not in (*causes, "inconclusive"):
             raise InvalidPlan("Invalid report conclusion")
         if not value["report"].strip():
             raise InvalidPlan("A final report is required")
         if value["conclusion"] != "inconclusive":
-            stations = {o["equipment"] for o in context["observations"] if o["id"] in value["evidence_ids"]}
+            stations = {
+                (o["equipment"], o.get("item") if probe else None)
+                for o in context["observations"]
+                if o["id"] in value["evidence_ids"]
+            }
             if len(stations) < 2:
                 raise InvalidPlan("A diagnosis needs evidence from at least two equipment stations")
             chosen = next(h for h in hypotheses if h["cause"] == value["conclusion"])
@@ -123,7 +146,23 @@ def codex_investigation(context):
         "Use concise Japanese for explanations and report. Respond ONLY with schema-compliant JSON. "
         f"Observed context: {json.dumps(context, ensure_ascii=False)}"
     )
-    return _codex_json(instructions, ROOT / "schema/investigation-decision.schema.json", 45)
+    if context.get("probe"):
+        instructions += (
+            " PROBE MODE: also track airflow_fault, four hypotheses total. inspect cooler exposes only power and "
+            "compressor status; air data MUST be obtained using action=measure, equipment=cooler, measurement="
+            "air_temperature or airflow. Each is a separate physical measurement requiring a different sampling "
+            "position and probe alignment. Select the item using the manual and past evidence, not a fixed order. "
+            "For inspect/report set measurement=null. For measure set conclusion=pending and report=''. "
+            "Final cooler_fault/airflow_fault/door_open diagnoses need BOTH air temperature and airflow evidence. "
+            "Normal compressor status does not prove cooling or airflow. An invalid measurement has no value "
+            "and cannot support a diagnosis. No repeated measurements or repeated equipment inspections. "
+            "knowledge_ids must contain unique IDs from context.knowledge.sections, with no duplicates. "
+            "In probe mode, two independent measurement channels at the same equipment count as distinct evidence."
+        )
+    schema = (
+        "investigation-probe-decision.schema.json" if context.get("probe") else "investigation-decision.schema.json"
+    )
+    return _codex_json(instructions, ROOT / "schema" / schema, 45)
 
 
 class InvestigationMotion:
@@ -196,7 +235,9 @@ class InvestigationMotion:
             self.sink.run_velocity(Velocity(speed, 0.0, max(-0.6, min(0.6, 1.8 * error))), 0.2)
 
 
-def execute_investigation(task, sink, inventory, inspect, *, planner=codex_investigation, seconds=360, log=None):
+def execute_investigation(
+    task, sink, inventory, inspect, *, planner=codex_investigation, seconds=360, log=None, measure=None
+):
     """No scene ID, seed, unobserved readings or cause is accepted by the planner interface."""
     if not isinstance(task, str) or not 1 <= len(task.strip()) <= 1800:
         raise ValueError("Task must contain 1–1800 characters")
@@ -204,12 +245,12 @@ def execute_investigation(task, sink, inventory, inspect, *, planner=codex_inves
         raise ValueError("Investigation budget must be 60–600 simulated seconds")
     log = {} if log is None else log
     log.update(observations=[], decisions=[], actions=[], scans=[], report=None, errors=[], returned=False)
-    knowledge = load_knowledge()
+    knowledge = load_knowledge(probe=measure is not None)
     motion = InvestigationMotion(sink, seconds, log)
     unavailable, report = [], None
     worker = ThreadPoolExecutor(max_workers=1)
     try:
-        for _ in range(5):  # three unique inspections, a report, and one spare failure cycle
+        for _ in range(8 if measure is not None else 5):
             state = motion.sample()
             if motion.remaining() <= motion.reserve(state) + 5:
                 log["errors"].append("return_reserve")
@@ -226,6 +267,8 @@ def execute_investigation(task, sink, inventory, inspect, *, planner=codex_inves
                 "remaining_seconds": motion.remaining(),
                 "home_obligation": "report_then_return",
             }
+            if measure is not None:
+                context["probe"] = True
             entry = {"context": deepcopy(context), "started": sink.observe()["time"]}
             log["decisions"].append(entry)
             request = worker.submit(planner, deepcopy(context))
@@ -263,13 +306,27 @@ def execute_investigation(task, sink, inventory, inspect, *, planner=codex_inves
                 print(f"REPORT: {report['report']} 不確実性: {report['uncertainties']}", flush=True)
                 break
             point = next(p for p in inventory if p["id"] == decision["equipment"])
+            measuring = decision["action"] == "measure"
+            if measuring:
+                from pai_motion.sensor_probe import execute_measurement
+
+                port = next(p for p in point["measurements"] if p["item"] == decision["measurement"])
             action = {"equipment": point["id"], "started": sink.observe()["time"]}
+            if measuring:
+                action["measurement"] = decision["measurement"]
             log["actions"].append(action)
-            action["outcome"] = motion.go(point["position"])
+            action["outcome"] = motion.go(port["position"] if measuring else point["position"])
             action["finished"] = sink.observe()["time"]
             if action["outcome"] == "reached":
                 try:
-                    observation = inspect(point["id"], sink.observe())
+                    if measuring:
+                        action["arrived"] = action["finished"]
+                    observation = (
+                        execute_measurement(motion, port, measure, action)
+                        if measuring
+                        else inspect(point["id"], sink.observe())
+                    )
+                    action["finished"] = sink.observe()["time"]
                 except Exception as exc:
                     log["errors"].append(f"inspection: {exc}")
                     break

@@ -20,7 +20,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--scene", choices=["A", "B"], default="A")
     parser.add_argument("--seed", type=int, default=1102, help="B generator seed; never sent to Codex")
-    parser.add_argument("--development-fault", choices=["power_loss", "cooler_fault", "door_open"])
+    parser.add_argument("--development-fault", choices=["power_loss", "cooler_fault", "door_open", "airflow_fault"])
+    parser.add_argument("--probe", action="store_true", help="Use kinematic yaw probe for air temperature and airflow")
     parser.add_argument("--seconds", type=int, default=360)
     parser.add_argument("--headless", action="store_true")
     parser.add_argument("--out-dir", type=Path, default=ROOT / "outputs" / "investigation")
@@ -31,14 +32,19 @@ def main():
     args = parser.parse_args()
     if args.scene == "B" and args.development_fault:
         parser.error("B is held out; fault overrides are development-only")
+    if args.development_fault == "airflow_fault" and not args.probe:
+        parser.error("airflow_fault requires --probe")
+    if args.probe and args.scene == "B":
+        parser.error("Probe development uses A; the earlier B evaluation belongs to the original implementation")
     if not 60 <= args.seconds <= 600:
         parser.error("--seconds must be 60–600")
-    world = warehouse_scene(args.seed, development=args.scene == "A", fault=args.development_fault)
+    world = warehouse_scene(args.seed, development=args.scene == "A", fault=args.development_fault, probe=args.probe)
     stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S%fZ")
     args.out_dir.mkdir(parents=True, exist_ok=True)
     output = args.out_dir / f"investigation-{args.scene}-{stamp}.json"
     log = {
         "scene": args.scene,
+        "probe_enabled": args.probe,
         "seed": args.seed if args.scene == "B" else None,
         "task": args.prompt,
         "requested_codex_settings": {"model": CODEX_MODEL, "reasoning_effort": CODEX_REASONING_EFFORT},
@@ -48,6 +54,8 @@ def main():
                 *sorted((ROOT / "src/pai_motion").glob("*.py")),
                 ROOT / "schema/investigation-decision.schema.json",
                 ROOT / "docs/warehouse-manual.json",
+                ROOT / "schema/investigation-probe-decision.schema.json",
+                ROOT / "docs/warehouse-probe-manual.json",
                 ROOT / "pyproject.toml",
                 ROOT / "uv.lock",
                 ROOT / "assets/go2-assets.json",
@@ -55,12 +63,22 @@ def main():
             ]
         },
         "status": "failed",
-        "limits": "simulated local inspection, oracle odometry; no camera recognition",
+        "limits": "kinematic probe, analytic air field, no payload dynamics; oracle odometry, no camera recognition"
+        if args.probe
+        else "simulated local inspection, oracle odometry; no camera recognition",
     }
     sink = None
     try:
-        sink = MuJoCoGo2Sink(headless=args.headless, search_seed=0, custom_map=world.geometry)
-        execute_investigation(args.prompt, sink, world.inventory(), world.inspect, seconds=args.seconds, log=log)
+        sink = MuJoCoGo2Sink(headless=args.headless, search_seed=0, custom_map=world.geometry, probe=args.probe)
+        execute_investigation(
+            args.prompt,
+            sink,
+            world.inventory(),
+            world.inspect,
+            seconds=args.seconds,
+            log=log,
+            measure=world.measure if args.probe else None,
+        )
         log["evaluation"] = world.evaluate(log["report"] or {}, log["observations"])
         success = (
             log["returned"]

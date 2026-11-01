@@ -1,0 +1,140 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "action",
+    "equipment",
+    "hypotheses",
+    "reason",
+    "expected_information",
+    "conclusion",
+    "evidence_ids",
+    "report",
+    "uncertainties",
+    "knowledge_ids",
+    "measurement"
+  ],
+  "properties": {
+    "action": {
+      "type": "string",
+      "enum": [
+        "inspect",
+        "report",
+        "measure"
+      ]
+    },
+    "equipment": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "supply",
+        "cooler",
+        "door",
+        null
+      ]
+    },
+    "hypotheses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "cause",
+          "status",
+          "evidence_ids"
+        ],
+        "properties": {
+          "cause": {
+            "type": "string",
+            "enum": [
+              "power_loss",
+              "cooler_fault",
+              "door_open",
+              "airflow_fault"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "possible",
+              "supported",
+              "ruled_out"
+            ]
+          },
+          "evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 5
+          }
+        }
+      },
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "reason": {
+      "type": "string",
+      "maxLength": 1800
+    },
+    "expected_information": {
+      "type": "string",
+      "maxLength": 1800
+    },
+    "conclusion": {
+      "type": "string",
+      "enum": [
+        "power_loss",
+        "cooler_fault",
+        "door_open",
+        "airflow_fault",
+        "pending",
+        "inconclusive"
+      ]
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 5
+    },
+    "report": {
+      "type": "string",
+      "maxLength": 1800
+    },
+    "uncertainties": {
+      "type": "string",
+      "maxLength": 1800
+    },
+    "knowledge_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "MAN-POWER",
+          "MAN-COOLER",
+          "MAN-AIRFLOW",
+          "MAN-TEMPERATURE",
+          "MAN-DOOR",
+          "MAN-LIMITS"
+        ]
+      },
+      "minItems": 1,
+      "maxItems": 6
+    },
+    "measurement": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "air_temperature",
+        "airflow",
+        null
+      ]
+    }
+  }
+}
