@@ -24,6 +24,10 @@ def main():
     parser.add_argument("--probe", action="store_true", help="Use kinematic yaw probe for air temperature and airflow")
     parser.add_argument("--seconds", type=int, default=360)
     parser.add_argument("--headless", action="store_true")
+    parser.add_argument("--demo", action="store_true", help="Show distinguishable 3D warehouse equipment")
+    parser.add_argument(
+        "--record-dir", type=Path, help="Save synchronized overview/follow videos and timestamp indices"
+    )
     parser.add_argument("--out-dir", type=Path, default=ROOT / "outputs" / "investigation")
     parser.add_argument(
         "--prompt",
@@ -42,9 +46,14 @@ def main():
     stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S%fZ")
     args.out_dir.mkdir(parents=True, exist_ok=True)
     output = args.out_dir / f"investigation-{args.scene}-{stamp}.json"
+    recording = args.record_dir / stamp if args.record_dir else None
+    if recording is not None:
+        recording.mkdir(parents=True, exist_ok=False)
+        output = recording / "execution.json"
     log = {
         "scene": args.scene,
         "probe_enabled": args.probe,
+        "warehouse_display": args.demo or recording is not None,
         "seed": args.seed if args.scene == "B" else None,
         "task": args.prompt,
         "requested_codex_settings": {"model": CODEX_MODEL, "reasoning_effort": CODEX_REASONING_EFFORT},
@@ -69,7 +78,15 @@ def main():
     }
     sink = None
     try:
-        sink = MuJoCoGo2Sink(headless=args.headless, search_seed=0, custom_map=world.geometry, probe=args.probe)
+        sink = MuJoCoGo2Sink(
+            headless=args.headless,
+            search_seed=0,
+            custom_map=world.geometry,
+            probe=args.probe,
+            warehouse_display=args.demo,
+            record_dir=recording,
+            door_open=world.cause == "door_open",
+        )
         execute_investigation(
             args.prompt,
             sink,
@@ -94,7 +111,12 @@ def main():
     finally:
         if sink is not None:
             log["events"], log["trace"] = sink.events, sink.trace
-            sink.close()
+            try:
+                sink.close()
+                if sink.recorder is not None:
+                    log["recording"] = sink.recorder.finalize(log)
+            except Exception as exc:
+                log.update(status="failed", recording_error=str(exc))
         # Evaluator-only data is intentionally stored separately from every planner context.
         log["evaluation_world"] = {"cause": world.cause, "geometry": world.geometry}
         output.write_text(json.dumps(log, ensure_ascii=False, indent=2), encoding="utf-8")

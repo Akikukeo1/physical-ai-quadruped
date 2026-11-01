@@ -31,6 +31,9 @@ class MuJoCoGo2Sink:
         field_areas: list | None = None,
         custom_map: dict | None = None,
         probe: bool = False,
+        warehouse_display: bool = False,
+        record_dir: Path | None = None,
+        door_open: bool = False,
     ) -> None:
         if dynamic_obstacle and not navigation:
             raise ValueError("dynamic_obstacle requires navigation")
@@ -44,6 +47,8 @@ class MuJoCoGo2Sink:
         self.events: list[dict] = []
         self.trace: list[dict] = []
         self.viewer = self.renderer = self.writer = None
+        self.recorder = None
+        self.demo_status = {"phase": "INITIALIZING"}
         self.visual_options = mujoco.MjvOption()
         self.visual_options.geomgroup[4] = 1
         self.visual_options.geomgroup[5] = 1
@@ -67,6 +72,12 @@ class MuJoCoGo2Sink:
             from pai_motion.sensor_probe import add_probe
 
             add_probe(scene, custom_map)
+        if warehouse_display or record_dir is not None:
+            from pai_motion.warehouse_demo import add_equipment
+
+            if custom_map is None:
+                raise ValueError("Warehouse display requires a warehouse map")
+            add_equipment(scene, custom_map, door_open=door_open)
         additions = ET.fromstring("""<mujoco>
           <visual><global offwidth="720" offheight="480"/></visual>
           <asset><texture name="grid" type="2d" builtin="checker" width="512" height="512"
@@ -278,6 +289,10 @@ class MuJoCoGo2Sink:
         ):
             raise ValueError("Go2 ONNX policy signature mismatch")
         try:
+            if record_dir is not None:
+                from pai_motion.warehouse_demo import WarehouseRecorder
+
+                self.recorder = WarehouseRecorder(self, record_dir)
             if video is not None:
                 import imageio.v2 as imageio
 
@@ -455,6 +470,8 @@ class MuJoCoGo2Sink:
             if self.writer is not None and self.ticks % 20 == 0:
                 self.renderer.update_scene(self.data, camera=self.camera, scene_option=self.visual_options)
                 self.writer.append_data(self.renderer.render())
+            if self.recorder is not None and self.ticks % 20 == 0:
+                self.recorder.capture(self)
             if self.viewer is not None:
                 if not self.viewer.is_running():
                     raise RuntimeError("MuJoCo viewer closed")
@@ -480,6 +497,9 @@ class MuJoCoGo2Sink:
         self.events.append(event)
         self._advance(values, seconds)
         event["end"] = self._state()
+
+    def set_demo_status(self, **values):
+        self.demo_status.update(values)
 
     def probe_pose(self):
         """Exact kinematic transform from current free-base pose; no joint or payload forces."""
@@ -565,7 +585,7 @@ class MuJoCoGo2Sink:
         event["end"] = self._state()
 
     def close(self) -> None:
-        for resource in (self.writer, self.renderer, self.viewer):
+        for resource in (self.recorder, self.writer, self.renderer, self.viewer):
             if resource is not None:
                 resource.close()
         self.writer = self.renderer = self.viewer = None

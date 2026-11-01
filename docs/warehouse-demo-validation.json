@@ -1,0 +1,488 @@
+{
+  "verified_at_utc": "2026-11-01T20:14:30.706631+00:00",
+  "classification": "development demonstration, not held-out evaluation",
+  "directory": "outputs/warehouse-demo-ready/20261101T201004013790Z",
+  "recording": {
+    "fps": 25,
+    "width": 720,
+    "height": 560,
+    "frames": 1550,
+    "streams": [
+      "overview.mp4",
+      "follow.mp4"
+    ],
+    "cameras": {
+      "overview": {
+        "lookat": [
+          1.7,
+          0,
+          0.35
+        ],
+        "distance": 8.4,
+        "azimuth": -35,
+        "elevation": -58
+      },
+      "follow": {
+        "lookat": "robot x,y; z=0.48",
+        "distance": 1.9,
+        "azimuth": -35,
+        "elevation": -28
+      }
+    },
+    "execution_log": "execution.json",
+    "frame_index": "frames.json",
+    "event_timeline": "timeline.json",
+    "sim_time_first_frame": 0.04000000000000002,
+    "sim_time_last_frame": 62.00000000002981,
+    "max_event_alignment_error": 0.0,
+    "limits": "native unedited simulation; kinematic probe, analytic sensing; visuals are not colliders"
+  },
+  "videos": [
+    {
+      "file": "overview.mp4",
+      "frames_decoded": 1550,
+      "duration": 62.0,
+      "sha256": "499c5a5e06ce8f320ab569e2c5bc5b8db8b4f494542665a4a16715baa6981740",
+      "bytes": 944165
+    },
+    {
+      "file": "follow.mp4",
+      "frames_decoded": 1550,
+      "duration": 62.0,
+      "sha256": "43ad3c3314cfd4d2f3837b93cfe1ebdeeff976a3b0a7b5d7943352ce5d0e0cb1",
+      "bytes": 2696836
+    }
+  ],
+  "mission": {
+    "status": "success",
+    "elapsed": 61.00000000002981,
+    "home_error": 0.13396754703290234,
+    "within_deadline": true,
+    "evaluation": {
+      "truth": "airflow_fault",
+      "correct_cause": true,
+      "evidence_sufficient": true
+    },
+    "min_clearance": 0.20844944554493933,
+    "observations": [
+      {
+        "equipment": "cooler",
+        "readings": {
+          "input_voltage_v": 230,
+          "cooling_requested": true,
+          "compressor_running": true
+        },
+        "time": 9.399999999999809,
+        "position": [
+          0.9123322604359747,
+          -0.0009595863317143723
+        ],
+        "interface": "simulated_local_inspection",
+        "id": "inspection-1"
+      },
+      {
+        "equipment": "cooler",
+        "item": "air_temperature",
+        "valid": true,
+        "value": -8.417,
+        "unit": "degC",
+        "geometry": {
+          "distance": 0.3246776149974165,
+          "alignment_cosine": 0.9996599597873239,
+          "correct_sampling_zone": true,
+          "line_of_sight": true
+        },
+        "reason": "analytic local vent field; not thermofluid simulation",
+        "pose": {
+          "tip": [
+            1.3079912367828601,
+            -0.14186476308197948,
+            0.5345634285905139
+          ],
+          "direction": [
+            0.8981917254822801,
+            0.43944350966707546,
+            0.011875440482141193
+          ],
+          "mount": [
+            1.1103890571767585,
+            -0.23854233520873608,
+            0.5319508316844428
+          ],
+          "angle": 0.49074013928765925,
+          "joint_speed": 0.0,
+          "target": 0.49074013928765925,
+          "implementation": "kinematic_no_robot_payload"
+        },
+        "time": 25.199999999996912,
+        "position": [
+          1.0129309921046794,
+          -0.23541669790825434
+        ],
+        "interface": "geometric_probe_field",
+        "id": "inspection-2"
+      },
+      {
+        "equipment": "cooler",
+        "item": "airflow",
+        "valid": true,
+        "value": 0.044,
+        "unit": "m/s",
+        "geometry": {
+          "distance": 0.24803875053819807,
+          "alignment_cosine": 0.996993328135102,
+          "correct_sampling_zone": true,
+          "line_of_sight": true
+        },
+        "reason": "analytic local vent field; not thermofluid simulation",
+        "pose": {
+          "tip": [
+            1.3750122271537715,
+            0.10350608873955836,
+            0.5437917885744727
+          ],
+          "direction": [
+            0.9084712371514604,
+            -0.4173716594948395,
+            0.021929640193588514
+          ],
+          "mount": [
+            1.1751485549804501,
+            0.19532785382842305,
+            0.5389672677318833
+          ],
+          "angle": -0.46155462176071704,
+          "joint_speed": 0.0,
+          "target": -0.46155462176071704,
+          "implementation": "kinematic_no_robot_payload"
+        },
+        "time": 42.80000000000634,
+        "position": [
+          1.0787795178460797,
+          0.1910511969045793
+        ],
+        "interface": "geometric_probe_field",
+        "id": "inspection-3"
+      }
+    ],
+    "report": {
+      "action": "report",
+      "equipment": null,
+      "hypotheses": [
+        {
+          "cause": "power_loss",
+          "status": "ruled_out",
+          "evidence_ids": [
+            "inspection-1"
+          ]
+        },
+        {
+          "cause": "cooler_fault",
+          "status": "possible",
+          "evidence_ids": [
+            "inspection-1",
+            "inspection-2"
+          ]
+        },
+        {
+          "cause": "door_open",
+          "status": "possible",
+          "evidence_ids": []
+        },
+        {
+          "cause": "airflow_fault",
+          "status": "supported",
+          "evidence_ids": [
+            "inspection-1",
+            "inspection-2",
+            "inspection-3"
+          ]
+        }
+      ],
+      "reason": "正常給電下で吹出空気は氷点下、風速は0.044m/sでした。低風速と冷気の組合せは送風不足を支持します。",
+      "expected_information": "送風不足が温度上昇の有力原因です。扉の開放や複合故障は未確認です。",
+      "conclusion": "airflow_fault",
+      "evidence_ids": [
+        "inspection-1",
+        "inspection-2",
+        "inspection-3"
+      ],
+      "report": "報告：送風不足が倉庫温度上昇の有力原因です。冷却機入力は230V、吹出空気は-8.417°C、風速は0.044m/sでした。電源異常は支持されません。扉開放や複合故障は未確認で、ファン故障か風路閉塞かも特定できていません。",
+      "uncertainties": "冷却機の局所測定のみです。扉状態とファン・風路の状態は未確認で、複合故障や過去の一時異常も評価していません。",
+      "knowledge_ids": [
+        "MAN-POWER",
+        "MAN-AIRFLOW",
+        "MAN-TEMPERATURE",
+        "MAN-LIMITS"
+      ],
+      "measurement": null
+    }
+  },
+  "decisions": [
+    {
+      "started": 1.400000000000001,
+      "finished": 3.999999999999781,
+      "decision": {
+        "action": "inspect",
+        "equipment": "cooler",
+        "hypotheses": [
+          {
+            "cause": "power_loss",
+            "status": "possible",
+            "evidence_ids": []
+          },
+          {
+            "cause": "cooler_fault",
+            "status": "possible",
+            "evidence_ids": []
+          },
+          {
+            "cause": "door_open",
+            "status": "possible",
+            "evidence_ids": []
+          },
+          {
+            "cause": "airflow_fault",
+            "status": "possible",
+            "evidence_ids": []
+          }
+        ],
+        "reason": "冷却機の入力電圧と圧縮機状態を確認し、電源系の仮説を絞ります。",
+        "expected_information": "入力0Vなら電源盤の出力確認が必要です。正常230Vなら供給異常の可能性が下がります。圧縮機表示だけでは冷却性能や送風は判定できません。",
+        "conclusion": "pending",
+        "evidence_ids": [],
+        "report": "",
+        "uncertainties": "現時点では現場観測がなく、全仮説が未検証です。",
+        "knowledge_ids": [
+          "MAN-POWER",
+          "MAN-COOLER"
+        ],
+        "measurement": null
+      }
+    },
+    {
+      "started": 9.799999999999942,
+      "finished": 16.60000000000168,
+      "decision": {
+        "action": "measure",
+        "equipment": "cooler",
+        "hypotheses": [
+          {
+            "cause": "power_loss",
+            "status": "ruled_out",
+            "evidence_ids": [
+              "inspection-1"
+            ]
+          },
+          {
+            "cause": "cooler_fault",
+            "status": "possible",
+            "evidence_ids": []
+          },
+          {
+            "cause": "door_open",
+            "status": "possible",
+            "evidence_ids": []
+          },
+          {
+            "cause": "airflow_fault",
+            "status": "possible",
+            "evidence_ids": []
+          }
+        ],
+        "reason": "入力は正常で圧縮機も運転中です。吹出口温度を測り、冷却の成否を確認します。",
+        "expected_information": "氷点下なら冷却は確認できますが、送風不足や扉開放は未判定です。約8°Cなら冷却不成立を示しますが、冷却系故障と送風不足の区別には風速測定も必要です。",
+        "conclusion": "pending",
+        "evidence_ids": [
+          "inspection-1"
+        ],
+        "report": "",
+        "uncertainties": "圧縮機の運転表示だけでは冷却性能や送風を判定できません。扉状態も未確認です。",
+        "knowledge_ids": [
+          "MAN-POWER",
+          "MAN-COOLER",
+          "MAN-TEMPERATURE"
+        ],
+        "measurement": "air_temperature"
+      }
+    },
+    {
+      "started": 26.999999999995914,
+      "finished": 31.399999999993476,
+      "decision": {
+        "action": "measure",
+        "equipment": "cooler",
+        "hypotheses": [
+          {
+            "cause": "power_loss",
+            "status": "ruled_out",
+            "evidence_ids": [
+              "inspection-1"
+            ]
+          },
+          {
+            "cause": "cooler_fault",
+            "status": "possible",
+            "evidence_ids": [
+              "inspection-1",
+              "inspection-2"
+            ]
+          },
+          {
+            "cause": "door_open",
+            "status": "possible",
+            "evidence_ids": []
+          },
+          {
+            "cause": "airflow_fault",
+            "status": "possible",
+            "evidence_ids": [
+              "inspection-2"
+            ]
+          }
+        ],
+        "reason": "吹出口は氷点下で、冷却は確認できました。残る送風不足と扉開放を分けるため、風速を測ります。",
+        "expected_information": "風速0.2m/s未満なら送風不足を支持します。概ね1〜2m/sなら送風は正常で、扉センサーの点検が次の判断材料になります。",
+        "conclusion": "pending",
+        "evidence_ids": [
+          "inspection-1",
+          "inspection-2"
+        ],
+        "report": "",
+        "uncertainties": "風速と扉状態は未確認です。局所的な吹出口の温度だけでは倉庫全体の状態や複合故障は評価できません。",
+        "knowledge_ids": [
+          "MAN-POWER",
+          "MAN-COOLER",
+          "MAN-AIRFLOW"
+        ],
+        "measurement": "airflow"
+      }
+    },
+    {
+      "started": 44.4000000000083,
+      "finished": 48.20000000001294,
+      "decision": {
+        "action": "report",
+        "equipment": null,
+        "hypotheses": [
+          {
+            "cause": "power_loss",
+            "status": "ruled_out",
+            "evidence_ids": [
+              "inspection-1"
+            ]
+          },
+          {
+            "cause": "cooler_fault",
+            "status": "possible",
+            "evidence_ids": [
+              "inspection-1",
+              "inspection-2"
+            ]
+          },
+          {
+            "cause": "door_open",
+            "status": "possible",
+            "evidence_ids": []
+          },
+          {
+            "cause": "airflow_fault",
+            "status": "supported",
+            "evidence_ids": [
+              "inspection-1",
+              "inspection-2",
+              "inspection-3"
+            ]
+          }
+        ],
+        "reason": "正常給電下で吹出空気は氷点下、風速は0.044m/sでした。低風速と冷気の組合せは送風不足を支持します。",
+        "expected_information": "送風不足が温度上昇の有力原因です。扉の開放や複合故障は未確認です。",
+        "conclusion": "airflow_fault",
+        "evidence_ids": [
+          "inspection-1",
+          "inspection-2",
+          "inspection-3"
+        ],
+        "report": "報告：送風不足が倉庫温度上昇の有力原因です。冷却機入力は230V、吹出空気は-8.417°C、風速は0.044m/sでした。電源異常は支持されません。扉開放や複合故障は未確認で、ファン故障か風路閉塞かも特定できていません。",
+        "uncertainties": "冷却機の局所測定のみです。扉状態とファン・風路の状態は未確認で、複合故障や過去の一時異常も評価していません。",
+        "knowledge_ids": [
+          "MAN-POWER",
+          "MAN-AIRFLOW",
+          "MAN-TEMPERATURE",
+          "MAN-LIMITS"
+        ],
+        "measurement": null
+      }
+    }
+  ],
+  "checks": "full decode of both streams, 25fps, identical counts, 40ms simulation frame steps, event alignment <=20ms, displayed observations and hypotheses agree with logs, mission audit",
+  "execution_sha256": "3aa5bf06defcde7413e3ba8baf4ccc4eb5909e3c5109a77993a0d1431b0ac1f8",
+  "source_sha256": {
+    "src/pai_motion/__init__.py": "1e734be59743ab4b4788e8c224b97546a33c0dfa051b74015242a5a8e0d8e931",
+    "src/pai_motion/agent_planner.py": "b857e2c6b46f0899c9fd7de8234c9b71f8dbc519e3cd658084ba1483daa69cac",
+    "src/pai_motion/assets.py": "d37498a34e1c7555efb1aaf7679ca94f94e13a04fac16f5272ac5ad7bfd254ee",
+    "src/pai_motion/correction.py": "07440e7d4f31f0d78ead820e3ba86273b37e7704a173a142d4ca4a8549a23a86",
+    "src/pai_motion/custom_map.py": "aa38210b5c71da2e70926d3e857289dc05257434769652bbdfdd803059d78e42",
+    "src/pai_motion/executor.py": "e26b8ba8a2c14f0f0b2afca81c676f7be9521678c54f1ac0a943217eb2fe7d17",
+    "src/pai_motion/field_areas.py": "1e436707cb8c9b20bbfcb434f9009fb78b8777b5788f394dbd4d09aab033c1ad",
+    "src/pai_motion/field_revision.py": "7b9299885765be79bd4cebe31c2a94fdcd261a5738b46231b66f601ba0e1aa77",
+    "src/pai_motion/initial_dialogue.py": "b0a9554a6aa5c9307f39a75d74995f65798c9ac996d3caeb4841ebf033d650be",
+    "src/pai_motion/investigation.py": "bd2ed43a6fa0c63a435e874a356ac4672b3f321f237856164c339c90ba51cec0",
+    "src/pai_motion/investigation_world.py": "1955d1bf37e481f421658e4e42c08af468b6721a3aaaab2e12fdecc87f7170b0",
+    "src/pai_motion/motion.py": "a9a07958fb9694c7fc68cc06848f3570d47df278151e5da2a87de465ff9d6ba9",
+    "src/pai_motion/navigation.py": "4d8ae17d3b9b3e5ad8923de615fad091f078d8633ce072f7db27c64a86543425",
+    "src/pai_motion/planner.py": "6fffaa470965b0c7b8273a40446d5bcb4b0e331a5ed77b73288905bc48e3f957",
+    "src/pai_motion/search.py": "350256bde1232a830bc479638706983b420f640200d737439429fc5ac855856a",
+    "src/pai_motion/search_world.py": "efef1446aa809a8251aaaa259b8a22b5b75002f9dc064cf0134d98f05767ff30",
+    "src/pai_motion/sensor_probe.py": "eeadadb5327da14100e226bda8d5cb42047732da93db69f9eca512dc6350cf42",
+    "src/pai_motion/sim_adapter.py": "db5a1ee6e8a4fbb419dcfe086edcfee9e49fa51409c46ad41a1a8197e0ed00eb",
+    "src/pai_motion/warehouse_demo.py": "dbe8dd3757a114b97a481300651711456a69ffec55bd33756ef8533c217b3ff3",
+    "schema/investigation-decision.schema.json": "157dc4174f9c4843c75d25f57be82f5e93899b211787c2f73cf3662d0c204b9a",
+    "docs/warehouse-manual.json": "2ee44c75bb85d43ac555fa68bb7db24a6a7c529a559164b5cbc05c002eae3587",
+    "schema/investigation-probe-decision.schema.json": "f8a781d34582bfc03c7c517e3d8c1087258de4a9a718ccad14541e2b3cbf5186",
+    "docs/warehouse-probe-manual.json": "79a3370e56e05bdd59522625f5013f7e1c290e3b913fb88ba671e02b269edaff",
+    "pyproject.toml": "53f9784ce16e1babe9bc544b8415a732a99233556d2fa55e03ea28d8717b3073",
+    "uv.lock": "a6b32f288eef40fa32a353f22c6cce7d7fd1e388721e58be2c522a90f1f0cc73",
+    "assets/go2-assets.json": "514b9c396fe9be115ba39bf7bc726599a08b24c1cdc575db28b54c68cd486a33",
+    "scripts/investigate.py": "b51d18c43c6ca5703adf587b47a0d0b915424e87e374dadcbdec3e69b8cb391a"
+  },
+  "inspected_frames": [
+    "qa/overview-00000.png",
+    "qa/follow-00629.png",
+    "qa/follow-01069.png",
+    "qa/follow-01215.png",
+    "qa/overview-01549.png"
+  ],
+  "tests": {
+    "full_physics_regression": {
+      "count": 115,
+      "skipped": 0,
+      "result": "passed"
+    },
+    "after_camera_and_equipment_adjustment": {
+      "target": "tests.test_warehouse_demo",
+      "count": 4,
+      "skipped": 0,
+      "result": "passed"
+    },
+    "final_HUD_layout": "both final streams fully decoded; 720x560; matching counts and timestamps; visual frames inspected",
+    "ruff": "passed",
+    "diff_check": "passed (cr-at-eol)"
+  },
+  "earlier_recordings": [
+    {
+      "directory": "outputs/warehouse-demo/20261101T195655179304Z",
+      "result": "success, full decode passed; initial camera framing needed adjustment"
+    },
+    {
+      "directory": "outputs/warehouse-demo-final/20261101T200352226165Z",
+      "result": "success, full decode passed; HUD overlapped part of equipment, moved into dedicated band"
+    }
+  ],
+  "limits": [
+    "No editing, audio or publishing",
+    "Display geometry does not replace existing colliders",
+    "Kinematic probe and analytic field, no new perception",
+    "No new held-out evaluation"
+  ]
+}

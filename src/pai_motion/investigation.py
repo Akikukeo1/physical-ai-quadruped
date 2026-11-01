@@ -271,6 +271,8 @@ def execute_investigation(
                 context["probe"] = True
             entry = {"context": deepcopy(context), "started": sink.observe()["time"]}
             log["decisions"].append(entry)
+            if hasattr(sink, "set_demo_status"):
+                sink.set_demo_status(phase="LLM_WAIT")
             request = worker.submit(planner, deepcopy(context))
             wall_start = time.monotonic()
             timeout = None
@@ -299,6 +301,14 @@ def execute_investigation(
                 break
             motion.settle()
             print(f"INVESTIGATE: {decision['action']} {decision['equipment']}; {decision['reason']}", flush=True)
+            if hasattr(sink, "set_demo_status"):
+                sink.set_demo_status(
+                    phase=decision["action"].upper(),
+                    equipment=decision["equipment"],
+                    measurement=decision.get("measurement"),
+                    conclusion=decision["conclusion"],
+                    hypotheses=deepcopy(decision["hypotheses"]),
+                )
             if decision["action"] == "report":
                 report = decision
                 log["report"] = deepcopy(report)
@@ -332,6 +342,8 @@ def execute_investigation(
                     break
                 observation["id"] = f"inspection-{len(log['observations']) + 1}"
                 log["observations"].append(observation)
+                if hasattr(sink, "set_demo_status"):
+                    sink.set_demo_status(last_observation=deepcopy(observation))
                 print(f"OBSERVATION: {json.dumps(observation, ensure_ascii=False)}", flush=True)
             elif action["outcome"] == "return_reserve":
                 log["errors"].append("return_reserve")
@@ -350,6 +362,8 @@ def execute_investigation(
             log["reported_at"] = sink.observe()["time"]
             print(f"REPORT: {log['report']['report']} {log['report']['uncertainties']}", flush=True)
         log["return_started"] = sink.observe()["time"]
+        if hasattr(sink, "set_demo_status"):
+            sink.set_demo_status(phase="RETURN_HOME", equipment="home", measurement=None)
         log["return_outcome"] = motion.go(motion.home, returning=True)
     except Exception as exc:
         log["errors"].append(f"execution: {exc}")
